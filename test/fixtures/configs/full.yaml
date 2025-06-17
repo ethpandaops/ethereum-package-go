@@ -1,0 +1,39 @@
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+    el_version: v1.13.0
+    cl_version: v4.5.0
+    count: 2
+    validator_count: 64
+  - el_type: besu
+    cl_type: teku
+    count: 1
+    validator_count: 32
+
+network_params:
+  chain_id: 12345
+  network_id: 12345
+  seconds_per_slot: 12
+  slots_per_epoch: 32
+  capella_fork_epoch: 10
+  deneb_fork_epoch: 20
+  electra_fork_epoch: 30
+  min_validator_withdrawability: 256
+
+mev_params:
+  type: full
+  relay_url: http://localhost:18550
+  min_bid_eth: "0.01"
+  max_bundle_length: 3
+
+additional_services:
+  - name: prometheus
+    config:
+      port: 9090
+      retention: 15d
+  - name: grafana
+    config:
+      port: 3000
+  - name: blockscout
+
+global_client_log_level: info

@@ -1,0 +1,4 @@
+participants:
+  - el_type: invalid_client
+    cl_type: lighthouse
+    count: -1
