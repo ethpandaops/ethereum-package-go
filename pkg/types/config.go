@@ -106,6 +106,11 @@ func (p *PresetConfigSource) Validate() error {
 	}
 }
 
+// GetPreset returns the preset
+func (p *PresetConfigSource) GetPreset() Preset {
+	return p.preset
+}
+
 // FileConfigSource uses a configuration file
 type FileConfigSource struct {
 	path string
@@ -127,6 +132,11 @@ func (f *FileConfigSource) Validate() error {
 	return nil
 }
 
+// GetPath returns the file path
+func (f *FileConfigSource) GetPath() string {
+	return f.path
+}
+
 // InlineConfigSource uses inline configuration
 type InlineConfigSource struct {
 	config *EthereumPackageConfig
@@ -146,4 +156,9 @@ func (i *InlineConfigSource) Validate() error {
 		return ErrNilConfig
 	}
 	return nil
+}
+
+// GetConfig returns the inline configuration
+func (i *InlineConfigSource) GetConfig() *EthereumPackageConfig {
+	return i.config
 }

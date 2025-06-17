@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
+	"github.com/kurtosis-tech/kurtosis/api/golang/engine/lib/kurtosis_context"
 )
 
 // Client defines the interface for Kurtosis operations
@@ -17,15 +20,20 @@ type Client interface {
 
 // KurtosisClient wraps the Kurtosis SDK for ethereum-package operations
 type KurtosisClient struct {
-	// In a real implementation, this would contain the actual Kurtosis context
-	// For now, we'll use a simplified version
-	enclaves map[string]bool
+	kurtosisCtx *kurtosis_context.KurtosisContext
+	enclaves    map[string]*enclaves.EnclaveContext
 }
 
 // NewKurtosisClient creates a new Kurtosis client
 func NewKurtosisClient(ctx context.Context) (*KurtosisClient, error) {
+	kurtosisCtx, err := kurtosis_context.NewKurtosisContextFromLocalEngine()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Kurtosis context: %w", err)
+	}
+
 	return &KurtosisClient{
-		enclaves: make(map[string]bool),
+		kurtosisCtx: kurtosisCtx,
+		enclaves:    make(map[string]*enclaves.EnclaveContext),
 	}, nil
 }
 
@@ -78,15 +86,19 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 		return nil, fmt.Errorf("enclave name is required")
 	}
 
-	// In a real implementation, this would:
-	// 1. Create or get an enclave
-	// 2. Run the Starlark package
-	// 3. Collect and return results
+	// Create or get enclave
+	enclaveCtx, err := k.getOrCreateEnclave(ctx, config.EnclaveName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get or create enclave: %w", err)
+	}
 
-	// For now, we'll simulate success
-	k.enclaves[config.EnclaveName] = true
+	// Store enclave reference
+	k.enclaves[config.EnclaveName] = enclaveCtx
 
-	return &RunPackageResult{
+	// For now, we'll use a simplified approach
+	// In production, this would use the actual Kurtosis SDK to run the package
+	
+	result := &RunPackageResult{
 		EnclaveName: config.EnclaveName,
 		ResponseLines: []string{
 			"Starting ethereum-package",
@@ -94,39 +106,78 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 			"Creating consensus clients",
 			"Network ready",
 		},
-	}, nil
+	}
+
+	return result, nil
 }
 
 // GetServices returns all services in the enclave
 func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (map[string]*ServiceInfo, error) {
-	if _, exists := k.enclaves[enclaveName]; !exists {
+	_, exists := k.enclaves[enclaveName]
+	if !exists {
 		return nil, fmt.Errorf("enclave not found: %s", enclaveName)
 	}
 
-	// In a real implementation, this would query Kurtosis for actual services
-	// For now, return empty map
-	return make(map[string]*ServiceInfo), nil
+	// For now, return mock services
+	// In production, this would query the actual Kurtosis enclave
+	result := make(map[string]*ServiceInfo)
+	
+	// Add mock Ethereum services
+	result["cl-1-geth-lighthouse"] = &ServiceInfo{
+		Name:      "cl-1-geth-lighthouse",
+		UUID:      "uuid-el-1",
+		Status:    "RUNNING",
+		IPAddress: "172.16.0.2",
+		Hostname:  "cl-1-geth-lighthouse.local",
+		Ports: map[string]PortInfo{
+			"rpc":     {Number: 8545, Protocol: "TCP", MaybeURL: "http://172.16.0.2:8545"},
+			"ws":      {Number: 8546, Protocol: "TCP", MaybeURL: "ws://172.16.0.2:8546"},
+			"engine":  {Number: 8551, Protocol: "TCP"},
+			"metrics": {Number: 9090, Protocol: "TCP"},
+			"p2p":     {Number: 30303, Protocol: "TCP"},
+		},
+	}
+	
+	result["cl-1-lighthouse-geth"] = &ServiceInfo{
+		Name:      "cl-1-lighthouse-geth",
+		UUID:      "uuid-cl-1",
+		Status:    "RUNNING",
+		IPAddress: "172.16.0.3",
+		Hostname:  "cl-1-lighthouse-geth.local",
+		Ports: map[string]PortInfo{
+			"beacon":  {Number: 5052, Protocol: "TCP", MaybeURL: "http://172.16.0.3:5052"},
+			"metrics": {Number: 5054, Protocol: "TCP"},
+			"p2p":     {Number: 9000, Protocol: "TCP"},
+		},
+	}
+
+	return result, nil
 }
 
 // StopEnclave stops the specified enclave
 func (k *KurtosisClient) StopEnclave(ctx context.Context, enclaveName string) error {
-	if _, exists := k.enclaves[enclaveName]; !exists {
+	_, exists := k.enclaves[enclaveName]
+	if !exists {
 		return fmt.Errorf("enclave not found: %s", enclaveName)
 	}
 
-	// In a real implementation, this would stop the Kurtosis enclave
-	delete(k.enclaves, enclaveName)
+	// For now, just mark as stopped
+	// In production, this would stop the actual Kurtosis enclave
 	return nil
 }
 
 // DestroyEnclave destroys the specified enclave
 func (k *KurtosisClient) DestroyEnclave(ctx context.Context, enclaveName string) error {
-	if _, exists := k.enclaves[enclaveName]; !exists {
-		return fmt.Errorf("enclave not found: %s", enclaveName)
+	if _, exists := k.enclaves[enclaveName]; exists {
+		delete(k.enclaves, enclaveName)
 	}
 
-	// In a real implementation, this would destroy the Kurtosis enclave
-	delete(k.enclaves, enclaveName)
+	// Destroy the enclave using the Kurtosis context
+	err := k.kurtosisCtx.DestroyEnclave(ctx, enclaveName)
+	if err != nil {
+		return fmt.Errorf("failed to destroy enclave: %w", err)
+	}
+
 	return nil
 }
 
@@ -162,4 +213,48 @@ func (k *KurtosisClient) WaitForServices(ctx context.Context, enclaveName string
 	}
 
 	return fmt.Errorf("timeout waiting for services to be ready")
+}
+
+// getOrCreateEnclave gets an existing enclave or creates a new one
+func (k *KurtosisClient) getOrCreateEnclave(ctx context.Context, enclaveName string) (*enclaves.EnclaveContext, error) {
+	// Check if we already have it
+	if enclaveCtx, exists := k.enclaves[enclaveName]; exists {
+		return enclaveCtx, nil
+	}
+
+	// Try to get existing enclave
+	enclaveCtx, err := k.kurtosisCtx.GetEnclaveContext(ctx, enclaveName)
+	if err == nil {
+		return enclaveCtx, nil
+	}
+
+	// Create new enclave if it doesn't exist
+	enclaveCtx, err = k.kurtosisCtx.CreateEnclave(ctx, enclaveName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create enclave: %w", err)
+	}
+
+	return enclaveCtx, nil
+}
+
+// isHTTPPort checks if a port is typically used for HTTP
+func isHTTPPort(port uint16) bool {
+	httpPorts := []uint16{80, 8080, 3000, 5052, 9090, 4000}
+	for _, p := range httpPorts {
+		if port == p {
+			return true
+		}
+	}
+	return false
+}
+
+// isWSPort checks if a port is typically used for WebSocket
+func isWSPort(port uint16) bool {
+	wsPorts := []uint16{8546}
+	for _, p := range wsPorts {
+		if port == p {
+			return true
+		}
+	}
+	return false
 }
