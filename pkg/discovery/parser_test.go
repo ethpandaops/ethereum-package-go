@@ -1,7 +1,6 @@
 package discovery
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
@@ -219,205 +218,15 @@ type ValidatorInfo struct {
 
 func TestMetadataParser_ParseValidatorInfo(t *testing.T) {
 	t.Skip("parseValidatorInfo is no longer a method on MetadataParser")
-	return
-	// parser := NewMetadataParser()
-
-	tests := []struct {
-		name         string
-		serviceName  string
-		expectedInfo ValidatorInfo
-	}{
-		{
-			name:        "validator with count",
-			serviceName: "validator-5",
-			expectedInfo: ValidatorInfo{
-				Count:      5,
-				StartIndex: 0,
-			},
-		},
-		{
-			name:        "validator prefix with count",
-			serviceName: "validator-client-10",
-			expectedInfo: ValidatorInfo{
-				Count:      10,
-				StartIndex: 0,
-			},
-		},
-		{
-			name:        "no validator count",
-			serviceName: "validator",
-			expectedInfo: ValidatorInfo{
-				Count:      0,
-				StartIndex: 0,
-			},
-		},
-		{
-			name:        "non-validator service",
-			serviceName: "prometheus",
-			expectedInfo: ValidatorInfo{
-				Count:      0,
-				StartIndex: 0,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// info := parser.parseValidatorInfo(tt.serviceName)
-			info := ValidatorInfo{}
-			assert.Equal(t, tt.expectedInfo.Count, info.Count)
-			assert.Equal(t, tt.expectedInfo.StartIndex, info.StartIndex)
-		})
-	}
 }
 
 func TestMetadataParser_ParseConnectionString(t *testing.T) {
 	t.Skip("ParseConnectionString is no longer a method on MetadataParser")
-	return
-	// parser := NewMetadataParser()
-
-	tests := []struct {
-		name     string
-		protocol string
-		endpoint string
-		expected map[string]string
-		wantErr  bool
-	}{
-		{
-			name:     "http connection",
-			protocol: "http",
-			endpoint: "http://localhost:8545",
-			expected: map[string]string{
-				"type":     "http",
-				"host":     "localhost",
-				"port":     "8545",
-				"endpoint": "http://localhost:8545",
-			},
-		},
-		{
-			name:     "https connection",
-			protocol: "https",
-			endpoint: "https://example.com:443",
-			expected: map[string]string{
-				"type":     "http",
-				"host":     "example.com",
-				"port":     "443",
-				"endpoint": "https://example.com:443",
-			},
-		},
-		{
-			name:     "websocket connection",
-			protocol: "ws",
-			endpoint: "ws://10.0.0.1:8546",
-			expected: map[string]string{
-				"type":     "websocket",
-				"host":     "10.0.0.1",
-				"port":     "8546",
-				"endpoint": "ws://10.0.0.1:8546",
-			},
-		},
-		{
-			name:     "tcp connection",
-			protocol: "tcp",
-			endpoint: "tcp://10.0.0.1:30303",
-			expected: map[string]string{
-				"type":     "tcp",
-				"host":     "10.0.0.1",
-				"port":     "30303",
-				"endpoint": "tcp://10.0.0.1:30303",
-			},
-		},
-		{
-			name:     "unsupported protocol",
-			protocol: "ftp",
-			endpoint: "ftp://example.com",
-			wantErr:  true,
-		},
-		{
-			name:     "invalid endpoint",
-			protocol: "http",
-			endpoint: "not-a-url",
-			wantErr:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// result, err := parser.ParseConnectionString(tt.protocol, tt.endpoint)
-			result := tt.expected
-			var err error
-			if tt.wantErr {
-				err = assert.AnError
-			}
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
 }
 
 func TestMetadataParser_SerializeDeserialize(t *testing.T) {
 	t.Skip("SerializeMetadata/DeserializeMetadata are no longer methods on MetadataParser")
-	return
-	// parser := NewMetadataParser()
-
-	original := &network.ServiceMetadata{
-		Name:        "el-1-geth",
-		ServiceType: network.ServiceTypeExecutionClient,
-		ClientType:  client.Geth,
-		Status:      "running",
-		ContainerID: "uuid-123",
-		IPAddress:   "10.0.0.1",
-		Ports: map[string]network.PortMetadata{
-			"rpc": {
-				Name:          "rpc",
-				Number:        8545,
-				Protocol:      "TCP",
-				URL:           "http://10.0.0.1:8545",
-				ExposedToHost: true,
-			},
-		},
-		NodeIndex:           1,
-		NodeName:            "el-1-geth",
-		ChainID:             12345,
-		ValidatorCount:      0,
-		ValidatorStartIndex: 0,
-	}
-
-	// Serialize
-	// data, err := parser.SerializeMetadata(original)
-	var data []byte
-	var err error
-	require.NoError(t, err)
-	require.NotEmpty(t, data)
-
-	// Verify it's valid JSON
-	var jsonCheck map[string]interface{}
-	err = json.Unmarshal(data, &jsonCheck)
-	require.NoError(t, err)
-
-	// Deserialize
-	// deserialized, err := parser.DeserializeMetadata(data)
-	deserialized := original
-	require.NoError(t, err)
-	require.NotNil(t, deserialized)
-
-	// Compare
-	assert.Equal(t, original.Name, deserialized.Name)
-	assert.Equal(t, original.ServiceType, deserialized.ServiceType)
-	assert.Equal(t, original.ClientType, deserialized.ClientType)
-	assert.Equal(t, original.Status, deserialized.Status)
-	assert.Equal(t, original.ContainerID, deserialized.ContainerID)
-	assert.Equal(t, original.IPAddress, deserialized.IPAddress)
-	assert.Equal(t, original.NodeIndex, deserialized.NodeIndex)
-	assert.Equal(t, original.NodeName, deserialized.NodeName)
-	assert.Equal(t, original.ChainID, deserialized.ChainID)
-	assert.Equal(t, len(original.Ports), len(deserialized.Ports))
 }
-
 func TestDetectServiceType(t *testing.T) {
 	tests := []struct {
 		name         string
