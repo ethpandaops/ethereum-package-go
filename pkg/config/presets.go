@@ -135,7 +135,7 @@ func getMinimalConfig() *EthereumPackageConfig {
 				ELType:         client.Geth,
 				CLType:         client.Lighthouse,
 				Count:          1,
-				ValidatorCount: 32,
+				ValidatorCount: 64,
 			},
 		},
 	}

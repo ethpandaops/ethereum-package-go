@@ -93,7 +93,7 @@ func TestGetPresetConfig(t *testing.T) {
 				assert.Equal(t, client.Geth, config.Participants[0].ELType)
 				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				assert.Equal(t, 1, config.Participants[0].Count)
-				assert.Equal(t, 32, config.Participants[0].ValidatorCount)
+				assert.Equal(t, 64, config.Participants[0].ValidatorCount)
 			},
 		},
 		{
