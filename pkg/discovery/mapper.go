@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
@@ -70,10 +71,12 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cf
 		})
 	}
 
-	// Determine chain ID
+	// Determine chain ID from network ID
 	chainID := uint64(12345) // Default
-	if cfg.NetworkParams != nil && cfg.NetworkParams.ChainID != 0 {
-		chainID = cfg.NetworkParams.ChainID
+	if cfg.NetworkParams != nil && cfg.NetworkParams.NetworkID != "" {
+		if parsedID, err := strconv.ParseUint(cfg.NetworkParams.NetworkID, 10, 64); err == nil {
+			chainID = parsedID
+		}
 	}
 
 	// Create network configuration

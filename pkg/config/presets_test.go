@@ -126,7 +126,7 @@ func TestPresetBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	networkParams := &NetworkParams{
-		ChainID:        99999,
+		NetworkID:      "99999",
 		SecondsPerSlot: 6,
 	}
 
@@ -139,7 +139,7 @@ func TestPresetBuilder(t *testing.T) {
 	}
 
 	config, err := builder.
-		WithChainID(12345). // This will be overridden by network params
+		WithNetworkID("12345"). // This will be overridden by network params
 		WithNetworkParams(networkParams).
 		WithMEV(mevConfig).
 		WithAdditionalService(service).
@@ -155,7 +155,7 @@ func TestPresetBuilder(t *testing.T) {
 
 	// Should have custom network params
 	require.NotNil(t, config.NetworkParams)
-	assert.Equal(t, uint64(99999), config.NetworkParams.ChainID)
+	assert.Equal(t, "99999", config.NetworkParams.NetworkID)
 	assert.Equal(t, 6, config.NetworkParams.SecondsPerSlot)
 
 	// Should have MEV config
@@ -167,7 +167,7 @@ func TestPresetBuilder(t *testing.T) {
 	assert.Equal(t, "blockscout", config.AdditionalServices[0].Name)
 
 	// Should have global log level
-	assert.Equal(t, "debug", config.GlobalClientLogLevel)
+	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
 func TestPresetBuilderInvalidPreset(t *testing.T) {

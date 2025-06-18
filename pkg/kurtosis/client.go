@@ -120,9 +120,21 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	)
 
 	// Execute the package
+	// Determine if this is a remote GitHub package or local package
+	isRemotePackage := strings.HasPrefix(config.PackageID, "github.com/")
+
 	if config.NonBlockingMode {
 		// Non-blocking mode - returns immediately with a channel
-		responseChan, cancelFunc, err := enclaveCtx.RunStarlarkPackage(ctx, config.PackageID, runConfig)
+		var responseChan chan *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine
+		var cancelFunc func()
+		var err error
+
+		if isRemotePackage {
+			responseChan, cancelFunc, err = enclaveCtx.RunStarlarkRemotePackage(ctx, config.PackageID, runConfig)
+		} else {
+			responseChan, cancelFunc, err = enclaveCtx.RunStarlarkPackage(ctx, config.PackageID, runConfig)
+		}
+
 		if err != nil {
 			result.ExecutionError = err
 			return result, nil
@@ -148,7 +160,15 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	done:
 	} else {
 		// Blocking mode - wait for completion
-		runResult, err := enclaveCtx.RunStarlarkPackageBlocking(ctx, config.PackageID, runConfig)
+		var runResult *enclaves.StarlarkRunResult
+		var err error
+
+		if isRemotePackage {
+			runResult, err = enclaveCtx.RunStarlarkRemotePackageBlocking(ctx, config.PackageID, runConfig)
+		} else {
+			runResult, err = enclaveCtx.RunStarlarkPackageBlocking(ctx, config.PackageID, runConfig)
+		}
+
 		if err != nil {
 			result.ExecutionError = err
 			return result, nil

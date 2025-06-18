@@ -159,13 +159,12 @@ func NewPresetBuilder(preset Preset) (*PresetBuilder, error) {
 	}, nil
 }
 
-// WithChainID sets the chain ID
-func (p *PresetBuilder) WithChainID(chainID uint64) *PresetBuilder {
+// WithNetworkID sets the network ID
+func (p *PresetBuilder) WithNetworkID(networkID string) *PresetBuilder {
 	if p.config.NetworkParams == nil {
 		p.config.NetworkParams = &NetworkParams{}
 	}
-	p.config.NetworkParams.ChainID = chainID
-	p.config.NetworkParams.NetworkID = chainID
+	p.config.NetworkParams.NetworkID = networkID
 	return p
 }
 
@@ -189,7 +188,7 @@ func (p *PresetBuilder) WithAdditionalService(service AdditionalService) *Preset
 
 // WithGlobalLogLevel sets the global log level
 func (p *PresetBuilder) WithGlobalLogLevel(level string) *PresetBuilder {
-	p.config.GlobalClientLogLevel = level
+	p.config.GlobalLogLevel = level
 	return p
 }
 

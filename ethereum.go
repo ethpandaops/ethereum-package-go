@@ -265,7 +265,7 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	if cfg.NetworkParams != nil {
 		builder.WithNetworkParams(cfg.NetworkParams)
 	} else if cfg.ChainID != 0 {
-		builder.WithChainID(cfg.ChainID)
+		builder.WithNetworkID(fmt.Sprintf("%d", cfg.ChainID))
 	}
 
 	// Apply MEV configuration

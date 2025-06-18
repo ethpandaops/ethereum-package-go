@@ -47,13 +47,16 @@ func DefaultValidConfig() *EthereumPackageConfig {
 func DefaultValidConfigWithNetworkParams() *EthereumPackageConfig {
 	config := DefaultValidConfig()
 	config.NetworkParams = &NetworkParams{
-		ChainID:          12345,
-		NetworkID:        12345,
-		SecondsPerSlot:   12,
-		SlotsPerEpoch:    32,
-		CapellaForkEpoch: 10,
-		DenebForkEpoch:   20,
-		ElectraForkEpoch: 30,
+		Network:              "kurtosis",
+		NetworkID:            "12345",
+		SecondsPerSlot:       12,
+		NumValidatorKeysPerNode: 64,
+		GenesisDelay:         20,
+		AltairForkEpoch:      0,
+		BellatrixForkEpoch:   0,
+		CapellaForkEpoch:     10,
+		DenebForkEpoch:       20,
+		ElectraForkEpoch:     30,
 	}
 	return config
 }
@@ -158,49 +161,45 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 			WantErr: "seconds per slot must be between 1 and 60",
 		},
 		{
-			Name: "invalid slots per epoch (too low)",
+			Name: "invalid validator keys per node (too low)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot: 12,
-				SlotsPerEpoch:  -1,
+				SecondsPerSlot:          12,
+				NumValidatorKeysPerNode: -1,
 			}),
-			WantErr: "slots per epoch must be between 1 and 1000",
+			WantErr: "num validator keys per node must be between 0 and 1000000",
 		},
 		{
-			Name: "invalid slots per epoch (too high)",
+			Name: "invalid validator keys per node (too high)",
+			Config: createConfigWithNetworkParams(&NetworkParams{
+				SecondsPerSlot:          12,
+				NumValidatorKeysPerNode: 1000001,
+			}),
+			WantErr: "num validator keys per node must be between 0 and 1000000",
+		},
+		{
+			Name: "negative genesis delay",
 			Config: createConfigWithNetworkParams(&NetworkParams{
 				SecondsPerSlot: 12,
-				SlotsPerEpoch:  1001,
+				GenesisDelay:   -1,
 			}),
-			WantErr: "slots per epoch must be between 1 and 1000",
+			WantErr: "genesis delay cannot be negative",
 		},
 		{
 			Name: "negative fork epoch",
 			Config: createConfigWithNetworkParams(&NetworkParams{
 				SecondsPerSlot:   12,
-				SlotsPerEpoch:    32,
 				CapellaForkEpoch: -1,
 			}),
-			WantErr: "capella fork epoch cannot be negative",
+			WantErr: "fork epochs cannot be negative",
 		},
 		{
-			Name: "invalid fork ordering (capella > deneb)",
+			Name: "invalid fork ordering",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot:   12,
-				SlotsPerEpoch:    32,
-				CapellaForkEpoch: 20,
-				DenebForkEpoch:   10,
+				SecondsPerSlot:     12,
+				CapellaForkEpoch:   20,
+				DenebForkEpoch:     10,
 			}),
-			WantErr: "deneb fork epoch must be after capella fork epoch",
-		},
-		{
-			Name: "invalid fork ordering (deneb > electra)",
-			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot:   12,
-				SlotsPerEpoch:    32,
-				DenebForkEpoch:   30,
-				ElectraForkEpoch: 20,
-			}),
-			WantErr: "electra fork epoch must be after deneb fork epoch",
+			WantErr: "fork epochs must be in chronological order",
 		},
 	}
 }
