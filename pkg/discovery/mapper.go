@@ -251,19 +251,21 @@ func detectConsensusClientType(name string) client.Type {
 func detectServiceType(name string) network.ServiceType {
 	nameLower := strings.ToLower(name)
 
-	// Check for consensus clients first (cl- prefix takes precedence)
-	if strings.Contains(nameLower, "cl-") || strings.Contains(nameLower, "beacon") {
+	// Check for validator services first (most specific)
+	if strings.Contains(nameLower, "validator-key-generation") || 
+		strings.HasPrefix(nameLower, "vc-") || 
+		(strings.Contains(nameLower, "validator") && !strings.HasPrefix(nameLower, "cl-") && !strings.HasPrefix(nameLower, "el-")) {
+		return network.ServiceTypeValidator
+	}
+
+	// Check for consensus clients (cl- prefix takes precedence)
+	if strings.HasPrefix(nameLower, "cl-") || strings.Contains(nameLower, "beacon") {
 		return network.ServiceTypeConsensusClient
 	}
 
 	// Check for execution clients
-	if strings.Contains(nameLower, "el-") || strings.Contains(nameLower, "execution") {
+	if strings.HasPrefix(nameLower, "el-") || strings.Contains(nameLower, "execution") {
 		return network.ServiceTypeExecutionClient
-	}
-
-	// Check for validator
-	if strings.Contains(nameLower, "validator") {
-		return network.ServiceTypeValidator
 	}
 
 	// Check by client name patterns (only if no prefix found)
@@ -289,10 +291,7 @@ func detectServiceType(name string) network.ServiceType {
 		}
 	}
 
-	// Check for validator
-	if strings.Contains(nameLower, "validator") {
-		return network.ServiceTypeValidator
-	}
+	// Validator check already done above, skip duplicate
 
 	// Check for other services
 	if strings.Contains(nameLower, "prometheus") {

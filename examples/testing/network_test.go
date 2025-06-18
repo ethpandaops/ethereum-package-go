@@ -35,6 +35,10 @@ func TestBasicNetwork(t *testing.T) {
 	}
 
 	// Assert network properties
+	// ethereum-package v5.0.1 creates:
+	// - 1 execution client (el-1-geth-lighthouse)
+	// - 1 consensus client (cl-1-lighthouse-geth)
+	// - validator services should not be counted as execution/consensus clients
 	testutil.Assert(t, net).
 		HasExecutionClients(1).
 		HasConsensusClients(1).
