@@ -3,45 +3,45 @@ package testdata
 
 // ConsensusClientData provides test data for consensus clients
 var ConsensusClientData = struct {
-	DefaultPort      int
-	DefaultBeaconURL string
+	DefaultPort        int
+	DefaultBeaconURL   string
 	DefaultMetricsPort int
 }{
-	DefaultPort:      9000,
-	DefaultBeaconURL: "http://localhost:5052",
+	DefaultPort:        9000,
+	DefaultBeaconURL:   "http://localhost:5052",
 	DefaultMetricsPort: 5054,
 }
 
 // ExecutionClientData provides test data for execution clients
 var ExecutionClientData = struct {
-	DefaultPort       int
-	DefaultRPCPort    int
-	DefaultWSPort     int
-	DefaultEnginePort int
+	DefaultPort        int
+	DefaultRPCPort     int
+	DefaultWSPort      int
+	DefaultEnginePort  int
 	DefaultMetricsPort int
 }{
-	DefaultPort:       30303,
-	DefaultRPCPort:    8545,
-	DefaultWSPort:     8546,
-	DefaultEnginePort: 8551,
+	DefaultPort:        30303,
+	DefaultRPCPort:     8545,
+	DefaultWSPort:      8546,
+	DefaultEnginePort:  8551,
 	DefaultMetricsPort: 9090,
 }
 
 // CommonTestPorts provides commonly used test port numbers
 var CommonTestPorts = struct {
-	GethRPC         int
-	BesuRPC         int
-	NethermindRPC   int
+	GethRPC          int
+	BesuRPC          int
+	NethermindRPC    int
 	LighthouseBeacon int
-	TekuBeacon      int
-	PrysmBeacon     int
+	TekuBeacon       int
+	PrysmBeacon      int
 }{
-	GethRPC:         8545,
-	BesuRPC:         8545,
-	NethermindRPC:   8545,
+	GethRPC:          8545,
+	BesuRPC:          8545,
+	NethermindRPC:    8545,
 	LighthouseBeacon: 5052,
-	TekuBeacon:      5052,
-	PrysmBeacon:     3500,
+	TekuBeacon:       5052,
+	PrysmBeacon:      3500,
 }
 
 // TestENRs provides test ENR values
