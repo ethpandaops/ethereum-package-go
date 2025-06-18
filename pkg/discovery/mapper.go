@@ -38,7 +38,7 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, co
 
 	// Process each service
 	for _, service := range services {
-		serviceType := detectServiceType(service.Name)
+		serviceType := m.detectServiceTypeWithPorts(service)
 		
 		switch serviceType {
 		case types.ServiceTypeExecutionClient:
@@ -104,10 +104,11 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, co
 
 // mapExecutionClient maps a Kurtosis service to an ExecutionClient
 func (m *ServiceMapper) mapExecutionClient(service *kurtosis.ServiceInfo) types.ExecutionClient {
-	clientType := kurtosis.DetectClientType(service.Name)
+	// For execution clients, we need to detect which execution client it is
+	// from the service name, even if it also contains consensus client names
+	clientType := m.detectExecutionClientType(service.Name)
 	
-	// Only map if it's an execution client type
-	if !isExecutionClient(clientType) {
+	if clientType == types.ClientType("unknown") {
 		return nil
 	}
 
@@ -116,10 +117,11 @@ func (m *ServiceMapper) mapExecutionClient(service *kurtosis.ServiceInfo) types.
 
 // mapConsensusClient maps a Kurtosis service to a ConsensusClient
 func (m *ServiceMapper) mapConsensusClient(service *kurtosis.ServiceInfo) types.ConsensusClient {
-	clientType := kurtosis.DetectClientType(service.Name)
+	// For consensus clients, we need to detect which consensus client it is
+	// from the service name, even if it also contains execution client names
+	clientType := m.detectConsensusClientType(service.Name)
 	
-	// Only map if it's a consensus client type
-	if !isConsensusClient(clientType) {
+	if clientType == types.ClientType("unknown") {
 		return nil
 	}
 
@@ -176,26 +178,12 @@ func (m *ServiceMapper) convertPorts(kurtosisePorts map[string]kurtosis.PortInfo
 	return ports
 }
 
-// detectServiceType detects the type of service based on its name
+// detectServiceType detects the type of service based on its name and ports
 func detectServiceType(serviceName string) types.ServiceType {
 	name := strings.ToLower(serviceName)
 	
+	// Special case services first
 	switch {
-	case strings.Contains(name, "geth") || 
-		 strings.Contains(name, "besu") || 
-		 strings.Contains(name, "nethermind") || 
-		 strings.Contains(name, "erigon") || 
-		 strings.Contains(name, "reth"):
-		return types.ServiceTypeExecutionClient
-		
-	case strings.Contains(name, "lighthouse") || 
-		 strings.Contains(name, "teku") || 
-		 strings.Contains(name, "prysm") || 
-		 strings.Contains(name, "nimbus") || 
-		 strings.Contains(name, "lodestar") || 
-		 strings.Contains(name, "grandine"):
-		return types.ServiceTypeConsensusClient
-		
 	case strings.Contains(name, "validator"):
 		return types.ServiceTypeValidator
 		
@@ -210,28 +198,131 @@ func detectServiceType(serviceName string) types.ServiceType {
 		
 	case strings.Contains(name, "apache") || strings.Contains(name, "config"):
 		return types.ServiceTypeApache
+	}
+	
+	// For ethereum clients, check prefixes to determine intent
+	// In test scenarios, cl- prefix means consensus, el- means execution
+	if strings.HasPrefix(name, "cl-") {
+		// It's intended to be a consensus client
+		if strings.Contains(name, "lighthouse") || 
+		   strings.Contains(name, "teku") || 
+		   strings.Contains(name, "prysm") || 
+		   strings.Contains(name, "nimbus") || 
+		   strings.Contains(name, "lodestar") || 
+		   strings.Contains(name, "grandine") {
+			return types.ServiceTypeConsensusClient
+		}
+	} else if strings.HasPrefix(name, "el-") {
+		// It's intended to be an execution client
+		if strings.Contains(name, "geth") || 
+		   strings.Contains(name, "besu") || 
+		   strings.Contains(name, "nethermind") || 
+		   strings.Contains(name, "erigon") || 
+		   strings.Contains(name, "reth") {
+			return types.ServiceTypeExecutionClient
+		}
+	}
+	
+	// No prefix, detect by client name alone
+	// Check consensus clients first (they're more specific)
+	if strings.Contains(name, "lighthouse") || 
+	   strings.Contains(name, "teku") || 
+	   strings.Contains(name, "prysm") || 
+	   strings.Contains(name, "nimbus") || 
+	   strings.Contains(name, "lodestar") || 
+	   strings.Contains(name, "grandine") {
+		return types.ServiceTypeConsensusClient
+	}
+	
+	// Then check execution clients
+	if strings.Contains(name, "geth") || 
+	   strings.Contains(name, "besu") || 
+	   strings.Contains(name, "nethermind") || 
+	   strings.Contains(name, "erigon") || 
+	   strings.Contains(name, "reth") {
+		return types.ServiceTypeExecutionClient
+	}
+	
+	return types.ServiceTypeOther
+}
+
+// detectServiceTypeWithPorts detects service type using port information as a hint
+func (m *ServiceMapper) detectServiceTypeWithPorts(service *kurtosis.ServiceInfo) types.ServiceType {
+	// First try name-based detection
+	serviceType := detectServiceType(service.Name)
+	
+	// If we got consensus or execution client, double-check with ports
+	if serviceType == types.ServiceTypeConsensusClient || serviceType == types.ServiceTypeExecutionClient {
+		hasRPC := false
+		hasEngine := false
+		hasBeacon := false
 		
+		for portName := range service.Ports {
+			switch portName {
+			case "rpc", "ws":
+				hasRPC = true
+			case "engine":
+				hasEngine = true
+			case "beacon", "http":
+				hasBeacon = true
+			}
+		}
+		
+		// If it has RPC/WS and engine ports, it's definitely an execution client
+		if hasRPC && hasEngine {
+			return types.ServiceTypeExecutionClient
+		}
+		
+		// If it has beacon port, it's definitely a consensus client
+		if hasBeacon {
+			return types.ServiceTypeConsensusClient
+		}
+	}
+	
+	return serviceType
+}
+
+
+// detectExecutionClientType detects which execution client type from the service name
+func (m *ServiceMapper) detectExecutionClientType(serviceName string) types.ClientType {
+	name := strings.ToLower(serviceName)
+	
+	// Check for execution client names
+	switch {
+	case strings.Contains(name, "geth"):
+		return types.ClientGeth
+	case strings.Contains(name, "besu"):
+		return types.ClientBesu
+	case strings.Contains(name, "nethermind"):
+		return types.ClientNethermind
+	case strings.Contains(name, "erigon"):
+		return types.ClientErigon
+	case strings.Contains(name, "reth"):
+		return types.ClientReth
 	default:
-		return types.ServiceTypeOther
+		return types.ClientType("unknown")
 	}
 }
 
-// isExecutionClient checks if the client type is an execution client
-func isExecutionClient(clientType types.ClientType) bool {
-	switch clientType {
-	case types.ClientGeth, types.ClientBesu, types.ClientNethermind, types.ClientErigon, types.ClientReth:
-		return true
+// detectConsensusClientType detects which consensus client type from the service name
+func (m *ServiceMapper) detectConsensusClientType(serviceName string) types.ClientType {
+	name := strings.ToLower(serviceName)
+	
+	// Check for consensus client names
+	switch {
+	case strings.Contains(name, "lighthouse"):
+		return types.ClientLighthouse
+	case strings.Contains(name, "teku"):
+		return types.ClientTeku
+	case strings.Contains(name, "prysm"):
+		return types.ClientPrysm
+	case strings.Contains(name, "nimbus"):
+		return types.ClientNimbus
+	case strings.Contains(name, "lodestar"):
+		return types.ClientLodestar
+	case strings.Contains(name, "grandine"):
+		return types.ClientGrandine
 	default:
-		return false
-	}
-}
-
-// isConsensusClient checks if the client type is a consensus client
-func isConsensusClient(clientType types.ClientType) bool {
-	switch clientType {
-	case types.ClientLighthouse, types.ClientTeku, types.ClientPrysm, types.ClientNimbus, types.ClientLodestar, types.ClientGrandine:
-		return true
-	default:
-		return false
+		return types.ClientType("unknown")
 	}
 }

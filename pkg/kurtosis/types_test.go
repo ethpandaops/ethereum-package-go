@@ -60,14 +60,14 @@ func TestDetectClientType(t *testing.T) {
 		expectedType types.ClientType
 	}{
 		// Execution clients
-		{"detect geth", "cl-1-geth-lighthouse", types.ClientGeth},
+		{"detect geth", "el-1-geth-lighthouse", types.ClientGeth},
 		{"detect besu", "el-2-besu", types.ClientBesu},
 		{"detect nethermind", "nethermind-node-1", types.ClientNethermind},
 		{"detect erigon", "erigon-archive", types.ClientErigon},
 		{"detect reth", "reth-full-node", types.ClientReth},
 
 		// Consensus clients
-		{"detect lighthouse", "cl-1-geth-lighthouse", types.ClientLighthouse},
+		{"detect lighthouse", "cl-1-lighthouse-geth", types.ClientLighthouse},
 		{"detect teku", "teku-validator", types.ClientTeku},
 		{"detect prysm", "prysm-beacon", types.ClientPrysm},
 		{"detect nimbus", "nimbus-eth2", types.ClientNimbus},

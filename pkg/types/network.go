@@ -25,6 +25,53 @@ type Port struct {
 	ExposedToHost bool
 }
 
+// PortMetadata represents detailed port information
+type PortMetadata struct {
+	Name          string
+	Number        int
+	Protocol      string
+	URL           string
+	ExposedToHost bool
+}
+
+// ExecutionEndpoints holds all endpoint URLs for execution clients
+type ExecutionEndpoints struct {
+	RPCURL     string
+	WSURL      string
+	EngineURL  string
+	P2PURL     string
+	MetricsURL string
+}
+
+// ConsensusEndpoints holds all endpoint URLs for consensus clients
+type ConsensusEndpoints struct {
+	BeaconURL  string
+	P2PURL     string
+	MetricsURL string
+}
+
+// ValidatorEndpoints holds all endpoint URLs for validator clients
+type ValidatorEndpoints struct {
+	APIURL     string
+	MetricsURL string
+}
+
+// ServiceMetadata contains detailed information about a service
+type ServiceMetadata struct {
+	Name                 string
+	ServiceType          ServiceType
+	ClientType           ClientType
+	Status               string
+	ContainerID          string
+	IPAddress            string
+	Ports                map[string]PortMetadata
+	NodeIndex            int
+	NodeName             string
+	ChainID              uint64
+	ValidatorCount       int
+	ValidatorStartIndex  int
+}
+
 // Service represents a generic service in the network
 type Service struct {
 	Name        string

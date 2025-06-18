@@ -160,6 +160,17 @@ func WithFullObservability() RunOption {
 	return WithAdditionalServices("prometheus", "grafana", "blockscout")
 }
 
+// WithParticipants sets custom participant configurations
+func WithParticipants(participants []types.ParticipantConfig) RunOption {
+	return func(cfg *RunConfig) {
+		// Create inline config with participants
+		ethConfig := &types.EthereumPackageConfig{
+			Participants: participants,
+		}
+		cfg.ConfigSource = types.NewInlineConfigSource(ethConfig)
+	}
+}
+
 // WithCustomChain creates a custom chain configuration
 func WithCustomChain(chainID uint64, secondsPerSlot, slotsPerEpoch int) RunOption {
 	return func(cfg *RunConfig) {

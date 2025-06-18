@@ -10,6 +10,9 @@ const (
 	ClientNethermind ClientType = "nethermind"
 	ClientErigon     ClientType = "erigon"
 	ClientReth       ClientType = "reth"
+	
+	// Unknown client
+	ClientUnknown    ClientType = "unknown"
 )
 
 // ExecutionClient represents a common interface for all execution layer clients
@@ -34,8 +37,8 @@ type ExecutionClient interface {
 	ContainerID() string
 }
 
-// baseExecutionClient provides common implementation for ExecutionClient
-type baseExecutionClient struct {
+// ExecutionClientImpl is a generic implementation of the ExecutionClient interface
+type ExecutionClientImpl struct {
 	name        string
 	clientType  ClientType
 	version     string
@@ -49,136 +52,73 @@ type baseExecutionClient struct {
 	containerID string
 }
 
-func (b *baseExecutionClient) Name() string         { return b.name }
-func (b *baseExecutionClient) Type() ClientType     { return b.clientType }
-func (b *baseExecutionClient) Version() string      { return b.version }
-func (b *baseExecutionClient) RPCURL() string       { return b.rpcURL }
-func (b *baseExecutionClient) WSURL() string        { return b.wsURL }
-func (b *baseExecutionClient) EngineURL() string    { return b.engineURL }
-func (b *baseExecutionClient) MetricsURL() string   { return b.metricsURL }
-func (b *baseExecutionClient) Enode() string        { return b.enode }
-func (b *baseExecutionClient) P2PPort() int         { return b.p2pPort }
-func (b *baseExecutionClient) ServiceName() string  { return b.serviceName }
-func (b *baseExecutionClient) ContainerID() string  { return b.containerID }
+func (e *ExecutionClientImpl) Name() string         { return e.name }
+func (e *ExecutionClientImpl) Type() ClientType     { return e.clientType }
+func (e *ExecutionClientImpl) Version() string      { return e.version }
+func (e *ExecutionClientImpl) RPCURL() string       { return e.rpcURL }
+func (e *ExecutionClientImpl) WSURL() string        { return e.wsURL }
+func (e *ExecutionClientImpl) EngineURL() string    { return e.engineURL }
+func (e *ExecutionClientImpl) MetricsURL() string   { return e.metricsURL }
+func (e *ExecutionClientImpl) Enode() string        { return e.enode }
+func (e *ExecutionClientImpl) P2PPort() int         { return e.p2pPort }
+func (e *ExecutionClientImpl) ServiceName() string  { return e.serviceName }
+func (e *ExecutionClientImpl) ContainerID() string  { return e.containerID }
 
-// GethClient represents a Geth execution client
-type GethClient struct {
-	baseExecutionClient
-}
-
-// NewGethClient creates a new Geth client instance
-func NewGethClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *GethClient {
-	return &GethClient{
-		baseExecutionClient: baseExecutionClient{
-			name:        name,
-			clientType:  ClientGeth,
-			version:     version,
-			rpcURL:      rpcURL,
-			wsURL:       wsURL,
-			engineURL:   engineURL,
-			metricsURL:  metricsURL,
-			enode:       enode,
-			p2pPort:     p2pPort,
-			serviceName: serviceName,
-			containerID: containerID,
-		},
+// NewExecutionClient creates a new generic execution client instance
+func NewExecutionClient(clientType ClientType, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return &ExecutionClientImpl{
+		name:        name,
+		clientType:  clientType,
+		version:     version,
+		rpcURL:      rpcURL,
+		wsURL:       wsURL,
+		engineURL:   engineURL,
+		metricsURL:  metricsURL,
+		enode:       enode,
+		p2pPort:     p2pPort,
+		serviceName: serviceName,
+		containerID: containerID,
 	}
 }
 
-// BesuClient represents a Besu execution client
-type BesuClient struct {
-	baseExecutionClient
+// Deprecated: Use NewExecutionClient instead
+type GethClient = ExecutionClientImpl
+
+// Deprecated: Use NewExecutionClient with ClientGeth instead
+func NewGethClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return NewExecutionClient(ClientGeth, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID, p2pPort)
 }
 
-// NewBesuClient creates a new Besu client instance
-func NewBesuClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *BesuClient {
-	return &BesuClient{
-		baseExecutionClient: baseExecutionClient{
-			name:        name,
-			clientType:  ClientBesu,
-			version:     version,
-			rpcURL:      rpcURL,
-			wsURL:       wsURL,
-			engineURL:   engineURL,
-			metricsURL:  metricsURL,
-			enode:       enode,
-			p2pPort:     p2pPort,
-			serviceName: serviceName,
-			containerID: containerID,
-		},
-	}
+// Deprecated: Use NewExecutionClient instead
+type BesuClient = ExecutionClientImpl
+
+// Deprecated: Use NewExecutionClient with ClientBesu instead
+func NewBesuClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return NewExecutionClient(ClientBesu, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID, p2pPort)
 }
 
-// NethermindClient represents a Nethermind execution client
-type NethermindClient struct {
-	baseExecutionClient
+// Deprecated: Use NewExecutionClient instead
+type NethermindClient = ExecutionClientImpl
+
+// Deprecated: Use NewExecutionClient with ClientNethermind instead
+func NewNethermindClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return NewExecutionClient(ClientNethermind, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID, p2pPort)
 }
 
-// NewNethermindClient creates a new Nethermind client instance
-func NewNethermindClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *NethermindClient {
-	return &NethermindClient{
-		baseExecutionClient: baseExecutionClient{
-			name:        name,
-			clientType:  ClientNethermind,
-			version:     version,
-			rpcURL:      rpcURL,
-			wsURL:       wsURL,
-			engineURL:   engineURL,
-			metricsURL:  metricsURL,
-			enode:       enode,
-			p2pPort:     p2pPort,
-			serviceName: serviceName,
-			containerID: containerID,
-		},
-	}
+// Deprecated: Use NewExecutionClient instead
+type ErigonClient = ExecutionClientImpl
+
+// Deprecated: Use NewExecutionClient with ClientErigon instead
+func NewErigonClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return NewExecutionClient(ClientErigon, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID, p2pPort)
 }
 
-// ErigonClient represents an Erigon execution client
-type ErigonClient struct {
-	baseExecutionClient
-}
+// Deprecated: Use NewExecutionClient instead
+type RethClient = ExecutionClientImpl
 
-// NewErigonClient creates a new Erigon client instance
-func NewErigonClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ErigonClient {
-	return &ErigonClient{
-		baseExecutionClient: baseExecutionClient{
-			name:        name,
-			clientType:  ClientErigon,
-			version:     version,
-			rpcURL:      rpcURL,
-			wsURL:       wsURL,
-			engineURL:   engineURL,
-			metricsURL:  metricsURL,
-			enode:       enode,
-			p2pPort:     p2pPort,
-			serviceName: serviceName,
-			containerID: containerID,
-		},
-	}
-}
-
-// RethClient represents a Reth execution client
-type RethClient struct {
-	baseExecutionClient
-}
-
-// NewRethClient creates a new Reth client instance
-func NewRethClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *RethClient {
-	return &RethClient{
-		baseExecutionClient: baseExecutionClient{
-			name:        name,
-			clientType:  ClientReth,
-			version:     version,
-			rpcURL:      rpcURL,
-			wsURL:       wsURL,
-			engineURL:   engineURL,
-			metricsURL:  metricsURL,
-			enode:       enode,
-			p2pPort:     p2pPort,
-			serviceName: serviceName,
-			containerID: containerID,
-		},
-	}
+// Deprecated: Use NewExecutionClient with ClientReth instead
+func NewRethClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {
+	return NewExecutionClient(ClientReth, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID, p2pPort)
 }
 
 // ExecutionClients holds all execution clients by type
@@ -208,10 +148,10 @@ func (ec *ExecutionClients) All() []ExecutionClient {
 }
 
 // Geth returns all Geth clients
-func (ec *ExecutionClients) Geth() []*GethClient {
-	var gethClients []*GethClient
+func (ec *ExecutionClients) Geth() []*ExecutionClientImpl {
+	var gethClients []*ExecutionClientImpl
 	for _, client := range ec.clients[ClientGeth] {
-		if gc, ok := client.(*GethClient); ok {
+		if gc, ok := client.(*ExecutionClientImpl); ok {
 			gethClients = append(gethClients, gc)
 		}
 	}
@@ -219,10 +159,10 @@ func (ec *ExecutionClients) Geth() []*GethClient {
 }
 
 // Besu returns all Besu clients
-func (ec *ExecutionClients) Besu() []*BesuClient {
-	var besuClients []*BesuClient
+func (ec *ExecutionClients) Besu() []*ExecutionClientImpl {
+	var besuClients []*ExecutionClientImpl
 	for _, client := range ec.clients[ClientBesu] {
-		if bc, ok := client.(*BesuClient); ok {
+		if bc, ok := client.(*ExecutionClientImpl); ok {
 			besuClients = append(besuClients, bc)
 		}
 	}
@@ -230,10 +170,10 @@ func (ec *ExecutionClients) Besu() []*BesuClient {
 }
 
 // Nethermind returns all Nethermind clients
-func (ec *ExecutionClients) Nethermind() []*NethermindClient {
-	var nethermindClients []*NethermindClient
+func (ec *ExecutionClients) Nethermind() []*ExecutionClientImpl {
+	var nethermindClients []*ExecutionClientImpl
 	for _, client := range ec.clients[ClientNethermind] {
-		if nc, ok := client.(*NethermindClient); ok {
+		if nc, ok := client.(*ExecutionClientImpl); ok {
 			nethermindClients = append(nethermindClients, nc)
 		}
 	}
@@ -241,10 +181,10 @@ func (ec *ExecutionClients) Nethermind() []*NethermindClient {
 }
 
 // Erigon returns all Erigon clients
-func (ec *ExecutionClients) Erigon() []*ErigonClient {
-	var erigonClients []*ErigonClient
+func (ec *ExecutionClients) Erigon() []*ExecutionClientImpl {
+	var erigonClients []*ExecutionClientImpl
 	for _, client := range ec.clients[ClientErigon] {
-		if ec, ok := client.(*ErigonClient); ok {
+		if ec, ok := client.(*ExecutionClientImpl); ok {
 			erigonClients = append(erigonClients, ec)
 		}
 	}
@@ -252,12 +192,17 @@ func (ec *ExecutionClients) Erigon() []*ErigonClient {
 }
 
 // Reth returns all Reth clients
-func (ec *ExecutionClients) Reth() []*RethClient {
-	var rethClients []*RethClient
+func (ec *ExecutionClients) Reth() []*ExecutionClientImpl {
+	var rethClients []*ExecutionClientImpl
 	for _, client := range ec.clients[ClientReth] {
-		if rc, ok := client.(*RethClient); ok {
+		if rc, ok := client.(*ExecutionClientImpl); ok {
 			rethClients = append(rethClients, rc)
 		}
 	}
 	return rethClients
+}
+
+// ByType returns all clients of a specific type
+func (ec *ExecutionClients) ByType(clientType ClientType) []ExecutionClient {
+	return ec.clients[clientType]
 }

@@ -31,8 +31,8 @@ type ConsensusClient interface {
 	ContainerID() string
 }
 
-// baseConsensusClient provides common implementation for ConsensusClient
-type baseConsensusClient struct {
+// ConsensusClientImpl is a generic implementation of the ConsensusClient interface
+type ConsensusClientImpl struct {
 	name         string
 	clientType   ClientType
 	version      string
@@ -45,153 +45,79 @@ type baseConsensusClient struct {
 	containerID  string
 }
 
-func (b *baseConsensusClient) Name() string         { return b.name }
-func (b *baseConsensusClient) Type() ClientType     { return b.clientType }
-func (b *baseConsensusClient) Version() string      { return b.version }
-func (b *baseConsensusClient) BeaconAPIURL() string { return b.beaconAPIURL }
-func (b *baseConsensusClient) MetricsURL() string   { return b.metricsURL }
-func (b *baseConsensusClient) P2PPort() int         { return b.p2pPort }
-func (b *baseConsensusClient) ENR() string          { return b.enr }
-func (b *baseConsensusClient) PeerID() string       { return b.peerID }
-func (b *baseConsensusClient) ServiceName() string  { return b.serviceName }
-func (b *baseConsensusClient) ContainerID() string  { return b.containerID }
+func (c *ConsensusClientImpl) Name() string         { return c.name }
+func (c *ConsensusClientImpl) Type() ClientType     { return c.clientType }
+func (c *ConsensusClientImpl) Version() string      { return c.version }
+func (c *ConsensusClientImpl) BeaconAPIURL() string { return c.beaconAPIURL }
+func (c *ConsensusClientImpl) MetricsURL() string   { return c.metricsURL }
+func (c *ConsensusClientImpl) P2PPort() int         { return c.p2pPort }
+func (c *ConsensusClientImpl) ENR() string          { return c.enr }
+func (c *ConsensusClientImpl) PeerID() string       { return c.peerID }
+func (c *ConsensusClientImpl) ServiceName() string  { return c.serviceName }
+func (c *ConsensusClientImpl) ContainerID() string  { return c.containerID }
 
-// LighthouseClient represents a Lighthouse consensus client
-type LighthouseClient struct {
-	baseConsensusClient
-}
-
-// NewLighthouseClient creates a new Lighthouse client instance
-func NewLighthouseClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *LighthouseClient {
-	return &LighthouseClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientLighthouse,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
+// NewConsensusClient creates a new generic consensus client instance
+func NewConsensusClient(clientType ClientType, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return &ConsensusClientImpl{
+		name:         name,
+		clientType:   clientType,
+		version:      version,
+		beaconAPIURL: beaconAPIURL,
+		metricsURL:   metricsURL,
+		p2pPort:      p2pPort,
+		enr:          enr,
+		peerID:       peerID,
+		serviceName:  serviceName,
+		containerID:  containerID,
 	}
 }
 
-// TekuClient represents a Teku consensus client
-type TekuClient struct {
-	baseConsensusClient
+// Deprecated: Use NewConsensusClient instead
+type LighthouseClient = ConsensusClientImpl
+
+// Deprecated: Use NewConsensusClient with ClientLighthouse instead
+func NewLighthouseClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientLighthouse, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
-// NewTekuClient creates a new Teku client instance
-func NewTekuClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *TekuClient {
-	return &TekuClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientTeku,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
-	}
+// Deprecated: Use NewConsensusClient instead
+type TekuClient = ConsensusClientImpl
+
+// Deprecated: Use NewConsensusClient with ClientTeku instead
+func NewTekuClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientTeku, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
-// PrysmClient represents a Prysm consensus client
-type PrysmClient struct {
-	baseConsensusClient
+// Deprecated: Use NewConsensusClient instead
+type PrysmClient = ConsensusClientImpl
+
+// Deprecated: Use NewConsensusClient with ClientPrysm instead
+func NewPrysmClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientPrysm, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
-// NewPrysmClient creates a new Prysm client instance
-func NewPrysmClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *PrysmClient {
-	return &PrysmClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientPrysm,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
-	}
+// Deprecated: Use NewConsensusClient instead
+type NimbusClient = ConsensusClientImpl
+
+// Deprecated: Use NewConsensusClient with ClientNimbus instead
+func NewNimbusClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientNimbus, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
-// NimbusClient represents a Nimbus consensus client
-type NimbusClient struct {
-	baseConsensusClient
+// Deprecated: Use NewConsensusClient instead
+type LodestarClient = ConsensusClientImpl
+
+// Deprecated: Use NewConsensusClient with ClientLodestar instead
+func NewLodestarClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientLodestar, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
-// NewNimbusClient creates a new Nimbus client instance
-func NewNimbusClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *NimbusClient {
-	return &NimbusClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientNimbus,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
-	}
-}
+// Deprecated: Use NewConsensusClient instead
+type GrandineClient = ConsensusClientImpl
 
-// LodestarClient represents a Lodestar consensus client
-type LodestarClient struct {
-	baseConsensusClient
-}
-
-// NewLodestarClient creates a new Lodestar client instance
-func NewLodestarClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *LodestarClient {
-	return &LodestarClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientLodestar,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
-	}
-}
-
-// GrandineClient represents a Grandine consensus client
-type GrandineClient struct {
-	baseConsensusClient
-}
-
-// NewGrandineClient creates a new Grandine client instance
-func NewGrandineClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *GrandineClient {
-	return &GrandineClient{
-		baseConsensusClient: baseConsensusClient{
-			name:         name,
-			clientType:   ClientGrandine,
-			version:      version,
-			beaconAPIURL: beaconAPIURL,
-			metricsURL:   metricsURL,
-			p2pPort:      p2pPort,
-			enr:          enr,
-			peerID:       peerID,
-			serviceName:  serviceName,
-			containerID:  containerID,
-		},
-	}
+// Deprecated: Use NewConsensusClient with ClientGrandine instead
+func NewGrandineClient(name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) *ConsensusClientImpl {
+	return NewConsensusClient(ClientGrandine, name, version, beaconAPIURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
 }
 
 // ConsensusClients holds all consensus clients by type
@@ -221,10 +147,10 @@ func (cc *ConsensusClients) All() []ConsensusClient {
 }
 
 // Lighthouse returns all Lighthouse clients
-func (cc *ConsensusClients) Lighthouse() []*LighthouseClient {
-	var lighthouseClients []*LighthouseClient
+func (cc *ConsensusClients) Lighthouse() []*ConsensusClientImpl {
+	var lighthouseClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientLighthouse] {
-		if lc, ok := client.(*LighthouseClient); ok {
+		if lc, ok := client.(*ConsensusClientImpl); ok {
 			lighthouseClients = append(lighthouseClients, lc)
 		}
 	}
@@ -232,10 +158,10 @@ func (cc *ConsensusClients) Lighthouse() []*LighthouseClient {
 }
 
 // Teku returns all Teku clients
-func (cc *ConsensusClients) Teku() []*TekuClient {
-	var tekuClients []*TekuClient
+func (cc *ConsensusClients) Teku() []*ConsensusClientImpl {
+	var tekuClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientTeku] {
-		if tc, ok := client.(*TekuClient); ok {
+		if tc, ok := client.(*ConsensusClientImpl); ok {
 			tekuClients = append(tekuClients, tc)
 		}
 	}
@@ -243,10 +169,10 @@ func (cc *ConsensusClients) Teku() []*TekuClient {
 }
 
 // Prysm returns all Prysm clients
-func (cc *ConsensusClients) Prysm() []*PrysmClient {
-	var prysmClients []*PrysmClient
+func (cc *ConsensusClients) Prysm() []*ConsensusClientImpl {
+	var prysmClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientPrysm] {
-		if pc, ok := client.(*PrysmClient); ok {
+		if pc, ok := client.(*ConsensusClientImpl); ok {
 			prysmClients = append(prysmClients, pc)
 		}
 	}
@@ -254,10 +180,10 @@ func (cc *ConsensusClients) Prysm() []*PrysmClient {
 }
 
 // Nimbus returns all Nimbus clients
-func (cc *ConsensusClients) Nimbus() []*NimbusClient {
-	var nimbusClients []*NimbusClient
+func (cc *ConsensusClients) Nimbus() []*ConsensusClientImpl {
+	var nimbusClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientNimbus] {
-		if nc, ok := client.(*NimbusClient); ok {
+		if nc, ok := client.(*ConsensusClientImpl); ok {
 			nimbusClients = append(nimbusClients, nc)
 		}
 	}
@@ -265,10 +191,10 @@ func (cc *ConsensusClients) Nimbus() []*NimbusClient {
 }
 
 // Lodestar returns all Lodestar clients
-func (cc *ConsensusClients) Lodestar() []*LodestarClient {
-	var lodestarClients []*LodestarClient
+func (cc *ConsensusClients) Lodestar() []*ConsensusClientImpl {
+	var lodestarClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientLodestar] {
-		if lc, ok := client.(*LodestarClient); ok {
+		if lc, ok := client.(*ConsensusClientImpl); ok {
 			lodestarClients = append(lodestarClients, lc)
 		}
 	}
@@ -276,12 +202,17 @@ func (cc *ConsensusClients) Lodestar() []*LodestarClient {
 }
 
 // Grandine returns all Grandine clients
-func (cc *ConsensusClients) Grandine() []*GrandineClient {
-	var grandineClients []*GrandineClient
+func (cc *ConsensusClients) Grandine() []*ConsensusClientImpl {
+	var grandineClients []*ConsensusClientImpl
 	for _, client := range cc.clients[ClientGrandine] {
-		if gc, ok := client.(*GrandineClient); ok {
+		if gc, ok := client.(*ConsensusClientImpl); ok {
 			grandineClients = append(grandineClients, gc)
 		}
 	}
 	return grandineClients
+}
+
+// ByType returns all clients of a specific type
+func (cc *ConsensusClients) ByType(clientType ClientType) []ConsensusClient {
+	return cc.clients[clientType]
 }

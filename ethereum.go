@@ -46,7 +46,7 @@ type RunConfig struct {
 func defaultRunConfig() *RunConfig {
 	return &RunConfig{
 		PackageID:      "github.com/ethpandaops/ethereum-package",
-		EnclaveName:    fmt.Sprintf("ethereum-package-%d", time.Now().Unix()),
+		EnclaveName:    generateEnclaveName(),
 		ConfigSource:   types.NewPresetConfigSource(types.PresetMinimal),
 		ChainID:        12345,
 		DryRun:         false,
@@ -55,6 +55,12 @@ func defaultRunConfig() *RunConfig {
 		Timeout:        10 * time.Minute,
 		GlobalLogLevel: "info",
 	}
+}
+
+// generateEnclaveName creates a unique enclave name to avoid conflicts
+func generateEnclaveName() string {
+	// Use nanoseconds for more uniqueness and add a random component
+	return fmt.Sprintf("ethereum-package-%d", time.Now().UnixNano())
 }
 
 // Run starts an Ethereum network and returns a Network interface
@@ -113,6 +119,8 @@ func Run(ctx context.Context, opts ...RunOption) (types.Network, error) {
 	if !cfg.DryRun {
 		err = cfg.KurtosisClient.WaitForServices(ctx, cfg.EnclaveName, []string{}, cfg.Timeout)
 		if err != nil {
+			// Cleanup on failure
+			_ = cfg.KurtosisClient.DestroyEnclave(ctx, cfg.EnclaveName)
 			return nil, fmt.Errorf("services failed to start: %w", err)
 		}
 	}
@@ -127,6 +135,52 @@ func Run(ctx context.Context, opts ...RunOption) (types.Network, error) {
 	}
 
 	return network, nil
+}
+
+// FindOrCreateNetwork finds an existing network by enclave name or creates a new one
+// If enclaveName is empty, a new network with a random name will be created
+func FindOrCreateNetwork(ctx context.Context, enclaveName string, opts ...RunOption) (types.Network, error) {
+	// If no enclave name provided, just create a new network
+	if enclaveName == "" {
+		return Run(ctx, opts...)
+	}
+
+	// Apply configuration with the specified enclave name
+	allOpts := append([]RunOption{WithEnclaveName(enclaveName)}, opts...)
+	cfg := defaultRunConfig()
+	for _, opt := range allOpts {
+		opt(cfg)
+	}
+
+	// Initialize Kurtosis client if not provided
+	if cfg.KurtosisClient == nil {
+		client, err := kurtosis.NewKurtosisClient(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Kurtosis client: %w", err)
+		}
+		cfg.KurtosisClient = client
+	}
+
+	// Try to get existing services first
+	services, err := cfg.KurtosisClient.GetServices(ctx, enclaveName)
+	if err == nil && len(services) > 0 {
+		// Enclave exists with services, map it to a network
+		ethConfig, err := buildEthereumConfig(cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build configuration: %w", err)
+		}
+
+		mapper := discovery.NewServiceMapper(cfg.KurtosisClient)
+		network, err := mapper.MapToNetwork(ctx, enclaveName, ethConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map existing network: %w", err)
+		}
+
+		return network, nil
+	}
+
+	// Enclave doesn't exist or has no services, create a new network
+	return Run(ctx, allOpts...)
 }
 
 // validateRunConfig validates the run configuration

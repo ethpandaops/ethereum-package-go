@@ -114,6 +114,44 @@ func ConvertServiceInfoToConsensusClient(service *ServiceInfo, clientType types.
 // DetectClientType attempts to detect the client type from the service name
 func DetectClientType(serviceName string) types.ClientType {
 	// Common patterns in ethereum-package service names
+	// Check consensus clients first as they might have execution client names in them
+	// e.g., "cl-1-lighthouse-geth" should be detected as lighthouse, not geth
+	
+	// First check for consensus client patterns (cl- prefix or consensus keywords)
+	if contains(serviceName, "cl-") || contains(serviceName, "consensus") {
+		switch {
+		case contains(serviceName, "lighthouse"):
+			return types.ClientLighthouse
+		case contains(serviceName, "teku"):
+			return types.ClientTeku
+		case contains(serviceName, "prysm"):
+			return types.ClientPrysm
+		case contains(serviceName, "nimbus"):
+			return types.ClientNimbus
+		case contains(serviceName, "lodestar"):
+			return types.ClientLodestar
+		case contains(serviceName, "grandine"):
+			return types.ClientGrandine
+		}
+	}
+	
+	// Then check for execution client patterns (el- prefix or execution keywords)
+	if contains(serviceName, "el-") || contains(serviceName, "execution") {
+		switch {
+		case contains(serviceName, "geth"):
+			return types.ClientGeth
+		case contains(serviceName, "besu"):
+			return types.ClientBesu
+		case contains(serviceName, "nethermind"):
+			return types.ClientNethermind
+		case contains(serviceName, "erigon"):
+			return types.ClientErigon
+		case contains(serviceName, "reth"):
+			return types.ClientReth
+		}
+	}
+	
+	// Fallback to simple matching
 	switch {
 	case contains(serviceName, "geth"):
 		return types.ClientGeth
