@@ -271,8 +271,8 @@ func TestPackageVersionOptions(t *testing.T) {
 	cfg := defaultRunConfig()
 
 	// Test WithPackageVersion
-	WithPackageVersion("2.5.0")(cfg)
-	assert.Equal(t, "2.5.0", cfg.PackageVersion)
+	WithPackageVersion("5.0.0")(cfg)
+	assert.Equal(t, "5.0.0", cfg.PackageVersion)
 
 	// Test WithPackageRepo
 	WithPackageRepo("github.com/custom/package", "1.0.0")(cfg)
@@ -290,8 +290,8 @@ func TestPackageIDConstruction(t *testing.T) {
 		{
 			name:           "with version",
 			packageID:      "github.com/ethpandaops/ethereum-package",
-			packageVersion: "3.0.1",
-			expectedID:     "github.com/ethpandaops/ethereum-package@3.0.1",
+			packageVersion: "5.0.1",
+			expectedID:     "github.com/ethpandaops/ethereum-package@5.0.1",
 		},
 		{
 			name:           "without version",
