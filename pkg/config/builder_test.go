@@ -18,7 +18,7 @@ func TestConfigBuilder(t *testing.T) {
 	}
 
 	networkParams := &NetworkParams{
-		ChainID:        12345,
+		NetworkID:      "12345",
 		SecondsPerSlot: 12,
 	}
 
@@ -44,12 +44,12 @@ func TestConfigBuilder(t *testing.T) {
 	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 	assert.Equal(t, 2, config.Participants[0].Count)
 	assert.NotNil(t, config.NetworkParams)
-	assert.Equal(t, uint64(12345), config.NetworkParams.ChainID)
+	assert.Equal(t, "12345", config.NetworkParams.NetworkID)
 	assert.NotNil(t, config.MEV)
 	assert.Equal(t, "full", config.MEV.Type)
 	assert.Len(t, config.AdditionalServices, 1)
 	assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
-	assert.Equal(t, "debug", config.GlobalClientLogLevel)
+	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
 func TestConfigBuilderWithParticipants(t *testing.T) {
@@ -66,7 +66,7 @@ func TestConfigBuilderWithParticipants(t *testing.T) {
 	assert.Len(t, config.Participants, 2)
 }
 
-func TestConfigBuilderWithChainID(t *testing.T) {
+func TestConfigBuilderWithNetworkID(t *testing.T) {
 	builder := NewConfigBuilder()
 
 	participant := ParticipantConfig{
@@ -76,13 +76,12 @@ func TestConfigBuilderWithChainID(t *testing.T) {
 
 	config, err := builder.
 		WithParticipant(participant).
-		WithChainID(98765).
+		WithNetworkID("98765").
 		Build()
 
 	require.NoError(t, err)
 	assert.NotNil(t, config.NetworkParams)
-	assert.Equal(t, uint64(98765), config.NetworkParams.ChainID)
-	assert.Equal(t, uint64(98765), config.NetworkParams.NetworkID)
+	assert.Equal(t, "98765", config.NetworkParams.NetworkID)
 }
 
 func TestConfigBuilderValidation(t *testing.T) {

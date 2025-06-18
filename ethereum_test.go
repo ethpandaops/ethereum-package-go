@@ -111,7 +111,7 @@ func TestBuildEthereumConfig(t *testing.T) {
 				assert.Equal(t, client.Geth, config.Participants[0].ELType)
 				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				require.NotNil(t, config.NetworkParams)
-				assert.Equal(t, uint64(98765), config.NetworkParams.ChainID)
+				assert.Equal(t, "98765", config.NetworkParams.NetworkID)
 			},
 		},
 		{
@@ -146,7 +146,7 @@ func TestBuildEthereumConfig(t *testing.T) {
 				assert.Len(t, config.AdditionalServices, 2)
 				assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
 				assert.Equal(t, "grafana", config.AdditionalServices[1].Name)
-				assert.Equal(t, "debug", config.GlobalClientLogLevel)
+				assert.Equal(t, "debug", config.GlobalLogLevel)
 			},
 		},
 	}
@@ -250,11 +250,11 @@ func TestConvenienceFunctions(t *testing.T) {
 	assert.Len(t, cfg.AdditionalServices, 3)
 
 	// Test custom chain
-	WithCustomChain(777, 6, 16)(cfg)
+	WithCustomChain("777", 6, 64)(cfg)
 	require.NotNil(t, cfg.NetworkParams)
-	assert.Equal(t, uint64(777), cfg.NetworkParams.ChainID)
+	assert.Equal(t, "777", cfg.NetworkParams.NetworkID)
 	assert.Equal(t, 6, cfg.NetworkParams.SecondsPerSlot)
-	assert.Equal(t, 16, cfg.NetworkParams.SlotsPerEpoch)
+	assert.Equal(t, 64, cfg.NetworkParams.NumValidatorKeysPerNode)
 
 	// Test MEV functions
 	WithMEVBoost()(cfg)

@@ -120,7 +120,7 @@ func AssertEqualConfigs(t *testing.T, expected, actual *config.EthereumPackageCo
 	// Compare network params
 	if expected.NetworkParams != nil {
 		require.NotNil(t, actual.NetworkParams, "actual should have network params")
-		assert.Equal(t, expected.NetworkParams.ChainID, actual.NetworkParams.ChainID, "chain ID mismatch")
+		assert.Equal(t, expected.NetworkParams.NetworkID, actual.NetworkParams.NetworkID, "network ID mismatch")
 	}
 
 	// Compare MEV
@@ -130,5 +130,5 @@ func AssertEqualConfigs(t *testing.T, expected, actual *config.EthereumPackageCo
 	}
 
 	// Compare global settings
-	assert.Equal(t, expected.GlobalClientLogLevel, actual.GlobalClientLogLevel, "global log level mismatch")
+	assert.Equal(t, expected.GlobalLogLevel, actual.GlobalLogLevel, "global log level mismatch")
 }

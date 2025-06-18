@@ -32,7 +32,7 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 12345,
+			NetworkID: "12345",
 		},
 	}
 
@@ -96,7 +96,7 @@ func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 			{ELType: client.Geth, CLType: client.Lighthouse, Count: 1},
 		},
 		NetworkParams: &config.NetworkParams{
-			ChainID: 54321,
+			NetworkID: "54321",
 		},
 	}
 
@@ -133,7 +133,7 @@ func TestServiceMapper_MapToNetworkEmpty(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 9999,
+			NetworkID: "9999",
 		},
 	}
 
@@ -162,7 +162,7 @@ func TestServiceMapper_MapToNetworkError(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 7777,
+			NetworkID: "7777",
 		},
 	}
 
@@ -195,7 +195,7 @@ func TestServiceMapper_DiscoverApacheConfig(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 8888,
+			NetworkID: "8888",
 		},
 	}
 
@@ -249,7 +249,7 @@ func TestServiceMapper_MultipleClientTypes(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 1111,
+			NetworkID: "1111",
 		},
 	}
 

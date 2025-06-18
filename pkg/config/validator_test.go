@@ -18,13 +18,15 @@ func TestValidatorValidConfig(t *testing.T) {
 			},
 		},
 		NetworkParams: &NetworkParams{
-			ChainID:          12345,
-			NetworkID:        12345,
-			SecondsPerSlot:   12,
-			SlotsPerEpoch:    32,
-			CapellaForkEpoch: 10,
-			DenebForkEpoch:   20,
-			ElectraForkEpoch: 30,
+			Network:                 "kurtosis",
+			NetworkID:               "12345",
+			SecondsPerSlot:          12,
+			NumValidatorKeysPerNode: 64,
+			AltairForkEpoch:         0,
+			BellatrixForkEpoch:      0,
+			CapellaForkEpoch:        10,
+			DenebForkEpoch:          20,
+			ElectraForkEpoch:        30,
 		},
 		MEV: &MEVConfig{
 			Type:            "full",
@@ -35,7 +37,7 @@ func TestValidatorValidConfig(t *testing.T) {
 			{Name: "prometheus"},
 			{Name: "grafana"},
 		},
-		GlobalClientLogLevel: "info",
+		GlobalLogLevel: "info",
 	}
 
 	validator := NewValidator(config)
@@ -142,7 +144,7 @@ func TestValidatorGlobalSettings(t *testing.T) {
 		{
 			name:     "invalid log level",
 			logLevel: "invalid",
-			wantErr:  "invalid global client log level: invalid",
+			wantErr:  "invalid global log level: invalid",
 		},
 		{
 			name:     "valid log level lowercase",
@@ -162,7 +164,7 @@ func TestValidatorGlobalSettings(t *testing.T) {
 				Participants: []ParticipantConfig{
 					{ELType: client.Geth, CLType: client.Lighthouse},
 				},
-				GlobalClientLogLevel: tt.logLevel,
+				GlobalLogLevel: tt.logLevel,
 			}
 			validator := NewValidator(config)
 			err := validator.Validate()
@@ -213,10 +215,10 @@ func TestValidatorHelperFunctions(t *testing.T) {
 	// Test log level validation
 	config := &EthereumPackageConfig{
 		Participants:         []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
-		GlobalClientLogLevel: "debug",
+		GlobalLogLevel: "debug",
 	}
 	assert.Nil(t, config.Validate())
 
-	config.GlobalClientLogLevel = "invalid"
+	config.GlobalLogLevel = "invalid"
 	assert.NotNil(t, config.Validate())
 }

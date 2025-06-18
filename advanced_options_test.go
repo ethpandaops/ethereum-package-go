@@ -48,18 +48,18 @@ func TestWithParticipants(t *testing.T) {
 func TestWithCustomChain(t *testing.T) {
 	cfg := defaultRunConfig()
 
-	chainID := uint64(99999)
+	networkID := "99999"
 	secondsPerSlot := 6
-	slotsPerEpoch := 16
+	numValidatorKeys := 64
 
-	opt := WithCustomChain(chainID, secondsPerSlot, slotsPerEpoch)
+	opt := WithCustomChain(networkID, secondsPerSlot, numValidatorKeys)
 	opt(cfg)
 
 	require.NotNil(t, cfg.NetworkParams)
-	assert.Equal(t, chainID, cfg.NetworkParams.ChainID)
-	assert.Equal(t, chainID, cfg.NetworkParams.NetworkID)
+	assert.Equal(t, "kurtosis", cfg.NetworkParams.Network)
+	assert.Equal(t, networkID, cfg.NetworkParams.NetworkID)
 	assert.Equal(t, secondsPerSlot, cfg.NetworkParams.SecondsPerSlot)
-	assert.Equal(t, slotsPerEpoch, cfg.NetworkParams.SlotsPerEpoch)
+	assert.Equal(t, numValidatorKeys, cfg.NetworkParams.NumValidatorKeysPerNode)
 }
 
 func TestAdvancedConfigurationCombinations(t *testing.T) {
@@ -94,14 +94,14 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 		{
 			name: "custom network params with monitoring",
 			options: []RunOption{
-				WithCustomChain(88888, 12, 32),
+				WithCustomChain("88888", 12, 64),
 				WithAdditionalServices("prometheus", "grafana"),
 				WithGlobalLogLevel("debug"),
 			},
 			validate: func(t *testing.T, cfg *RunConfig) {
 				// Check network params
 				require.NotNil(t, cfg.NetworkParams)
-				assert.Equal(t, uint64(88888), cfg.NetworkParams.ChainID)
+				assert.Equal(t, "88888", cfg.NetworkParams.NetworkID)
 				assert.Equal(t, 12, cfg.NetworkParams.SecondsPerSlot)
 
 				// Check monitoring services
@@ -162,7 +162,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 					{ELType: client.Geth, CLType: client.Lighthouse, Count: 2},
 					{ELType: client.Besu, CLType: client.Teku, Count: 1},
 				}),
-				WithCustomChain(77777, 6, 32),
+				WithCustomChain("77777", 6, 64),
 				WithMEVBoost(),
 				WithFullObservability(),
 				WithTimeout(20 * time.Minute),
@@ -177,7 +177,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 
 				// Check network params
 				require.NotNil(t, cfg.NetworkParams)
-				assert.Equal(t, uint64(77777), cfg.NetworkParams.ChainID)
+				assert.Equal(t, "77777", cfg.NetworkParams.NetworkID)
 
 				// Check MEV
 				assert.NotNil(t, cfg.MEV)
@@ -250,40 +250,40 @@ func TestNetworkParamsValidation(t *testing.T) {
 		{
 			name: "valid params",
 			params: &config.NetworkParams{
-				ChainID:        12345,
-				NetworkID:      12345,
-				SecondsPerSlot: 12,
-				SlotsPerEpoch:  32,
+				Network:                 "kurtosis",
+				NetworkID:               "12345",
+				SecondsPerSlot:          12,
+				NumValidatorKeysPerNode: 64,
 			},
 			valid: true,
 		},
 		{
-			name: "zero chain ID",
+			name: "empty network ID",
 			params: &config.NetworkParams{
-				ChainID:        0,
-				NetworkID:      12345,
-				SecondsPerSlot: 12,
-				SlotsPerEpoch:  32,
+				Network:                 "kurtosis",
+				NetworkID:               "",
+				SecondsPerSlot:          12,
+				NumValidatorKeysPerNode: 64,
 			},
-			valid: false,
+			valid: true, // Empty network ID is valid, defaults will be applied
 		},
 		{
 			name: "invalid seconds per slot",
 			params: &config.NetworkParams{
-				ChainID:        12345,
-				NetworkID:      12345,
-				SecondsPerSlot: 0,
-				SlotsPerEpoch:  32,
+				Network:                 "kurtosis",
+				NetworkID:               "12345",
+				SecondsPerSlot:          0,
+				NumValidatorKeysPerNode: 64,
 			},
 			valid: false,
 		},
 		{
-			name: "invalid slots per epoch",
+			name: "invalid validator keys per node",
 			params: &config.NetworkParams{
-				ChainID:        12345,
-				NetworkID:      12345,
-				SecondsPerSlot: 12,
-				SlotsPerEpoch:  0,
+				Network:                 "kurtosis",
+				NetworkID:               "12345",
+				SecondsPerSlot:          12,
+				NumValidatorKeysPerNode: -1,
 			},
 			valid: false,
 		},

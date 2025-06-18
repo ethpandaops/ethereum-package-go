@@ -83,10 +83,10 @@ func TestWithChainID(t *testing.T) {
 func TestWithNetworkParams(t *testing.T) {
 	cfg := defaultRunConfig()
 	params := &config.NetworkParams{
-		ChainID:        12345,
-		NetworkID:      12345,
-		SecondsPerSlot: 12,
-		SlotsPerEpoch:  32,
+		Network:                 "kurtosis",
+		NetworkID:               "12345",
+		SecondsPerSlot:          12,
+		NumValidatorKeysPerNode: 64,
 	}
 
 	opt := WithNetworkParams(params)
