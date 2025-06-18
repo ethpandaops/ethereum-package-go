@@ -38,12 +38,31 @@ jobs:
     - name: Run go vet
       run: go vet ./...
 
+    - name: Install Kurtosis CLI
+      run: |
+        echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+        sudo apt update
+        sudo apt install kurtosis-cli
+
+    - name: Install Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Start Kurtosis Engine
+      run: |
+        kurtosis engine start
+        sleep 10
+        kurtosis engine status
+
     - name: Run tests
-      run: go test -race -coverprofile=coverage.out ./... -skip "TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
+      run: go test -race -coverprofile=coverage.out ./...
 
     - name: Run tests with verbose output (on failure)
       if: failure()
-      run: go test -v ./... -skip "TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
+      run: go test -v ./...
+
+    - name: Stop Kurtosis Engine
+      if: always()
+      run: kurtosis engine stop
 
     - name: Upload coverage to Codecov
       if: matrix.go-version == '1.24'
