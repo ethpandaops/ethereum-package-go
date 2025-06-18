@@ -126,11 +126,11 @@ network, err := ethereum.Run(ctx,
     ethereum.WithReuse("my-persistent-network"),
 )
 
-// Or use the RunOrReuse helper method (recommended)
-network, err := ethereum.RunOrReuse(ctx, "my-persistent-network", ethereum.Minimal())
+// Or use FindOrCreateNetwork to find existing by name or create new
+network, err := ethereum.FindOrCreateNetwork(ctx, "my-persistent-network", ethereum.Minimal())
 ```
 
-The `RunOrReuse` function looks for an existing network with the given name and reuses it if found. If no network exists with that name, it creates a new one with the specified configuration.
+The `FindOrCreateNetwork` function looks for an existing network with the given name and reuses it if found. If no network exists with that name, it creates a new one with the specified configuration.
 
 ### Explicit Cleanup
 For manual control over cleanup timing:

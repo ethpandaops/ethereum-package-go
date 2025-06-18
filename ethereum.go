@@ -281,13 +281,6 @@ func FindOrCreateNetwork(ctx context.Context, enclaveName string, opts ...RunOpt
 	return Run(ctx, allOpts...)
 }
 
-// RunOrReuse is a convenience function that looks for existing networks with the given name
-// and reuses that network if it exists. If it doesn't exist, it runs a new network like normal.
-// This is equivalent to FindOrCreateNetwork but with a more intuitive name.
-func RunOrReuse(ctx context.Context, networkName string, opts ...RunOption) (network.Network, error) {
-	return FindOrCreateNetwork(ctx, networkName, opts...)
-}
-
 // validateRunConfig validates the run configuration
 func validateRunConfig(cfg *RunConfig) error {
 	if cfg.PackageID == "" {
