@@ -290,8 +290,8 @@ func TestPackageIDConstruction(t *testing.T) {
 		{
 			name:           "with version",
 			packageID:      "github.com/ethpandaops/ethereum-package",
-			packageVersion: "5.0.1",
-			expectedID:     "github.com/ethpandaops/ethereum-package@5.0.1",
+			packageVersion: "3.1.0",
+			expectedID:     "github.com/ethpandaops/ethereum-package@3.1.0",
 		},
 		{
 			name:           "without version",
