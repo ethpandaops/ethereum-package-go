@@ -15,7 +15,7 @@ const (
 	// DefaultPackageRepository is the default ethereum-package repository
 	DefaultPackageRepository = "github.com/ethpandaops/ethereum-package"
 	// DefaultPackageVersion is the pinned version of ethereum-package
-	DefaultPackageVersion = "3.1.0"
+	DefaultPackageVersion = "5.0.1"
 )
 
 // RunOption configures how the Ethereum network is started
@@ -125,9 +125,20 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	}
 
 	// Run the package
-	_, err = cfg.KurtosisClient.RunPackage(ctx, runConfig)
+	result, err := cfg.KurtosisClient.RunPackage(ctx, runConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run ethereum-package: %w", err)
+	}
+	
+	// Check for Kurtosis execution errors even if err is nil
+	if result.ExecutionError != nil {
+		return nil, fmt.Errorf("ethereum-package execution error: %w", result.ExecutionError)
+	}
+	if result.InterpretationError != nil {
+		return nil, fmt.Errorf("ethereum-package interpretation error: %w", result.InterpretationError)
+	}
+	if len(result.ValidationErrors) > 0 {
+		return nil, fmt.Errorf("ethereum-package validation errors: %v", result.ValidationErrors)
 	}
 
 	// Wait for services to be ready
