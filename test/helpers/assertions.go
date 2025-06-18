@@ -61,7 +61,7 @@ func AssertServiceExists(t *testing.T, network types.Network, serviceName string
 
 	services := network.Services()
 	found := false
-	
+
 	for _, service := range services {
 		if service.Name == serviceName {
 			found = true
@@ -78,7 +78,7 @@ func AssertApacheConfig(t *testing.T, network types.Network) {
 
 	apache := network.ApacheConfig()
 	require.NotNil(t, apache, "network should have Apache config server")
-	
+
 	assert.NotEmpty(t, apache.URL(), "Apache should have a base URL")
 	assert.Contains(t, apache.GenesisSSZURL(), "genesis.ssz", "Genesis URL should contain genesis.ssz")
 	assert.Contains(t, apache.ConfigYAMLURL(), "config.yaml", "Config URL should contain config.yaml")

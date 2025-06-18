@@ -115,11 +115,11 @@ func GenerateTestEnclaveName(t *testing.T) string {
 // DefaultTestConfig returns a default test configuration
 func DefaultTestConfig() kurtosis.RunPackageConfig {
 	return kurtosis.RunPackageConfig{
-		PackageID:    "github.com/ethpandaops/ethereum-package",
-		EnclaveName:  "test-enclave",
-		ConfigYAML:   "participants:\n  - el_type: geth\n    cl_type: lighthouse\n    count: 1",
-		DryRun:       false,
-		Parallelism:  4,
-		VerboseMode:  true,
+		PackageID:   "github.com/ethpandaops/ethereum-package",
+		EnclaveName: "test-enclave",
+		ConfigYAML:  "participants:\n  - el_type: geth\n    cl_type: lighthouse\n    count: 1",
+		DryRun:      false,
+		Parallelism: 4,
+		VerboseMode: true,
 	}
 }

@@ -100,7 +100,7 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 		client.Erigon,
 		client.Reth,
 	}
-	
+
 	clClients := []client.Type{
 		client.Lighthouse,
 		client.Teku,
@@ -109,9 +109,9 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 		client.Lodestar,
 		client.Grandine,
 	}
-	
+
 	var participants []ParticipantConfig
-	
+
 	for _, el := range elClients {
 		for _, cl := range clClients {
 			participants = append(participants, ParticipantConfig{
@@ -121,7 +121,7 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 			})
 		}
 	}
-	
+
 	return &EthereumPackageConfig{
 		Participants: participants,
 	}
@@ -197,11 +197,11 @@ func (p *PresetBuilder) WithGlobalLogLevel(level string) *PresetBuilder {
 func (p *PresetBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
 	p.config.ApplyDefaults()
-	
+
 	// Validate
 	if err := p.config.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	return p.config, nil
 }

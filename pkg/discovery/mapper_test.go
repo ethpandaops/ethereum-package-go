@@ -47,7 +47,7 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 	// Verify clients were discovered
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.NotEmpty(t, execClients, "should have execution clients")
 	assert.NotEmpty(t, consClients, "should have consensus clients")
 
@@ -111,10 +111,10 @@ func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 	// Verify we got the expected clients
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.Len(t, execClients, 1)
 	assert.Len(t, consClients, 1)
-	
+
 	assert.Equal(t, "geth-1", execClients[0].Name())
 	assert.Equal(t, "lighthouse-1", consClients[0].Name())
 }
@@ -260,7 +260,7 @@ func TestServiceMapper_MultipleClientTypes(t *testing.T) {
 	// Should discover multiple execution and consensus clients
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.Len(t, execClients, 2, "should have 2 execution clients")
 	assert.Len(t, consClients, 2, "should have 2 consensus clients")
 

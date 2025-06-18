@@ -52,7 +52,7 @@ func TestValidatorNilConfig(t *testing.T) {
 
 func TestValidatorParticipants(t *testing.T) {
 	tests := ParticipantTestCases()
-	
+
 	// Add additional participant-specific test cases
 	additionalTests := []ValidatorTestCase{
 		{
@@ -74,7 +74,7 @@ func TestValidatorParticipants(t *testing.T) {
 			WantErr: "participant 0: validator count cannot exceed 1000000",
 		},
 	}
-	
+
 	tests = append(tests, additionalTests...)
 	RunValidatorTests(t, tests)
 }
@@ -180,14 +180,14 @@ func TestValidatorHelperFunctions(t *testing.T) {
 	// Test execution client validation using ParticipantConfig
 	p := ParticipantConfig{ELType: client.Geth, CLType: client.Lighthouse}
 	assert.Nil(t, p.Validate(0))
-	
+
 	p.ELType = "invalid"
 	assert.NotNil(t, p.Validate(0))
-	
+
 	// Test consensus client validation
 	p = ParticipantConfig{ELType: client.Geth, CLType: client.Lighthouse}
 	assert.Nil(t, p.Validate(0))
-	
+
 	p.CLType = "invalid"
 	assert.NotNil(t, p.Validate(0))
 
@@ -212,11 +212,11 @@ func TestValidatorHelperFunctions(t *testing.T) {
 
 	// Test log level validation
 	config := &EthereumPackageConfig{
-		Participants: []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
+		Participants:         []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
 		GlobalClientLogLevel: "debug",
 	}
 	assert.Nil(t, config.Validate())
-	
+
 	config.GlobalClientLogLevel = "invalid"
 	assert.NotNil(t, config.Validate())
 }

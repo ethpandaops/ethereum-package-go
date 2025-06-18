@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"gopkg.in/yaml.v3"
-
 )
 
 // ToYAML converts the configuration to a YAML string

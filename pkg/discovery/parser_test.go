@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
 	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -165,38 +165,38 @@ func TestMetadataParser_ParseServiceMetadata(t *testing.T) {
 
 func TestMetadataParser_ParseNodeInfo(t *testing.T) {
 	tests := []struct {
-		name         string
-		serviceName  string
+		name          string
+		serviceName   string
 		expectedIndex int
 		expectedName  string
 	}{
 		{
 			name:          "el-1 pattern",
-			serviceName:  "el-1-geth-lighthouse",
+			serviceName:   "el-1-geth-lighthouse",
 			expectedIndex: 1,
 			expectedName:  "geth-lighthouse",
 		},
 		{
 			name:          "cl-2 pattern",
-			serviceName:  "cl-2-lighthouse-geth",
+			serviceName:   "cl-2-lighthouse-geth",
 			expectedIndex: 2,
 			expectedName:  "lighthouse-geth",
 		},
 		{
 			name:          "el-10 pattern",
-			serviceName:  "el-10-besu",
+			serviceName:   "el-10-besu",
 			expectedIndex: 10,
 			expectedName:  "besu",
 		},
 		{
 			name:          "no index pattern",
-			serviceName:  "prometheus",
+			serviceName:   "prometheus",
 			expectedIndex: 0,
 			expectedName:  "prometheus",
 		},
 		{
 			name:          "invalid pattern",
-			serviceName:  "el-abc-geth",
+			serviceName:   "el-abc-geth",
 			expectedIndex: 0,
 			expectedName:  "el-abc-geth",
 		},

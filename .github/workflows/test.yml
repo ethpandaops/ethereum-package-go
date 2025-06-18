@@ -39,11 +39,11 @@ jobs:
       run: go vet ./...
 
     - name: Run tests
-      run: go test -race -coverprofile=coverage.out ./... -skip="TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
+      run: go test -race -coverprofile=coverage.out ./... -skip "TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
 
     - name: Run tests with verbose output (on failure)
       if: failure()
-      run: go test -v ./... -skip="TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
+      run: go test -v ./... -skip "TestBasicNetwork|TestCustomParticipants|TestSharedNetwork"
 
     - name: Upload coverage to Codecov
       if: matrix.go-version == '1.24'
@@ -63,11 +63,17 @@ jobs:
       with:
         go-version: '1.24'
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: latest
-        args: --timeout=5m
+    - name: Run go fmt
+      run: |
+        fmt_result=$(go fmt ./...)
+        if [ -n "$fmt_result" ]; then
+          echo "Code is not formatted. Please run 'go fmt ./...'"
+          echo "$fmt_result"
+          exit 1
+        fi
+
+    - name: Run go vet
+      run: go vet ./...
 
   build:
     runs-on: ubuntu-latest

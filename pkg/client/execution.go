@@ -37,17 +37,17 @@ type ExecutionClientImpl struct {
 	containerID string
 }
 
-func (e *ExecutionClientImpl) Name() string         { return e.name }
-func (e *ExecutionClientImpl) Type() Type           { return e.clientType }
-func (e *ExecutionClientImpl) Version() string      { return e.version }
-func (e *ExecutionClientImpl) RPCURL() string       { return e.rpcURL }
-func (e *ExecutionClientImpl) WSURL() string        { return e.wsURL }
-func (e *ExecutionClientImpl) EngineURL() string    { return e.engineURL }
-func (e *ExecutionClientImpl) MetricsURL() string   { return e.metricsURL }
-func (e *ExecutionClientImpl) Enode() string        { return e.enode }
-func (e *ExecutionClientImpl) P2PPort() int         { return e.p2pPort }
-func (e *ExecutionClientImpl) ServiceName() string  { return e.serviceName }
-func (e *ExecutionClientImpl) ContainerID() string  { return e.containerID }
+func (e *ExecutionClientImpl) Name() string        { return e.name }
+func (e *ExecutionClientImpl) Type() Type          { return e.clientType }
+func (e *ExecutionClientImpl) Version() string     { return e.version }
+func (e *ExecutionClientImpl) RPCURL() string      { return e.rpcURL }
+func (e *ExecutionClientImpl) WSURL() string       { return e.wsURL }
+func (e *ExecutionClientImpl) EngineURL() string   { return e.engineURL }
+func (e *ExecutionClientImpl) MetricsURL() string  { return e.metricsURL }
+func (e *ExecutionClientImpl) Enode() string       { return e.enode }
+func (e *ExecutionClientImpl) P2PPort() int        { return e.p2pPort }
+func (e *ExecutionClientImpl) ServiceName() string { return e.serviceName }
+func (e *ExecutionClientImpl) ContainerID() string { return e.containerID }
 
 // NewExecutionClient creates a new generic execution client instance
 func NewExecutionClient(clientType Type, name, version, rpcURL, wsURL, engineURL, metricsURL, enode, serviceName, containerID string, p2pPort int) *ExecutionClientImpl {

@@ -93,12 +93,12 @@ func demonstratePeerIDFunctionality(ctx context.Context) {
 
 func demonstrateLogsFunctionality(ctx context.Context) {
 	// Example: Working with Log Filtering
-	
+
 	// Note: In a real scenario, you'd create the LogsClient with actual Kurtosis context
 	fmt.Println("Log filtering examples (requires running Kurtosis environment):")
-	
+
 	fmt.Println("\n1. Basic log filtering options:")
-	
+
 	// Example filter options
 	tailOptions := client.TailLogs(50, "ERROR")
 	fmt.Printf("   TailLogs(50, \"ERROR\") creates options for: last 50 lines containing 'ERROR'\n")
@@ -109,14 +109,14 @@ func demonstrateLogsFunctionality(ctx context.Context) {
 	_ = followOptions
 
 	fmt.Println("\n2. Advanced filtering with functional options:")
-	
+
 	// Chainable options example
 	advancedOptions := []client.LogOption{
-		client.WithLines(100),                    // Last 100 lines
-		client.WithGrep("peer"),                  // Lines containing "peer"
-		client.WithSince(5 * time.Minute),       // From last 5 minutes
-		client.WithCaseSensitive(false),          // Case insensitive
-		client.WithExcludeRegex("debug"),         // Exclude debug messages
+		client.WithLines(100),             // Last 100 lines
+		client.WithGrep("peer"),           // Lines containing "peer"
+		client.WithSince(5 * time.Minute), // From last 5 minutes
+		client.WithCaseSensitive(false),   // Case insensitive
+		client.WithExcludeRegex("debug"),  // Exclude debug messages
 	}
 	fmt.Printf("   Advanced options: last 100 lines, containing 'peer', from last 5 minutes, excluding 'debug'\n")
 	_ = advancedOptions

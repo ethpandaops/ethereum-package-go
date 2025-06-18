@@ -21,7 +21,7 @@ func main() {
 	network1, err := ethereum.Run(ctx,
 		ethereum.Minimal(),
 		ethereum.WithPackageVersion("2.8.0"), // Use a different version
-		ethereum.WithDryRun(true),             // Just validate, don't run
+		ethereum.WithDryRun(true),            // Just validate, don't run
 	)
 	if err != nil {
 		log.Printf("Error with version override: %v", err)

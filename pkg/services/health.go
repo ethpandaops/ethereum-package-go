@@ -27,14 +27,14 @@ func NewHealthChecker() *HealthChecker {
 
 // HealthCheck represents a health check configuration
 type HealthCheck struct {
-	Name        string
-	Type        HealthCheckType
-	URL         string
-	Method      string
-	Interval    time.Duration
-	Timeout     time.Duration
+	Name         string
+	Type         HealthCheckType
+	URL          string
+	Method       string
+	Interval     time.Duration
+	Timeout      time.Duration
 	SuccessCodes []int
-	CheckFunc   func(ctx context.Context) error
+	CheckFunc    func(ctx context.Context) error
 }
 
 // HealthCheckType represents the type of health check
@@ -70,7 +70,7 @@ const (
 func (h *HealthChecker) RegisterCheck(check HealthCheck) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	
+
 	// Set defaults
 	if check.Method == "" {
 		check.Method = "GET"
@@ -81,7 +81,7 @@ func (h *HealthChecker) RegisterCheck(check HealthCheck) {
 	if len(check.SuccessCodes) == 0 {
 		check.SuccessCodes = []int{http.StatusOK}
 	}
-	
+
 	h.checks[check.Name] = check
 }
 
@@ -101,17 +101,17 @@ func (h *HealthChecker) CheckHealth(ctx context.Context, name string) (*ServiceH
 	h.mu.RLock()
 	check, exists := h.checks[name]
 	h.mu.RUnlock()
-	
+
 	if !exists {
 		return nil, fmt.Errorf("health check %s not found", name)
 	}
-	
+
 	status := &ServiceHealthStatus{
 		Name:      name,
 		LastCheck: time.Now(),
 		Status:    StatusUnknown,
 	}
-	
+
 	switch check.Type {
 	case HealthCheckHTTP:
 		err := h.performHTTPCheck(ctx, check)
@@ -121,7 +121,7 @@ func (h *HealthChecker) CheckHealth(ctx context.Context, name string) (*ServiceH
 		} else {
 			status.Status = StatusHealthy
 		}
-		
+
 	case HealthCheckCustom:
 		if check.CheckFunc != nil {
 			err := check.CheckFunc(ctx)
@@ -132,11 +132,11 @@ func (h *HealthChecker) CheckHealth(ctx context.Context, name string) (*ServiceH
 				status.Status = StatusHealthy
 			}
 		}
-		
+
 	default:
 		return nil, fmt.Errorf("unsupported health check type: %s", check.Type)
 	}
-	
+
 	return status, nil
 }
 
@@ -148,16 +148,16 @@ func (h *HealthChecker) CheckAllHealth(ctx context.Context) map[string]*ServiceH
 		checkNames = append(checkNames, name)
 	}
 	h.mu.RUnlock()
-	
+
 	results := make(map[string]*ServiceHealthStatus)
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	
+
 	for _, name := range checkNames {
 		wg.Add(1)
 		go func(checkName string) {
 			defer wg.Done()
-			
+
 			status, err := h.CheckHealth(ctx, checkName)
 			if err != nil {
 				status = &ServiceHealthStatus{
@@ -167,13 +167,13 @@ func (h *HealthChecker) CheckAllHealth(ctx context.Context) map[string]*ServiceH
 					LastCheck: time.Now(),
 				}
 			}
-			
+
 			mu.Lock()
 			results[checkName] = status
 			mu.Unlock()
 		}(name)
 	}
-	
+
 	wg.Wait()
 	return results
 }
@@ -184,20 +184,20 @@ func (h *HealthChecker) performHTTPCheck(ctx context.Context, check HealthCheck)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	
+
 	resp, err := h.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("health check failed: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	// Check if status code is in success codes
 	for _, code := range check.SuccessCodes {
 		if resp.StatusCode == code {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("unhealthy status code: %d", resp.StatusCode)
 }
 
@@ -208,11 +208,11 @@ func (h *HealthChecker) AggregateHealth(statuses map[string]*ServiceHealthStatus
 		Services:  statuses,
 		Timestamp: time.Now(),
 	}
-	
+
 	healthyCount := 0
 	unhealthyCount := 0
 	degradedCount := 0
-	
+
 	for _, status := range statuses {
 		switch status.Status {
 		case StatusHealthy:
@@ -223,12 +223,12 @@ func (h *HealthChecker) AggregateHealth(statuses map[string]*ServiceHealthStatus
 			degradedCount++
 		}
 	}
-	
+
 	overall.HealthyServices = healthyCount
 	overall.UnhealthyServices = unhealthyCount
 	overall.DegradedServices = degradedCount
 	overall.TotalServices = len(statuses)
-	
+
 	// Determine overall status
 	if unhealthyCount > 0 {
 		overall.Status = StatusUnhealthy
@@ -238,27 +238,27 @@ func (h *HealthChecker) AggregateHealth(statuses map[string]*ServiceHealthStatus
 	} else if degradedCount > 0 {
 		overall.Status = StatusDegraded
 	}
-	
+
 	return overall
 }
 
 // StartPeriodicChecks starts periodic health checks for all registered services
 func (h *HealthChecker) StartPeriodicChecks(ctx context.Context, interval time.Duration) <-chan map[string]*ServiceHealthStatus {
 	results := make(chan map[string]*ServiceHealthStatus)
-	
+
 	go func() {
 		defer close(results)
-		
+
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
-		
+
 		// Initial check
 		select {
 		case results <- h.CheckAllHealth(ctx):
 		case <-ctx.Done():
 			return
 		}
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -272,19 +272,19 @@ func (h *HealthChecker) StartPeriodicChecks(ctx context.Context, interval time.D
 			}
 		}
 	}()
-	
+
 	return results
 }
 
 // OverallHealth represents the overall health of all services
 type OverallHealth struct {
-	Status            ServiceStatus             `json:"status"`
-	Services          map[string]*ServiceHealthStatus  `json:"services"`
-	HealthyServices   int                       `json:"healthy_services"`
-	UnhealthyServices int                       `json:"unhealthy_services"`
-	DegradedServices  int                       `json:"degraded_services"`
-	TotalServices     int                       `json:"total_services"`
-	Timestamp         time.Time                 `json:"timestamp"`
+	Status            ServiceStatus                   `json:"status"`
+	Services          map[string]*ServiceHealthStatus `json:"services"`
+	HealthyServices   int                             `json:"healthy_services"`
+	UnhealthyServices int                             `json:"unhealthy_services"`
+	DegradedServices  int                             `json:"degraded_services"`
+	TotalServices     int                             `json:"total_services"`
+	Timestamp         time.Time                       `json:"timestamp"`
 }
 
 // CreateServiceHealthCheck creates a health check for common service types

@@ -24,12 +24,12 @@ type RunOption func(*RunConfig)
 // RunConfig holds configuration for running an Ethereum network
 type RunConfig struct {
 	// Package configuration
-	PackageID       string
-	PackageVersion  string
-	EnclaveName     string
-	ConfigSource    config.ConfigSource
-	NetworkParams   *config.NetworkParams
-	ChainID         uint64
+	PackageID      string
+	PackageVersion string
+	EnclaveName    string
+	ConfigSource   config.ConfigSource
+	NetworkParams  *config.NetworkParams
+	ChainID        uint64
 
 	// MEV configuration
 	MEV *config.MEVConfig
@@ -112,7 +112,7 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	if cfg.PackageVersion != "" {
 		packageID = fmt.Sprintf("%s@%s", cfg.PackageID, cfg.PackageVersion)
 	}
-	
+
 	runConfig := kurtosis.RunPackageConfig{
 		PackageID:       packageID,
 		EnclaveName:     cfg.EnclaveName,

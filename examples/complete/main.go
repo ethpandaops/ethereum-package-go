@@ -81,9 +81,9 @@ func main() {
 	// Show all services
 	fmt.Println("\n📊 Additional Services:")
 	for _, service := range network.Services() {
-		if service.Type != "execution" && 
-		   service.Type != "consensus" && 
-		   service.Type != "apache" {
+		if service.Type != "execution" &&
+			service.Type != "consensus" &&
+			service.Type != "apache" {
 			fmt.Printf("   %s (%s): %s\n", service.Name, service.Type, service.Status)
 		}
 	}

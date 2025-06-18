@@ -54,29 +54,29 @@ func (p *ParticipantConfig) Validate(index int) error {
 	if p.CLType == "" {
 		return fmt.Errorf("participant %d: consensus layer type is required", index)
 	}
-	
+
 	if !p.ELType.IsExecution() {
 		return fmt.Errorf("participant %d: invalid execution client type: %s", index, p.ELType)
 	}
-	
+
 	if !p.CLType.IsConsensus() {
 		return fmt.Errorf("participant %d: invalid consensus client type: %s", index, p.CLType)
 	}
-	
+
 	if p.Count < 0 {
 		return fmt.Errorf("participant %d: count cannot be negative", index)
 	}
 	if p.Count > 100 {
 		return fmt.Errorf("participant %d: count %d exceeds maximum of 100", index, p.Count)
 	}
-	
+
 	if p.ValidatorCount < 0 {
 		return fmt.Errorf("participant %d: validator count cannot be negative", index)
 	}
 	if p.ValidatorCount > 1000000 {
 		return fmt.Errorf("participant %d: validator count cannot exceed 1000000", index)
 	}
-	
+
 	return nil
 }
 
@@ -104,11 +104,11 @@ func (n *NetworkParams) Validate() error {
 	if n.SecondsPerSlot < 1 || n.SecondsPerSlot > 60 {
 		return fmt.Errorf("seconds per slot must be between 1 and 60, got %d", n.SecondsPerSlot)
 	}
-	
+
 	if n.SlotsPerEpoch < 1 || n.SlotsPerEpoch > 1000 {
 		return fmt.Errorf("slots per epoch must be between 1 and 1000, got %d", n.SlotsPerEpoch)
 	}
-	
+
 	// Validate fork epochs ordering
 	if n.CapellaForkEpoch < 0 {
 		return fmt.Errorf("capella fork epoch cannot be negative")
@@ -119,7 +119,7 @@ func (n *NetworkParams) Validate() error {
 	if n.ElectraForkEpoch < n.DenebForkEpoch {
 		return fmt.Errorf("electra fork epoch must be after deneb fork epoch")
 	}
-	
+
 	return nil
 }
 
@@ -147,28 +147,28 @@ type MEVConfig struct {
 // Validate validates the MEV configuration
 func (m *MEVConfig) Validate() error {
 	validTypes := map[string]bool{
-		"full":  true,
-		"mock":  true,
-		"none":  true,
-		"":      true, // Empty is valid
+		"full": true,
+		"mock": true,
+		"none": true,
+		"":     true, // Empty is valid
 	}
-	
+
 	if !validTypes[m.Type] {
 		return fmt.Errorf("invalid MEV type: %s, must be one of: full, mock, none", m.Type)
 	}
-	
+
 	if m.RelayURL != "" && !strings.HasPrefix(m.RelayURL, "http://") && !strings.HasPrefix(m.RelayURL, "https://") {
 		return fmt.Errorf("invalid relay URL: %s, must start with http:// or https://", m.RelayURL)
 	}
-	
+
 	if m.MaxBundleLength < 0 {
 		return fmt.Errorf("max bundle length cannot be negative")
 	}
-	
+
 	if m.MaxBundleLength > 10000 {
 		return fmt.Errorf("max bundle length %d exceeds maximum of 10000", m.MaxBundleLength)
 	}
-	
+
 	return nil
 }
 
@@ -201,32 +201,32 @@ func (c *EthereumPackageConfig) Validate() error {
 	if c == nil {
 		return fmt.Errorf("configuration is nil")
 	}
-	
+
 	if len(c.Participants) == 0 {
 		return fmt.Errorf("at least one participant is required")
 	}
-	
+
 	// Validate each participant
 	for i, p := range c.Participants {
 		if err := p.Validate(i); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate network params
 	if c.NetworkParams != nil {
 		if err := c.NetworkParams.Validate(); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate MEV config
 	if c.MEV != nil {
 		if err := c.MEV.Validate(); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate additional services
 	serviceNames := make(map[string]bool)
 	for i, service := range c.AdditionalServices {
@@ -237,7 +237,7 @@ func (c *EthereumPackageConfig) Validate() error {
 			return fmt.Errorf("duplicate additional service: %s", service.Name)
 		}
 		serviceNames[service.Name] = true
-		
+
 		// Validate known service names
 		validServices := map[string]bool{
 			"prometheus": true,
@@ -250,12 +250,12 @@ func (c *EthereumPackageConfig) Validate() error {
 			return fmt.Errorf("invalid additional service name: %s", service.Name)
 		}
 	}
-	
+
 	// Validate global log level
 	if c.GlobalClientLogLevel != "" && !isValidLogLevel(c.GlobalClientLogLevel) {
 		return fmt.Errorf("invalid global client log level: %s, must be one of: debug, info, warn, error, fatal", c.GlobalClientLogLevel)
 	}
-	
+
 	return nil
 }
 
@@ -264,12 +264,12 @@ func (c *EthereumPackageConfig) ApplyDefaults() {
 	if c == nil {
 		return
 	}
-	
+
 	// Apply defaults to participants
 	for i := range c.Participants {
 		c.Participants[i].ApplyDefaults()
 	}
-	
+
 	// Apply defaults to network params
 	if c.NetworkParams != nil {
 		c.NetworkParams.ApplyDefaults()

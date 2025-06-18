@@ -14,7 +14,7 @@ import (
 
 func TestDefaultRunConfig(t *testing.T) {
 	cfg := defaultRunConfig()
-	
+
 	assert.Equal(t, DefaultPackageRepository, cfg.PackageID)
 	assert.Equal(t, DefaultPackageVersion, cfg.PackageVersion)
 	assert.NotEmpty(t, cfg.EnclaveName)

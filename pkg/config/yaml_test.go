@@ -75,7 +75,7 @@ func TestToYAMLMinimal(t *testing.T) {
 	assert.Contains(t, yamlStr, "participants:")
 	assert.Contains(t, yamlStr, "el_type: geth")
 	assert.Contains(t, yamlStr, "cl_type: lighthouse")
-	
+
 	// Should not contain optional fields
 	assert.NotContains(t, yamlStr, "network_params:")
 	assert.NotContains(t, yamlStr, "mev_params:")
@@ -234,7 +234,7 @@ func TestRoundTrip(t *testing.T) {
 			{
 				Name: "prometheus",
 				Config: map[string]interface{}{
-					"port":     9090,
+					"port":      9090,
 					"retention": "15d",
 				},
 			},

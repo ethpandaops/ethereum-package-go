@@ -11,11 +11,11 @@ import (
 
 func TestHealthChecker_CheckHealth(t *testing.T) {
 	tests := []struct {
-		name         string
-		handler      http.HandlerFunc
-		serviceName  string
+		name           string
+		handler        http.HandlerFunc
+		serviceName    string
 		expectedStatus ServiceStatus
-		expectedMsg  string
+		expectedMsg    string
 	}{
 		{
 			name:        "healthy service",
@@ -75,7 +75,7 @@ func TestHealthChecker_CheckAllHealth(t *testing.T) {
 	ctx := context.Background()
 
 	results := checker.CheckAllHealth(ctx)
-	
+
 	assert.Len(t, results, 2)
 	assert.Equal(t, StatusHealthy, results["healthy-service"].Status)
 	assert.Equal(t, StatusUnhealthy, results["unhealthy-service"].Status)
@@ -83,15 +83,15 @@ func TestHealthChecker_CheckAllHealth(t *testing.T) {
 
 func TestHealthChecker_AggregateHealth(t *testing.T) {
 	checker := NewHealthChecker()
-	
+
 	statuses := map[string]*ServiceHealthStatus{
 		"service1": {
 			Name:   "service1",
 			Status: StatusHealthy,
 		},
 		"service2": {
-			Name:   "service2",
-			Status: StatusUnhealthy,
+			Name:    "service2",
+			Status:  StatusUnhealthy,
 			Message: "Connection failed",
 		},
 		"service3": {
@@ -99,9 +99,9 @@ func TestHealthChecker_AggregateHealth(t *testing.T) {
 			Status: StatusDegraded,
 		},
 	}
-	
+
 	overall := checker.AggregateHealth(statuses)
-	
+
 	assert.Equal(t, StatusDegraded, overall.Status)
 	assert.Equal(t, 1, overall.HealthyServices)
 	assert.Equal(t, 1, overall.UnhealthyServices)
@@ -150,7 +150,7 @@ func TestCreateServiceHealthCheck(t *testing.T) {
 			expectedType: HealthCheckCustom,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			check := CreateServiceHealthCheck(tt.serviceType, tt.serviceName, tt.url)

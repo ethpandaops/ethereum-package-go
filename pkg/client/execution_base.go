@@ -99,8 +99,8 @@ type RPCResponse struct {
 
 // RPCError represents a JSON-RPC error
 type RPCError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
@@ -244,16 +244,16 @@ type PeerInfo struct {
 
 // TraceResult represents the result of a transaction trace
 type TraceResult struct {
-	Type    string                 `json:"type"`
-	From    string                 `json:"from"`
-	To      string                 `json:"to"`
-	Value   string                 `json:"value"`
-	Gas     string                 `json:"gas"`
-	GasUsed string                 `json:"gasUsed"`
-	Input   string                 `json:"input"`
-	Output  string                 `json:"output"`
-	Error   string                 `json:"error,omitempty"`
-	Calls   []TraceResult          `json:"calls,omitempty"`
+	Type    string        `json:"type"`
+	From    string        `json:"from"`
+	To      string        `json:"to"`
+	Value   string        `json:"value"`
+	Gas     string        `json:"gas"`
+	GasUsed string        `json:"gasUsed"`
+	Input   string        `json:"input"`
+	Output  string        `json:"output"`
+	Error   string        `json:"error,omitempty"`
+	Calls   []TraceResult `json:"calls,omitempty"`
 }
 
 // TxPoolStatus represents transaction pool status

@@ -145,7 +145,7 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 				goto done
 			}
 		}
-		done:
+	done:
 	} else {
 		// Blocking mode - wait for completion
 		runResult, err := enclaveCtx.RunStarlarkPackageBlocking(ctx, config.PackageID, runConfig)
@@ -241,8 +241,8 @@ func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (m
 			if serviceContext.GetMaybePublicIPAddress() != "" {
 				host := serviceContext.GetMaybePublicIPAddress()
 				switch {
-				case strings.Contains(portName, "http") || strings.Contains(portName, "rpc") || 
-				     strings.Contains(portName, "beacon") || strings.Contains(portName, "engine"):
+				case strings.Contains(portName, "http") || strings.Contains(portName, "rpc") ||
+					strings.Contains(portName, "beacon") || strings.Contains(portName, "engine"):
 					portInfo.MaybeURL = fmt.Sprintf("http://%s:%d", host, portSpec.GetNumber())
 				case strings.Contains(portName, "ws"):
 					portInfo.MaybeURL = fmt.Sprintf("ws://%s:%d", host, portSpec.GetNumber())
@@ -393,9 +393,9 @@ func formatStarlarkResponse(response *kurtosis_core_rpc_api_bindings.StarlarkRun
 
 	if response.GetProgressInfo() != nil {
 		info := response.GetProgressInfo()
-		return fmt.Sprintf("[Progress] %d/%d - %s", 
-			info.GetCurrentStepNumber(), 
-			info.GetTotalSteps(), 
+		return fmt.Sprintf("[Progress] %d/%d - %s",
+			info.GetCurrentStepNumber(),
+			info.GetTotalSteps(),
 			info.GetCurrentStepInfo())
 	}
 

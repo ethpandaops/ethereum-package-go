@@ -9,18 +9,18 @@ import (
 
 // consensusClientTestCase represents a test case for consensus client constructors
 type consensusClientTestCase struct {
-	name         string
-	clientType   ClientType
-	constructor  func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient
-	clientName   string
-	version      string
-	beaconURL    string
-	metricsURL   string
-	enr          string
-	peerID       string
-	serviceName  string
-	containerID  string
-	p2pPort      int
+	name        string
+	clientType  ClientType
+	constructor func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient
+	clientName  string
+	version     string
+	beaconURL   string
+	metricsURL  string
+	enr         string
+	peerID      string
+	serviceName string
+	containerID string
+	p2pPort     int
 }
 
 func TestConsensusClientConstructors(t *testing.T) {

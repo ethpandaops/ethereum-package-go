@@ -80,13 +80,13 @@ func New(config Config) Network {
 	}
 }
 
-func (n *network) Name() string                           { return n.name }
-func (n *network) ChainID() uint64                        { return n.chainID }
-func (n *network) EnclaveName() string                    { return n.enclaveName }
+func (n *network) Name() string                               { return n.name }
+func (n *network) ChainID() uint64                            { return n.chainID }
+func (n *network) EnclaveName() string                        { return n.enclaveName }
 func (n *network) ExecutionClients() *client.ExecutionClients { return n.executionClients }
 func (n *network) ConsensusClients() *client.ConsensusClients { return n.consensusClients }
-func (n *network) Services() []Service                    { return n.services }
-func (n *network) ApacheConfig() ApacheConfigServer       { return n.apacheConfig }
+func (n *network) Services() []Service                        { return n.services }
+func (n *network) ApacheConfig() ApacheConfigServer           { return n.apacheConfig }
 
 func (n *network) Stop(ctx context.Context) error {
 	// In a real implementation, this would stop the Kurtosis enclave

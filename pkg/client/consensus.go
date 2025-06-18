@@ -65,8 +65,8 @@ type NodeIdentityResponse struct {
 		P2PAddresses       []string `json:"p2p_addresses"`
 		DiscoveryAddresses []string `json:"discovery_addresses"`
 		Metadata           struct {
-			SeqNumber       string `json:"seq_number"`
-			Attnets         string `json:"attnets"`
+			SeqNumber         string `json:"seq_number"`
+			Attnets           string `json:"attnets"`
 			SyncCommitteeNets string `json:"syncnets,omitempty"`
 		} `json:"metadata"`
 	} `json:"data"`

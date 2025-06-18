@@ -42,20 +42,20 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cf
 	// Process each service
 	for _, service := range services {
 		serviceType := m.detectServiceTypeWithPorts(service)
-		
+
 		switch serviceType {
 		case network.ServiceTypeExecutionClient:
 			client := m.mapExecutionClient(service)
 			if client != nil {
 				executionClients.Add(client)
 			}
-			
+
 		case network.ServiceTypeConsensusClient:
 			client := m.mapConsensusClient(service)
 			if client != nil {
 				consensusClients.Add(client)
 			}
-			
+
 		case network.ServiceTypeApache:
 			apacheConfigServer = m.mapApacheConfigServer(service)
 		}
@@ -117,13 +117,13 @@ func (m *ServiceMapper) mapExecutionClient(service *kurtosis.ServiceInfo) client
 	// Extract endpoints
 	extractor := NewEndpointExtractor()
 	endpoints, _ := extractor.ExtractExecutionEndpoints(service)
-	
+
 	// Detect client type
 	clientType := detectExecutionClientType(service.Name)
-	
+
 	// Extract metadata
 	metadata, _ := m.metadataParser.ParseServiceMetadata(service)
-	
+
 	return client.NewExecutionClient(
 		clientType,
 		service.Name,
@@ -144,13 +144,13 @@ func (m *ServiceMapper) mapConsensusClient(service *kurtosis.ServiceInfo) client
 	// Extract endpoints
 	extractor := NewEndpointExtractor()
 	endpoints, _ := extractor.ExtractConsensusEndpoints(service)
-	
+
 	// Detect client type
 	clientType := detectConsensusClientType(service.Name)
-	
+
 	// Extract metadata
 	metadata, _ := m.metadataParser.ParseServiceMetadata(service)
-	
+
 	return client.NewConsensusClient(
 		clientType,
 		service.Name,
@@ -174,7 +174,7 @@ func (m *ServiceMapper) mapApacheConfigServer(service *kurtosis.ServiceInfo) net
 			return network.NewApacheConfigServer(url)
 		}
 	}
-	
+
 	// Fallback to default port
 	url := fmt.Sprintf("http://%s:80", service.IPAddress)
 	return network.NewApacheConfigServer(url)
@@ -205,7 +205,7 @@ func (m *ServiceMapper) createCleanupFunc(enclaveName string) func(context.Conte
 // detectExecutionClientType detects the execution client type from the service name
 func detectExecutionClientType(name string) client.Type {
 	nameLower := strings.ToLower(name)
-	
+
 	switch {
 	case strings.Contains(nameLower, "geth"):
 		return client.Geth
@@ -225,7 +225,7 @@ func detectExecutionClientType(name string) client.Type {
 // detectConsensusClientType detects the consensus client type from the service name
 func detectConsensusClientType(name string) client.Type {
 	nameLower := strings.ToLower(name)
-	
+
 	switch {
 	case strings.Contains(nameLower, "lighthouse"):
 		return client.Lighthouse
@@ -247,25 +247,25 @@ func detectConsensusClientType(name string) client.Type {
 // detectServiceType detects the service type from the service name
 func detectServiceType(name string) network.ServiceType {
 	nameLower := strings.ToLower(name)
-	
+
 	// Check for consensus clients first (cl- prefix takes precedence)
 	if strings.Contains(nameLower, "cl-") || strings.Contains(nameLower, "beacon") {
 		return network.ServiceTypeConsensusClient
 	}
-	
+
 	// Check for execution clients
 	if strings.Contains(nameLower, "el-") || strings.Contains(nameLower, "execution") {
 		return network.ServiceTypeExecutionClient
 	}
-	
+
 	// Check for validator
 	if strings.Contains(nameLower, "validator") {
 		return network.ServiceTypeValidator
 	}
-	
+
 	// Check by client name patterns (only if no prefix found)
-	if !strings.Contains(nameLower, "-") || 
-	   (!strings.HasPrefix(nameLower, "cl-") && !strings.HasPrefix(nameLower, "el-")) {
+	if !strings.Contains(nameLower, "-") ||
+		(!strings.HasPrefix(nameLower, "cl-") && !strings.HasPrefix(nameLower, "el-")) {
 		// Execution clients
 		if strings.Contains(nameLower, "geth") ||
 			strings.Contains(nameLower, "besu") ||
@@ -274,7 +274,7 @@ func detectServiceType(name string) network.ServiceType {
 			strings.Contains(nameLower, "reth") {
 			return network.ServiceTypeExecutionClient
 		}
-		
+
 		// Consensus clients
 		if strings.Contains(nameLower, "lighthouse") ||
 			strings.Contains(nameLower, "teku") ||
@@ -285,12 +285,12 @@ func detectServiceType(name string) network.ServiceType {
 			return network.ServiceTypeConsensusClient
 		}
 	}
-	
+
 	// Check for validator
 	if strings.Contains(nameLower, "validator") {
 		return network.ServiceTypeValidator
 	}
-	
+
 	// Check for other services
 	if strings.Contains(nameLower, "prometheus") {
 		return network.ServiceTypePrometheus
@@ -310,6 +310,6 @@ func detectServiceType(name string) network.ServiceType {
 	if strings.Contains(nameLower, "spamoor") {
 		return network.ServiceTypeSpamoor
 	}
-	
+
 	return network.ServiceTypeOther
 }

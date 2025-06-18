@@ -134,7 +134,7 @@ func (a *ApacheConfigClient) ListAvailableFiles(ctx context.Context) ([]string, 
 	html := string(body)
 	var files []string
 	seen := make(map[string]bool)
-	
+
 	// Apache directory listings typically have links in <a> tags
 	// We'll parse href attributes manually to extract filenames
 	for i := 0; i < len(html); i++ {
@@ -145,25 +145,25 @@ func (a *ApacheConfigClient) ListAvailableFiles(ctx context.Context) ([]string, 
 				continue
 			}
 			i++
-			
+
 			endIdx := strings.IndexByte(html[i:], quote)
 			if endIdx == -1 {
 				continue
 			}
-			
+
 			filename := html[i : i+endIdx]
-			
+
 			// Skip parent directory, query parameters, and directories
-			if filename == "" || 
-			   filename == "../" || 
-			   strings.HasPrefix(filename, "?") ||
-			   strings.HasPrefix(filename, "#") ||
-			   strings.Contains(filename, "://") ||
-			   strings.HasSuffix(filename, "/") {
+			if filename == "" ||
+				filename == "../" ||
+				strings.HasPrefix(filename, "?") ||
+				strings.HasPrefix(filename, "#") ||
+				strings.Contains(filename, "://") ||
+				strings.HasSuffix(filename, "/") {
 				i += endIdx
 				continue
 			}
-			
+
 			// Clean the filename
 			if idx := strings.Index(filename, "?"); idx != -1 {
 				filename = filename[:idx]
@@ -171,13 +171,13 @@ func (a *ApacheConfigClient) ListAvailableFiles(ctx context.Context) ([]string, 
 			if idx := strings.Index(filename, "#"); idx != -1 {
 				filename = filename[:idx]
 			}
-			
+
 			// Add unique files only
 			if !seen[filename] {
 				seen[filename] = true
 				files = append(files, filename)
 			}
-			
+
 			i += endIdx
 		}
 	}

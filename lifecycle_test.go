@@ -19,7 +19,7 @@ func TestRun_NetworkLifecycle(t *testing.T) {
 
 	// Setup mock expectations
 	runResult := &kurtosis.RunPackageResult{
-		EnclaveName: "test-enclave",
+		EnclaveName:   "test-enclave",
 		ResponseLines: []string{"Network started successfully"},
 	}
 
@@ -77,7 +77,7 @@ func TestRun_NetworkLifecycle(t *testing.T) {
 	// Verify network properties
 	assert.Equal(t, uint64(12345), network.ChainID())
 	assert.NotEmpty(t, network.EnclaveName())
-	
+
 	// Debug: log all services
 	for _, svc := range network.Services() {
 		t.Logf("Service: %s, Type: %s", svc.Name, svc.Type)
@@ -135,7 +135,7 @@ func TestRun_FailureScenarios(t *testing.T) {
 			name: "service startup timeout",
 			setupMock: func(m *mocks.MockKurtosisClient) {
 				runResult := &kurtosis.RunPackageResult{
-					EnclaveName: "test-enclave",
+					EnclaveName:   "test-enclave",
 					ResponseLines: []string{"Network started"},
 				}
 				m.RunPackageFunc = func(ctx context.Context, config kurtosis.RunPackageConfig) (*kurtosis.RunPackageResult, error) {
@@ -155,7 +155,7 @@ func TestRun_FailureScenarios(t *testing.T) {
 			name: "service discovery failure",
 			setupMock: func(m *mocks.MockKurtosisClient) {
 				runResult := &kurtosis.RunPackageResult{
-					EnclaveName: "test-enclave",
+					EnclaveName:   "test-enclave",
 					ResponseLines: []string{"Network started"},
 				}
 				m.RunPackageFunc = func(ctx context.Context, config kurtosis.RunPackageConfig) (*kurtosis.RunPackageResult, error) {
@@ -198,7 +198,7 @@ func TestRun_DryRunMode(t *testing.T) {
 	mockClient := mocks.NewMockKurtosisClient()
 
 	runResult := &kurtosis.RunPackageResult{
-		EnclaveName: "dry-run-enclave",
+		EnclaveName:   "dry-run-enclave",
 		ResponseLines: []string{"Dry run completed"},
 	}
 
@@ -307,7 +307,7 @@ func TestRun_ContextCancellation(t *testing.T) {
 
 func TestNetwork_Stop(t *testing.T) {
 	ctx := context.Background()
-	
+
 	config := types.NetworkConfig{
 		Name:        "test-network",
 		ChainID:     12345,
@@ -315,7 +315,7 @@ func TestNetwork_Stop(t *testing.T) {
 	}
 
 	network := types.NewNetwork(config)
-	
+
 	// Stop is currently a no-op, but we test it works
 	err := network.Stop(ctx)
 	assert.NoError(t, err)

@@ -67,7 +67,7 @@ func (h *HTTPWaitStrategy) WithInterval(interval time.Duration) *HTTPWaitStrateg
 // WaitUntilReady waits for the HTTP endpoint to be ready
 func (h *HTTPWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
 	var url string
-	
+
 	switch t := target.(type) {
 	case ExecutionClient:
 		url = t.RPCURL()
@@ -161,7 +161,7 @@ func (s *SyncWaitStrategy) WaitUntilReady(ctx context.Context, target interface{
 				syncCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 				err := client.WaitForSync(syncCtx)
 				cancel()
-				
+
 				if err == nil {
 					return nil // Synced
 				}
@@ -268,7 +268,7 @@ func (c *CombinedWaitStrategy) waitSequential(ctx context.Context, target interf
 // waitParallel executes strategies in parallel
 func (c *CombinedWaitStrategy) waitParallel(ctx context.Context, target interface{}) error {
 	errChan := make(chan error, len(c.strategies))
-	
+
 	for i, strategy := range c.strategies {
 		go func(idx int, s WaitStrategy) {
 			if err := s.WaitUntilReady(ctx, target); err != nil {
@@ -278,14 +278,14 @@ func (c *CombinedWaitStrategy) waitParallel(ctx context.Context, target interfac
 			}
 		}(i, strategy)
 	}
-	
+
 	// Wait for all strategies to complete
 	for i := 0; i < len(c.strategies); i++ {
 		if err := <-errChan; err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -297,7 +297,7 @@ func DefaultExecutionClientWait() WaitStrategy {
 	)
 }
 
-// DefaultConsensusClientWait returns a default wait strategy for consensus clients  
+// DefaultConsensusClientWait returns a default wait strategy for consensus clients
 func DefaultConsensusClientWait() WaitStrategy {
 	return NewCombinedWaitStrategy(
 		NewHTTPWaitStrategy(5052).WithPath("/eth/v1/node/health"),

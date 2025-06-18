@@ -69,7 +69,7 @@ func (b *ConfigBuilder) WithGlobalLogLevel(level string) *ConfigBuilder {
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
 	b.config.ApplyDefaults()
-	
+
 	// Validate configuration
 	if err := b.config.Validate(); err != nil {
 		return nil, err

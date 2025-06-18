@@ -133,7 +133,7 @@ func ParticipantTestCases() []ValidatorTestCase {
 // NetworkParamsTestCases returns common test cases for network params validation
 func NetworkParamsTestCases() []ValidatorTestCase {
 	baseConfig := DefaultValidConfig()
-	
+
 	createConfigWithNetworkParams := func(params *NetworkParams) *EthereumPackageConfig {
 		config := &EthereumPackageConfig{
 			Participants:  baseConfig.Participants,
@@ -161,7 +161,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 			Name: "invalid slots per epoch (too low)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
 				SecondsPerSlot: 12,
-				SlotsPerEpoch: -1,
+				SlotsPerEpoch:  -1,
 			}),
 			WantErr: "slots per epoch must be between 1 and 1000",
 		},
@@ -169,15 +169,15 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 			Name: "invalid slots per epoch (too high)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
 				SecondsPerSlot: 12,
-				SlotsPerEpoch: 1001,
+				SlotsPerEpoch:  1001,
 			}),
 			WantErr: "slots per epoch must be between 1 and 1000",
 		},
 		{
 			Name: "negative fork epoch",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot: 12,
-				SlotsPerEpoch: 32,
+				SecondsPerSlot:   12,
+				SlotsPerEpoch:    32,
 				CapellaForkEpoch: -1,
 			}),
 			WantErr: "capella fork epoch cannot be negative",
@@ -185,8 +185,8 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid fork ordering (capella > deneb)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot: 12,
-				SlotsPerEpoch: 32,
+				SecondsPerSlot:   12,
+				SlotsPerEpoch:    32,
 				CapellaForkEpoch: 20,
 				DenebForkEpoch:   10,
 			}),
@@ -195,8 +195,8 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid fork ordering (deneb > electra)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot: 12,
-				SlotsPerEpoch: 32,
+				SecondsPerSlot:   12,
+				SlotsPerEpoch:    32,
 				DenebForkEpoch:   30,
 				ElectraForkEpoch: 20,
 			}),
@@ -208,7 +208,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 // MEVTestCases returns common test cases for MEV validation
 func MEVTestCases() []ValidatorTestCase {
 	baseConfig := DefaultValidConfig()
-	
+
 	createConfigWithMEV := func(mev *MEVConfig) *EthereumPackageConfig {
 		config := &EthereumPackageConfig{
 			Participants: baseConfig.Participants,
