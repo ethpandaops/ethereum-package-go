@@ -11,17 +11,25 @@ import (
 	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 )
 
+const (
+	// DefaultPackageRepository is the default ethereum-package repository
+	DefaultPackageRepository = "github.com/ethpandaops/ethereum-package"
+	// DefaultPackageVersion is the pinned version of ethereum-package
+	DefaultPackageVersion = "3.0.1"
+)
+
 // RunOption configures how the Ethereum network is started
 type RunOption func(*RunConfig)
 
 // RunConfig holds configuration for running an Ethereum network
 type RunConfig struct {
 	// Package configuration
-	PackageID     string
-	EnclaveName   string
-	ConfigSource  config.ConfigSource
-	NetworkParams *config.NetworkParams
-	ChainID       uint64
+	PackageID       string
+	PackageVersion  string
+	EnclaveName     string
+	ConfigSource    config.ConfigSource
+	NetworkParams   *config.NetworkParams
+	ChainID         uint64
 
 	// MEV configuration
 	MEV *config.MEVConfig
@@ -46,7 +54,8 @@ type RunConfig struct {
 // defaultRunConfig returns a RunConfig with sensible defaults
 func defaultRunConfig() *RunConfig {
 	return &RunConfig{
-		PackageID:      "github.com/ethpandaops/ethereum-package",
+		PackageID:      DefaultPackageRepository,
+		PackageVersion: DefaultPackageVersion,
 		EnclaveName:    generateEnclaveName(),
 		ConfigSource:   config.NewPresetConfigSource(config.PresetMinimal),
 		ChainID:        12345,
@@ -99,8 +108,13 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	}
 
 	// Create Kurtosis run configuration
+	packageID := cfg.PackageID
+	if cfg.PackageVersion != "" {
+		packageID = fmt.Sprintf("%s@%s", cfg.PackageID, cfg.PackageVersion)
+	}
+	
 	runConfig := kurtosis.RunPackageConfig{
-		PackageID:       cfg.PackageID,
+		PackageID:       packageID,
 		EnclaveName:     cfg.EnclaveName,
 		ConfigYAML:      yamlConfig,
 		DryRun:          cfg.DryRun,

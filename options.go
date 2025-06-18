@@ -88,6 +88,21 @@ func WithPackageID(packageID string) RunOption {
 	}
 }
 
+// WithPackageVersion sets a custom ethereum-package version
+func WithPackageVersion(version string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.PackageVersion = version
+	}
+}
+
+// WithPackageRepo sets both repository and version for the ethereum-package
+func WithPackageRepo(repo, version string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.PackageID = repo
+		cfg.PackageVersion = version
+	}
+}
+
 // WithDryRun enables dry run mode (validation only, no actual deployment)
 func WithDryRun(dryRun bool) RunOption {
 	return func(cfg *RunConfig) {

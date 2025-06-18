@@ -167,6 +167,28 @@ func TestWithPackageID(t *testing.T) {
 	assert.Equal(t, packageID, cfg.PackageID)
 }
 
+func TestWithPackageVersion(t *testing.T) {
+	cfg := defaultRunConfig()
+	version := "2.5.0"
+	
+	opt := WithPackageVersion(version)
+	opt(cfg)
+
+	assert.Equal(t, version, cfg.PackageVersion)
+}
+
+func TestWithPackageRepo(t *testing.T) {
+	cfg := defaultRunConfig()
+	repo := "github.com/custom/ethereum-package"
+	version := "1.2.3"
+	
+	opt := WithPackageRepo(repo, version)
+	opt(cfg)
+
+	assert.Equal(t, repo, cfg.PackageID)
+	assert.Equal(t, version, cfg.PackageVersion)
+}
+
 func TestWithDryRun(t *testing.T) {
 	cfg := defaultRunConfig()
 	

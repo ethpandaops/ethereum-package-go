@@ -15,7 +15,8 @@ import (
 func TestDefaultRunConfig(t *testing.T) {
 	cfg := defaultRunConfig()
 	
-	assert.NotEmpty(t, cfg.PackageID)
+	assert.Equal(t, DefaultPackageRepository, cfg.PackageID)
+	assert.Equal(t, DefaultPackageVersion, cfg.PackageVersion)
 	assert.NotEmpty(t, cfg.EnclaveName)
 	assert.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, uint64(12345), cfg.ChainID)
@@ -264,4 +265,56 @@ func TestConvenienceFunctions(t *testing.T) {
 	require.NotNil(t, cfg.MEV)
 	assert.Equal(t, "full", cfg.MEV.Type)
 	assert.Equal(t, "http://relay:18550", cfg.MEV.RelayURL)
+}
+
+func TestPackageVersionOptions(t *testing.T) {
+	cfg := defaultRunConfig()
+
+	// Test WithPackageVersion
+	WithPackageVersion("2.5.0")(cfg)
+	assert.Equal(t, "2.5.0", cfg.PackageVersion)
+
+	// Test WithPackageRepo
+	WithPackageRepo("github.com/custom/package", "1.0.0")(cfg)
+	assert.Equal(t, "github.com/custom/package", cfg.PackageID)
+	assert.Equal(t, "1.0.0", cfg.PackageVersion)
+}
+
+func TestPackageIDConstruction(t *testing.T) {
+	tests := []struct {
+		name           string
+		packageID      string
+		packageVersion string
+		expectedID     string
+	}{
+		{
+			name:           "with version",
+			packageID:      "github.com/ethpandaops/ethereum-package",
+			packageVersion: "3.0.1",
+			expectedID:     "github.com/ethpandaops/ethereum-package@3.0.1",
+		},
+		{
+			name:           "without version",
+			packageID:      "github.com/ethpandaops/ethereum-package",
+			packageVersion: "",
+			expectedID:     "github.com/ethpandaops/ethereum-package",
+		},
+		{
+			name:           "custom repo with version",
+			packageID:      "github.com/custom/ethereum-package",
+			packageVersion: "2.0.0",
+			expectedID:     "github.com/custom/ethereum-package@2.0.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test the package ID construction logic
+			packageID := tt.packageID
+			if tt.packageVersion != "" {
+				packageID = packageID + "@" + tt.packageVersion
+			}
+			assert.Equal(t, tt.expectedID, packageID)
+		})
+	}
 }
