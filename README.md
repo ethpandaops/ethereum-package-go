@@ -24,12 +24,13 @@ import (
 func main() {
     ctx := context.Background()
     
-    // Start a minimal network
+    // Start a minimal network (auto-cleanup on process exit)
     network, err := ethereum.Run(ctx, ethereum.Minimal())
     if err != nil {
         panic(err)
     }
-    defer network.Cleanup(ctx)
+    // Network auto-cleans up when process exits (testcontainers-style)
+    // Optional: defer network.Cleanup(ctx) for explicit cleanup
     
     // Access clients
     clients := network.ExecutionClients().ByType(types.ClientGeth)
@@ -90,6 +91,48 @@ for _, client := range network.ExecutionClients().All() {
 apache := network.ApacheConfig()
 genesisURL := apache.GenesisSSZURL()
 configURL := apache.ConfigYAMLURL()
+```
+
+## Lifecycle Management
+
+### Auto-Cleanup (Default)
+Networks automatically clean up when the process exits (testcontainers-style):
+
+```go
+// Default behavior - auto cleanup on exit
+network, err := ethereum.Run(ctx, ethereum.Minimal())
+// Network will be destroyed when process exits
+```
+
+### Orphan Networks
+Prevent auto-cleanup to create persistent networks:
+
+```go
+// Network persists after process exit
+network, err := ethereum.Run(ctx,
+    ethereum.Minimal(),
+    ethereum.WithOrphanOnExit(),
+)
+// Manual cleanup: kurtosis enclave rm <enclave-name>
+```
+
+### Reuse Networks
+Connect to existing networks or create reusable ones:
+
+```go
+// Reuse existing network or create with specific name
+network, err := ethereum.Run(ctx,
+    ethereum.Minimal(),
+    ethereum.WithReuse("my-persistent-network"),
+)
+```
+
+### Explicit Cleanup
+For manual control over cleanup timing:
+
+```go
+network, err := ethereum.Run(ctx, ethereum.Minimal())
+defer network.Cleanup(ctx) // Explicit cleanup
 ```
 
 ## Requirements

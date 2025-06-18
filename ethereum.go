@@ -47,6 +47,10 @@ type RunConfig struct {
 	Timeout        time.Duration
 	WaitForGenesis bool
 
+	// Lifecycle management
+	OrphanOnExit  bool // Don't cleanup enclave when process exits
+	ReuseExisting bool // Try to reuse existing enclave
+
 	// Dependencies (can be injected for testing)
 	KurtosisClient kurtosis.Client
 }
@@ -64,6 +68,8 @@ func defaultRunConfig() *RunConfig {
 		VerboseMode:    false,
 		Timeout:        10 * time.Minute,
 		GlobalLogLevel: "info",
+		OrphanOnExit:   false, // Auto-cleanup by default (testcontainers style)
+		ReuseExisting:  false,
 	}
 }
 
@@ -86,22 +92,46 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
+	fmt.Printf("[ethereum-package-go] Starting network deployment...\n")
+	fmt.Printf("[ethereum-package-go] Package: %s\n", cfg.PackageID)
+	if cfg.PackageVersion != "" {
+		fmt.Printf("[ethereum-package-go] Version: %s\n", cfg.PackageVersion)
+	}
+	fmt.Printf("[ethereum-package-go] Enclave: %s\n", cfg.EnclaveName)
+
 	// Initialize Kurtosis client if not provided
 	if cfg.KurtosisClient == nil {
+		fmt.Printf("[ethereum-package-go] Initializing Kurtosis client...\n")
 		client, err := kurtosis.NewKurtosisClient(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Kurtosis client: %w", err)
 		}
 		cfg.KurtosisClient = client
+		fmt.Printf("[ethereum-package-go] Kurtosis client initialized\n")
 	}
 
 	// Build ethereum-package configuration
+	fmt.Printf("[ethereum-package-go] Building ethereum-package configuration...\n")
 	ethConfig, err := buildEthereumConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build configuration: %w", err)
 	}
 
+	// Log configuration details
+	if ethConfig.Participants != nil {
+		fmt.Printf("[ethereum-package-go] Participants: %d\n", len(ethConfig.Participants))
+		for i, p := range ethConfig.Participants {
+			fmt.Printf("[ethereum-package-go]   %d: %s/%s (count: %d, validators: %d)\n",
+				i, p.ELType, p.CLType, p.Count, p.ValidatorCount)
+		}
+	}
+	if ethConfig.NetworkParams != nil {
+		fmt.Printf("[ethereum-package-go] Network ID: %s\n", ethConfig.NetworkParams.NetworkID)
+		fmt.Printf("[ethereum-package-go] Validators per node: %d\n", ethConfig.NetworkParams.NumValidatorKeysPerNode)
+	}
+
 	// Convert to YAML
+	fmt.Printf("[ethereum-package-go] Converting configuration to YAML...\n")
 	yamlConfig, err := config.ToYAML(ethConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate YAML configuration: %w", err)
@@ -125,47 +155,81 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	}
 
 	// Run the package
+	fmt.Printf("[ethereum-package-go] Starting ethereum-package deployment...\n")
+	fmt.Printf("[ethereum-package-go] This may take several minutes...\n")
 	result, err := cfg.KurtosisClient.RunPackage(ctx, runConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to run ethereum-package: %w", err)
 	}
+	fmt.Printf("[ethereum-package-go] Package deployment completed\n")
 
 	// Check for Kurtosis execution errors even if err is nil
+	fmt.Printf("[ethereum-package-go] Checking deployment result...\n")
 	if result.ExecutionError != nil {
+		fmt.Printf("[ethereum-package-go] ERROR: Execution failed: %v\n", result.ExecutionError)
 		return nil, fmt.Errorf("ethereum-package execution error: %w", result.ExecutionError)
 	}
 	if result.InterpretationError != nil {
+		fmt.Printf("[ethereum-package-go] ERROR: Interpretation failed: %v\n", result.InterpretationError)
 		return nil, fmt.Errorf("ethereum-package interpretation error: %w", result.InterpretationError)
 	}
 	if len(result.ValidationErrors) > 0 {
+		fmt.Printf("[ethereum-package-go] ERROR: Validation failed: %v\n", result.ValidationErrors)
 		return nil, fmt.Errorf("ethereum-package validation errors: %v", result.ValidationErrors)
 	}
+	fmt.Printf("[ethereum-package-go] Deployment validation passed\n")
 
 	// Wait for services to be ready
 	if !cfg.DryRun {
+		fmt.Printf("[ethereum-package-go] Waiting for services to be ready (timeout: %v)...\n", cfg.Timeout)
 		err = cfg.KurtosisClient.WaitForServices(ctx, cfg.EnclaveName, []string{}, cfg.Timeout)
 		if err != nil {
+			fmt.Printf("[ethereum-package-go] ERROR: Services failed to start: %v\n", err)
+			fmt.Printf("[ethereum-package-go] Cleaning up failed deployment...\n")
 			// Cleanup on failure
 			_ = cfg.KurtosisClient.DestroyEnclave(ctx, cfg.EnclaveName)
 			return nil, fmt.Errorf("services failed to start: %w", err)
 		}
+		fmt.Printf("[ethereum-package-go] All services are ready\n")
 	}
 
 	// Discover and map services
+	fmt.Printf("[ethereum-package-go] Discovering and mapping services...\n")
 	mapper := discovery.NewServiceMapper(cfg.KurtosisClient)
-	network, err := mapper.MapToNetwork(ctx, cfg.EnclaveName, ethConfig)
+	network, err := mapper.MapToNetwork(ctx, cfg.EnclaveName, ethConfig, cfg.OrphanOnExit)
 	if err != nil {
+		fmt.Printf("[ethereum-package-go] ERROR: Failed to discover services: %v\n", err)
+		fmt.Printf("[ethereum-package-go] Cleaning up failed deployment...\n")
 		// Cleanup on failure
 		_ = cfg.KurtosisClient.DestroyEnclave(ctx, cfg.EnclaveName)
 		return nil, fmt.Errorf("failed to discover services: %w", err)
 	}
+	fmt.Printf("[ethereum-package-go] Service discovery completed\n")
+	fmt.Printf("[ethereum-package-go] Found %d execution clients\n", len(network.ExecutionClients().All()))
+	fmt.Printf("[ethereum-package-go] Found %d consensus clients\n", len(network.ConsensusClients().All()))
+	fmt.Printf("[ethereum-package-go] Found %d total services\n", len(network.Services()))
 
 	// Wait for genesis if requested
 	if cfg.WaitForGenesis && !cfg.DryRun {
+		fmt.Printf("[ethereum-package-go] Waiting for genesis block...\n")
 		if err := WaitForGenesis(ctx, network); err != nil {
+			fmt.Printf("[ethereum-package-go] WARNING: Failed to wait for genesis: %v\n", err)
 			// Don't cleanup on genesis wait failure - network is already running
 			return network, fmt.Errorf("failed to wait for genesis: %w", err)
 		}
+		fmt.Printf("[ethereum-package-go] Genesis block detected\n")
+	}
+
+	fmt.Printf("[ethereum-package-go] Network deployment completed successfully!\n")
+	fmt.Printf("[ethereum-package-go] Network name: %s\n", network.Name())
+	fmt.Printf("[ethereum-package-go] Enclave: %s\n", network.EnclaveName())
+	fmt.Printf("[ethereum-package-go] Chain ID: %d\n", network.ChainID())
+
+	if cfg.OrphanOnExit {
+		fmt.Printf("[ethereum-package-go] Network will be ORPHANED - manual cleanup required\n")
+		fmt.Printf("[ethereum-package-go] Run 'kurtosis enclave rm %s' to clean up manually\n", network.EnclaveName())
+	} else {
+		fmt.Printf("[ethereum-package-go] Network will auto-cleanup on process exit\n")
 	}
 
 	return network, nil
@@ -205,7 +269,7 @@ func FindOrCreateNetwork(ctx context.Context, enclaveName string, opts ...RunOpt
 		}
 
 		mapper := discovery.NewServiceMapper(cfg.KurtosisClient)
-		network, err := mapper.MapToNetwork(ctx, enclaveName, ethConfig)
+		network, err := mapper.MapToNetwork(ctx, enclaveName, ethConfig, cfg.OrphanOnExit)
 		if err != nil {
 			return nil, fmt.Errorf("failed to map existing network: %w", err)
 		}

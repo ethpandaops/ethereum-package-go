@@ -219,3 +219,31 @@ func WithWaitForGenesis() RunOption {
 func WithSpamoor() RunOption {
 	return WithAdditionalServices("spamoor")
 }
+
+// WithOrphanOnExit prevents automatic cleanup when the process exits
+// This is similar to testcontainers' reuse option - the enclave will persist
+// after the program terminates and must be manually cleaned up
+func WithOrphanOnExit() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.OrphanOnExit = true
+	}
+}
+
+// WithAutoCleanup explicitly enables automatic cleanup (default behavior)
+// This ensures the enclave is destroyed when the network goes out of scope
+func WithAutoCleanup() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.OrphanOnExit = false
+	}
+}
+
+// WithReuse attempts to reuse an existing enclave with the given name
+// If the enclave doesn't exist, a new one will be created
+// This is similar to testcontainers' reuse functionality
+func WithReuse(enclaveName string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.EnclaveName = enclaveName
+		cfg.ReuseExisting = true
+		cfg.OrphanOnExit = true // Reused enclaves should not be auto-cleaned
+	}
+}

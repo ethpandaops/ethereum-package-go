@@ -36,7 +36,7 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -100,7 +100,7 @@ func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "custom-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "custom-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -137,7 +137,7 @@ func TestServiceMapper_MapToNetworkEmpty(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "empty-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "empty-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -166,7 +166,7 @@ func TestServiceMapper_MapToNetworkError(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "error-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "error-enclave", ethConfig, false)
 	assert.Nil(t, networkObj)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get services")
@@ -199,7 +199,7 @@ func TestServiceMapper_DiscoverApacheConfig(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "apache-test", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "apache-test", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -253,7 +253,7 @@ func TestServiceMapper_MultipleClientTypes(t *testing.T) {
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "multi-client", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "multi-client", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 

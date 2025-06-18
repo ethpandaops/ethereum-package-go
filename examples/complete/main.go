@@ -27,13 +27,9 @@ func main() {
 		log.Fatalf("Failed to start network: %v", err)
 	}
 
-	// Ensure cleanup on exit
-	defer func() {
-		fmt.Println("🧹 Cleaning up network...")
-		if err := network.Cleanup(ctx); err != nil {
-			log.Printf("Failed to cleanup network: %v", err)
-		}
-	}()
+	// Network will auto-cleanup when process exits (testcontainers-style)
+	// If you want to prevent this, use ethereum.WithOrphanOnExit()
+	// If you want explicit control, you can still call network.Cleanup(ctx)
 
 	fmt.Printf("✅ Network started successfully!\n")
 	fmt.Printf("   Chain ID: %d\n", network.ChainID())

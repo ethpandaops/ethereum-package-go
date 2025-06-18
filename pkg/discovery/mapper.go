@@ -27,7 +27,7 @@ func NewServiceMapper(kurtosisClient kurtosis.Client) *ServiceMapper {
 }
 
 // MapToNetwork discovers services and creates a Network instance
-func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cfg *config.EthereumPackageConfig) (network.Network, error) {
+func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cfg *config.EthereumPackageConfig, orphanOnExit bool) (network.Network, error) {
 	// Get all services from Kurtosis
 	services, err := m.kurtosisClient.GetServices(ctx, enclaveName)
 	if err != nil {
@@ -89,6 +89,7 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cf
 		Services:         networkServices,
 		ApacheConfig:     apacheConfigServer,
 		CleanupFunc:      m.createCleanupFunc(enclaveName),
+		OrphanOnExit:     orphanOnExit,
 	}
 
 	return network.New(networkConfig), nil
@@ -252,8 +253,8 @@ func detectServiceType(name string) network.ServiceType {
 	nameLower := strings.ToLower(name)
 
 	// Check for validator services first (most specific)
-	if strings.Contains(nameLower, "validator-key-generation") || 
-		strings.HasPrefix(nameLower, "vc-") || 
+	if strings.Contains(nameLower, "validator-key-generation") ||
+		strings.HasPrefix(nameLower, "vc-") ||
 		(strings.Contains(nameLower, "validator") && !strings.HasPrefix(nameLower, "cl-") && !strings.HasPrefix(nameLower, "el-")) {
 		return network.ServiceTypeValidator
 	}

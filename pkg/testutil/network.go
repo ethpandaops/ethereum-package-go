@@ -24,11 +24,14 @@ type TestNetwork struct {
 func NewTestNetwork(t testing.TB, opts ...ethereum.RunOption) *TestNetwork {
 	t.Helper()
 
+	t.Log("Starting network setup...")
 	ctx := context.Background()
+	t.Log("Calling ethereum.Run() to create network")
 	network, err := ethereum.Run(ctx, opts...)
 	if err != nil {
 		t.Fatalf("Failed to start test network: %v", err)
 	}
+	t.Log("Network created successfully")
 
 	tn := &TestNetwork{
 		Network: network,
@@ -36,11 +39,19 @@ func NewTestNetwork(t testing.TB, opts ...ethereum.RunOption) *TestNetwork {
 		cleanup: []func(){},
 	}
 
+	t.Logf("Network enclave: %s", network.EnclaveName())
+	t.Logf("Found %d execution clients", len(network.ExecutionClients().All()))
+	t.Logf("Found %d consensus clients", len(network.ConsensusClients().All()))
+	t.Logf("Found %d total services", len(network.Services()))
+
 	// Register cleanup
 	t.Cleanup(func() {
+		t.Log("Cleaning up test network...")
 		ctx := context.Background()
 		if err := tn.Cleanup(ctx); err != nil {
 			t.Logf("Failed to cleanup network: %v", err)
+		} else {
+			t.Log("Network cleanup completed")
 		}
 	})
 
@@ -57,11 +68,13 @@ func StartNetwork(t testing.TB) *TestNetwork {
 func StartSharedNetwork(t testing.TB, name string, opts ...ethereum.RunOption) *TestNetwork {
 	t.Helper()
 
+	t.Logf("Starting or finding shared network: %s", name)
 	ctx := context.Background()
 	network, err := ethereum.FindOrCreateNetwork(ctx, name, opts...)
 	if err != nil {
 		t.Fatalf("Failed to start/find shared network: %v", err)
 	}
+	t.Logf("Shared network ready: %s", name)
 
 	tn := &TestNetwork{
 		Network: network,
@@ -118,51 +131,81 @@ func (tn *TestNetwork) GetConsensusClient() client.ConsensusClient {
 func (tn *TestNetwork) WaitForSync(timeout time.Duration) {
 	tn.t.Helper()
 
+	tn.t.Logf("Waiting for network sync (timeout: %v)...", timeout)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	// Wait for execution clients
-	for _, client := range tn.ExecutionClients().All() {
-		if waiter, ok := client.(interface{ WaitForSync(context.Context) error }); ok {
-			if err := waiter.WaitForSync(ctx); err != nil {
-				tn.t.Fatalf("Execution client %s failed to sync: %v", client.Name(), err)
+	execClients := tn.ExecutionClients().All()
+	if len(execClients) > 0 {
+		tn.t.Logf("Waiting for %d execution clients to sync...", len(execClients))
+		for _, client := range execClients {
+			tn.t.Logf("Syncing execution client: %s", client.Name())
+			if waiter, ok := client.(interface{ WaitForSync(context.Context) error }); ok {
+				if err := waiter.WaitForSync(ctx); err != nil {
+					tn.t.Fatalf("Execution client %s failed to sync: %v", client.Name(), err)
+				}
+				tn.t.Logf("Execution client %s synced successfully", client.Name())
 			}
 		}
 	}
 
 	// Wait for consensus clients
-	for _, client := range tn.ConsensusClients().All() {
-		if waiter, ok := client.(interface{ WaitForSync(context.Context) error }); ok {
-			if err := waiter.WaitForSync(ctx); err != nil {
-				tn.t.Fatalf("Consensus client %s failed to sync: %v", client.Name(), err)
+	consClients := tn.ConsensusClients().All()
+	if len(consClients) > 0 {
+		tn.t.Logf("Waiting for %d consensus clients to sync...", len(consClients))
+		for _, client := range consClients {
+			tn.t.Logf("Syncing consensus client: %s", client.Name())
+			if waiter, ok := client.(interface{ WaitForSync(context.Context) error }); ok {
+				if err := waiter.WaitForSync(ctx); err != nil {
+					tn.t.Fatalf("Consensus client %s failed to sync: %v", client.Name(), err)
+				}
+				tn.t.Logf("Consensus client %s synced successfully", client.Name())
 			}
 		}
 	}
+
+	tn.t.Log("All clients synced successfully")
 }
 
 // RequireHealthy checks that all services are healthy or fails the test
 func (tn *TestNetwork) RequireHealthy() {
 	tn.t.Helper()
 
+	tn.t.Log("Checking network health...")
 	ctx := context.Background()
 
 	// Check execution clients
-	for _, client := range tn.ExecutionClients().All() {
-		if checker, ok := client.(interface{ IsHealthy(context.Context) bool }); ok {
-			if !checker.IsHealthy(ctx) {
-				tn.t.Fatalf("Execution client %s is not healthy", client.Name())
+	execClients := tn.ExecutionClients().All()
+	if len(execClients) > 0 {
+		tn.t.Logf("Checking health of %d execution clients...", len(execClients))
+		for _, client := range execClients {
+			tn.t.Logf("Checking execution client health: %s", client.Name())
+			if checker, ok := client.(interface{ IsHealthy(context.Context) bool }); ok {
+				if !checker.IsHealthy(ctx) {
+					tn.t.Fatalf("Execution client %s is not healthy", client.Name())
+				}
+				tn.t.Logf("Execution client %s is healthy", client.Name())
 			}
 		}
 	}
 
 	// Check consensus clients
-	for _, client := range tn.ConsensusClients().All() {
-		if checker, ok := client.(interface{ IsHealthy(context.Context) bool }); ok {
-			if !checker.IsHealthy(ctx) {
-				tn.t.Fatalf("Consensus client %s is not healthy", client.Name())
+	consClients := tn.ConsensusClients().All()
+	if len(consClients) > 0 {
+		tn.t.Logf("Checking health of %d consensus clients...", len(consClients))
+		for _, client := range consClients {
+			tn.t.Logf("Checking consensus client health: %s", client.Name())
+			if checker, ok := client.(interface{ IsHealthy(context.Context) bool }); ok {
+				if !checker.IsHealthy(ctx) {
+					tn.t.Fatalf("Consensus client %s is not healthy", client.Name())
+				}
+				tn.t.Logf("Consensus client %s is healthy", client.Name())
 			}
 		}
 	}
+
+	tn.t.Log("All network components are healthy")
 }
 
 // AddCleanup adds a cleanup function to be called when the test ends
