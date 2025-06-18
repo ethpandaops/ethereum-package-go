@@ -129,7 +129,7 @@ func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to run ethereum-package: %w", err)
 	}
-	
+
 	// Check for Kurtosis execution errors even if err is nil
 	if result.ExecutionError != nil {
 		return nil, fmt.Errorf("ethereum-package execution error: %w", result.ExecutionError)
