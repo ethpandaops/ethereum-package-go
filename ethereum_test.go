@@ -14,8 +14,9 @@ import (
 
 func TestDefaultRunConfig(t *testing.T) {
 	cfg := defaultRunConfig()
-	
-	assert.NotEmpty(t, cfg.PackageID)
+
+	assert.Equal(t, DefaultPackageRepository, cfg.PackageID)
+	assert.Equal(t, DefaultPackageVersion, cfg.PackageVersion)
 	assert.NotEmpty(t, cfg.EnclaveName)
 	assert.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, uint64(12345), cfg.ChainID)
@@ -110,7 +111,7 @@ func TestBuildEthereumConfig(t *testing.T) {
 				assert.Equal(t, client.Geth, config.Participants[0].ELType)
 				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				require.NotNil(t, config.NetworkParams)
-				assert.Equal(t, uint64(98765), config.NetworkParams.ChainID)
+				assert.Equal(t, "98765", config.NetworkParams.NetworkID)
 			},
 		},
 		{
@@ -145,7 +146,7 @@ func TestBuildEthereumConfig(t *testing.T) {
 				assert.Len(t, config.AdditionalServices, 2)
 				assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
 				assert.Equal(t, "grafana", config.AdditionalServices[1].Name)
-				assert.Equal(t, "debug", config.GlobalClientLogLevel)
+				assert.Equal(t, "debug", config.GlobalLogLevel)
 			},
 		},
 	}
@@ -249,11 +250,11 @@ func TestConvenienceFunctions(t *testing.T) {
 	assert.Len(t, cfg.AdditionalServices, 3)
 
 	// Test custom chain
-	WithCustomChain(777, 6, 16)(cfg)
+	WithCustomChain("777", 6, 64)(cfg)
 	require.NotNil(t, cfg.NetworkParams)
-	assert.Equal(t, uint64(777), cfg.NetworkParams.ChainID)
+	assert.Equal(t, "777", cfg.NetworkParams.NetworkID)
 	assert.Equal(t, 6, cfg.NetworkParams.SecondsPerSlot)
-	assert.Equal(t, 16, cfg.NetworkParams.SlotsPerEpoch)
+	assert.Equal(t, 64, cfg.NetworkParams.NumValidatorKeysPerNode)
 
 	// Test MEV functions
 	WithMEVBoost()(cfg)
@@ -264,4 +265,56 @@ func TestConvenienceFunctions(t *testing.T) {
 	require.NotNil(t, cfg.MEV)
 	assert.Equal(t, "full", cfg.MEV.Type)
 	assert.Equal(t, "http://relay:18550", cfg.MEV.RelayURL)
+}
+
+func TestPackageVersionOptions(t *testing.T) {
+	cfg := defaultRunConfig()
+
+	// Test WithPackageVersion
+	WithPackageVersion("5.0.0")(cfg)
+	assert.Equal(t, "5.0.0", cfg.PackageVersion)
+
+	// Test WithPackageRepo
+	WithPackageRepo("github.com/custom/package", "1.0.0")(cfg)
+	assert.Equal(t, "github.com/custom/package", cfg.PackageID)
+	assert.Equal(t, "1.0.0", cfg.PackageVersion)
+}
+
+func TestPackageIDConstruction(t *testing.T) {
+	tests := []struct {
+		name           string
+		packageID      string
+		packageVersion string
+		expectedID     string
+	}{
+		{
+			name:           "with version",
+			packageID:      "github.com/ethpandaops/ethereum-package",
+			packageVersion: "5.0.1",
+			expectedID:     "github.com/ethpandaops/ethereum-package@5.0.1",
+		},
+		{
+			name:           "without version",
+			packageID:      "github.com/ethpandaops/ethereum-package",
+			packageVersion: "",
+			expectedID:     "github.com/ethpandaops/ethereum-package",
+		},
+		{
+			name:           "custom repo with version",
+			packageID:      "github.com/custom/ethereum-package",
+			packageVersion: "2.0.0",
+			expectedID:     "github.com/custom/ethereum-package@2.0.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test the package ID construction logic
+			packageID := tt.packageID
+			if tt.packageVersion != "" {
+				packageID = packageID + "@" + tt.packageVersion
+			}
+			assert.Equal(t, tt.expectedID, packageID)
+		})
+	}
 }

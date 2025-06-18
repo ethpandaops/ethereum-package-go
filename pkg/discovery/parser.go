@@ -28,7 +28,7 @@ func NewMetadataParser() *MetadataParser {
 func (p *MetadataParser) ParseServiceMetadata(service *kurtosis.ServiceInfo) (*network.ServiceMetadata, error) {
 	// First detect the service type
 	serviceType := detectServiceType(service.Name)
-	
+
 	// Then detect client type based on service type
 	var clientType client.Type
 	if serviceType == network.ServiceTypeExecutionClient {
@@ -38,7 +38,7 @@ func (p *MetadataParser) ParseServiceMetadata(service *kurtosis.ServiceInfo) (*n
 	} else {
 		clientType = client.Unknown
 	}
-	
+
 	metadata := &network.ServiceMetadata{
 		Name:        service.Name,
 		ServiceType: serviceType,
@@ -105,12 +105,12 @@ func parseNodeInfo(serviceName string) (int, string) {
 	// Pattern: el-1-geth-lighthouse, cl-2-teku-geth, etc.
 	re := regexp.MustCompile(`^(el|cl)-(\d+)-(.+)$`)
 	matches := re.FindStringSubmatch(serviceName)
-	
+
 	if len(matches) >= 4 {
 		index, _ := strconv.Atoi(matches[2])
 		return index, matches[3]
 	}
-	
+
 	return 0, serviceName
 }
 
@@ -119,7 +119,7 @@ func parseValidatorInfo(service *kurtosis.ServiceInfo) (int, int) {
 	// Check config for validator information
 	// Note: Config field is not available in current Kurtosis ServiceInfo
 	// Will try to parse from service name instead
-	
+
 	// Try to parse from service name (e.g., "validator-5-10" means 5 validators starting at index 10)
 	re := regexp.MustCompile(`validator-(\d+)-(\d+)`)
 	if matches := re.FindStringSubmatch(service.Name); len(matches) >= 3 {
@@ -127,7 +127,7 @@ func parseValidatorInfo(service *kurtosis.ServiceInfo) (int, int) {
 		startIndex, _ := strconv.Atoi(matches[2])
 		return count, startIndex
 	}
-	
+
 	return 0, 0
 }
 
@@ -137,7 +137,7 @@ func extractVersion(service *kurtosis.ServiceInfo) string {
 	// Note: Config and Container fields are not available in current Kurtosis ServiceInfo
 	// Will return a default version based on client type
 	// In a real implementation, this would be fetched from the service's API
-	
+
 	return "unknown"
 }
 
@@ -162,7 +162,6 @@ func extractPeerID(service *kurtosis.ServiceInfo) string {
 	return ""
 }
 
-
 // ParseConnectionString parses a connection string into components
 func ParseConnectionString(connectionStr string) (protocol, address string, port int, err error) {
 	// Format: protocol://address:port
@@ -170,21 +169,21 @@ func ParseConnectionString(connectionStr string) (protocol, address string, port
 	if len(parts) != 2 {
 		return "", "", 0, fmt.Errorf("invalid connection string format")
 	}
-	
+
 	protocol = parts[0]
-	
+
 	// Split address and port
 	addressParts := strings.Split(parts[1], ":")
 	if len(addressParts) != 2 {
 		return "", "", 0, fmt.Errorf("invalid address format")
 	}
-	
+
 	address = addressParts[0]
 	port, err = strconv.Atoi(addressParts[1])
 	if err != nil {
 		return "", "", 0, fmt.Errorf("invalid port: %w", err)
 	}
-	
+
 	return protocol, address, port, nil
 }
 

@@ -21,10 +21,10 @@ func NewEndpointExtractor() *EndpointExtractor {
 // ExtractExecutionEndpoints extracts all endpoints for an execution client
 func (e *EndpointExtractor) ExtractExecutionEndpoints(service *kurtosis.ServiceInfo) (*network.ExecutionEndpoints, error) {
 	endpoints := &network.ExecutionEndpoints{}
-	
+
 	for portName, portInfo := range service.Ports {
 		portNameLower := strings.ToLower(portName)
-		
+
 		switch {
 		case strings.Contains(portNameLower, "rpc") && !strings.Contains(portNameLower, "ws"):
 			endpoints.RPCURL = e.buildURL(service, portInfo, "http")
@@ -38,7 +38,7 @@ func (e *EndpointExtractor) ExtractExecutionEndpoints(service *kurtosis.ServiceI
 			endpoints.MetricsURL = e.buildURL(service, portInfo, "http")
 		}
 	}
-	
+
 	// Fallback attempts if certain endpoints are missing
 	if endpoints.RPCURL == "" {
 		endpoints.RPCURL = e.findFallbackEndpoint(service, []string{"http", "http-rpc", "json-rpc"}, "http")
@@ -46,17 +46,17 @@ func (e *EndpointExtractor) ExtractExecutionEndpoints(service *kurtosis.ServiceI
 	if endpoints.EngineURL == "" {
 		endpoints.EngineURL = e.findFallbackEndpoint(service, []string{"engine", "auth", "auth-rpc"}, "http")
 	}
-	
+
 	return endpoints, nil
 }
 
 // ExtractConsensusEndpoints extracts all endpoints for a consensus client
 func (e *EndpointExtractor) ExtractConsensusEndpoints(service *kurtosis.ServiceInfo) (*network.ConsensusEndpoints, error) {
 	endpoints := &network.ConsensusEndpoints{}
-	
+
 	for portName, portInfo := range service.Ports {
 		portNameLower := strings.ToLower(portName)
-		
+
 		switch {
 		case strings.Contains(portNameLower, "beacon") || strings.Contains(portNameLower, "http"):
 			endpoints.BeaconURL = e.buildURL(service, portInfo, "http")
@@ -66,22 +66,22 @@ func (e *EndpointExtractor) ExtractConsensusEndpoints(service *kurtosis.ServiceI
 			endpoints.MetricsURL = e.buildURL(service, portInfo, "http")
 		}
 	}
-	
+
 	// Fallback attempts if beacon endpoint is missing
 	if endpoints.BeaconURL == "" {
 		endpoints.BeaconURL = e.findFallbackEndpoint(service, []string{"api", "rest", "http"}, "http")
 	}
-	
+
 	return endpoints, nil
 }
 
 // ExtractValidatorEndpoints extracts all endpoints for a validator client
 func (e *EndpointExtractor) ExtractValidatorEndpoints(service *kurtosis.ServiceInfo) (*network.ValidatorEndpoints, error) {
 	endpoints := &network.ValidatorEndpoints{}
-	
+
 	for portName, portInfo := range service.Ports {
 		portNameLower := strings.ToLower(portName)
-		
+
 		switch {
 		case strings.Contains(portNameLower, "api") || strings.Contains(portNameLower, "http"):
 			endpoints.APIURL = e.buildURL(service, portInfo, "http")
@@ -89,11 +89,11 @@ func (e *EndpointExtractor) ExtractValidatorEndpoints(service *kurtosis.ServiceI
 			endpoints.MetricsURL = e.buildURL(service, portInfo, "http")
 		}
 	}
-	
+
 	if endpoints.APIURL == "" {
 		return nil, fmt.Errorf("no API endpoint found for validator service %s", service.Name)
 	}
-	
+
 	return endpoints, nil
 }
 
@@ -103,12 +103,12 @@ func (e *EndpointExtractor) buildURL(service *kurtosis.ServiceInfo, port kurtosi
 	if port.MaybeURL != "" {
 		return port.MaybeURL
 	}
-	
+
 	// Construct URL from parts
 	if service.IPAddress != "" {
 		return fmt.Sprintf("%s://%s:%d", scheme, service.IPAddress, port.Number)
 	}
-	
+
 	// Fallback to service name or localhost
 	host := service.Name
 	if host == "" {
@@ -134,17 +134,17 @@ func (e *EndpointExtractor) ParseEndpointURL(endpoint string) (*url.URL, error) 
 	if endpoint == "" {
 		return nil, fmt.Errorf("empty endpoint")
 	}
-	
+
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
-	
+
 	// Validate that we have a scheme
 	if u.Scheme == "" {
 		return nil, fmt.Errorf("missing URL scheme")
 	}
-	
+
 	// Validate supported schemes
 	switch u.Scheme {
 	case "http", "https", "ws", "wss":
@@ -152,12 +152,12 @@ func (e *EndpointExtractor) ParseEndpointURL(endpoint string) (*url.URL, error) 
 	default:
 		return nil, fmt.Errorf("unsupported scheme: %s", u.Scheme)
 	}
-	
+
 	// Validate that we have a host
 	if u.Host == "" {
 		return nil, fmt.Errorf("missing host")
 	}
-	
+
 	// Set default ports if not specified
 	if u.Port() == "" {
 		switch u.Scheme {
@@ -171,7 +171,7 @@ func (e *EndpointExtractor) ParseEndpointURL(endpoint string) (*url.URL, error) 
 			u.Host = u.Host + ":443"
 		}
 	}
-	
+
 	return u, nil
 }
 
@@ -187,7 +187,7 @@ func (e *EndpointExtractor) GetPortNumber(endpoint string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	
+
 	portStr := u.Port()
 	if portStr == "" {
 		// Return default ports
@@ -200,11 +200,11 @@ func (e *EndpointExtractor) GetPortNumber(endpoint string) (int, error) {
 			return 0, fmt.Errorf("unknown scheme: %s", u.Scheme)
 		}
 	}
-	
+
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		return 0, fmt.Errorf("invalid port: %s", portStr)
 	}
-	
+
 	return port, nil
 }

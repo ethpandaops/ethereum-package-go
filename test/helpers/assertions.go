@@ -61,7 +61,7 @@ func AssertServiceExists(t *testing.T, network types.Network, serviceName string
 
 	services := network.Services()
 	found := false
-	
+
 	for _, service := range services {
 		if service.Name == serviceName {
 			found = true
@@ -78,7 +78,7 @@ func AssertApacheConfig(t *testing.T, network types.Network) {
 
 	apache := network.ApacheConfig()
 	require.NotNil(t, apache, "network should have Apache config server")
-	
+
 	assert.NotEmpty(t, apache.URL(), "Apache should have a base URL")
 	assert.Contains(t, apache.GenesisSSZURL(), "genesis.ssz", "Genesis URL should contain genesis.ssz")
 	assert.Contains(t, apache.ConfigYAMLURL(), "config.yaml", "Config URL should contain config.yaml")
@@ -120,7 +120,7 @@ func AssertEqualConfigs(t *testing.T, expected, actual *config.EthereumPackageCo
 	// Compare network params
 	if expected.NetworkParams != nil {
 		require.NotNil(t, actual.NetworkParams, "actual should have network params")
-		assert.Equal(t, expected.NetworkParams.ChainID, actual.NetworkParams.ChainID, "chain ID mismatch")
+		assert.Equal(t, expected.NetworkParams.NetworkID, actual.NetworkParams.NetworkID, "network ID mismatch")
 	}
 
 	// Compare MEV
@@ -130,5 +130,5 @@ func AssertEqualConfigs(t *testing.T, expected, actual *config.EthereumPackageCo
 	}
 
 	// Compare global settings
-	assert.Equal(t, expected.GlobalClientLogLevel, actual.GlobalClientLogLevel, "global log level mismatch")
+	assert.Equal(t, expected.GlobalLogLevel, actual.GlobalLogLevel, "global log level mismatch")
 }

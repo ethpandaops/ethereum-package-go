@@ -20,8 +20,8 @@ func TestToYAML(t *testing.T) {
 			},
 		},
 		NetworkParams: &NetworkParams{
-			ChainID:        12345,
-			NetworkID:      12345,
+			Network:        "kurtosis",
+			NetworkID:      "12345",
 			SecondsPerSlot: 12,
 		},
 		MEV: &MEVConfig{
@@ -35,7 +35,7 @@ func TestToYAML(t *testing.T) {
 				},
 			},
 		},
-		GlobalClientLogLevel: "info",
+		GlobalLogLevel: "info",
 	}
 
 	yamlStr, err := ToYAML(config)
@@ -49,12 +49,12 @@ func TestToYAML(t *testing.T) {
 	assert.Contains(t, yamlStr, "count: 2")
 	assert.Contains(t, yamlStr, "validator_count: 32")
 	assert.Contains(t, yamlStr, "network_params:")
-	assert.Contains(t, yamlStr, "chain_id: 12345")
+	assert.Contains(t, yamlStr, "network_id: \"12345\"")
 	assert.Contains(t, yamlStr, "mev_params:")
 	assert.Contains(t, yamlStr, "type: full")
 	assert.Contains(t, yamlStr, "additional_services:")
 	assert.Contains(t, yamlStr, "name: prometheus")
-	assert.Contains(t, yamlStr, "global_client_log_level: info")
+	assert.Contains(t, yamlStr, "global_log_level: info")
 }
 
 func TestToYAMLMinimal(t *testing.T) {
@@ -75,12 +75,12 @@ func TestToYAMLMinimal(t *testing.T) {
 	assert.Contains(t, yamlStr, "participants:")
 	assert.Contains(t, yamlStr, "el_type: geth")
 	assert.Contains(t, yamlStr, "cl_type: lighthouse")
-	
+
 	// Should not contain optional fields
 	assert.NotContains(t, yamlStr, "network_params:")
 	assert.NotContains(t, yamlStr, "mev_params:")
 	assert.NotContains(t, yamlStr, "additional_services:")
-	assert.NotContains(t, yamlStr, "global_client_log_level:")
+	assert.NotContains(t, yamlStr, "global_log_level:")
 }
 
 func TestFromYAML(t *testing.T) {
@@ -95,10 +95,10 @@ participants:
     count: 1
 
 network_params:
-  chain_id: 12345
-  network_id: 12345
+  network: kurtosis
+  network_id: "12345"
   seconds_per_slot: 12
-  slots_per_epoch: 32
+  num_validator_keys_per_node: 64
 
 mev_params:
   type: full
@@ -110,7 +110,7 @@ additional_services:
       port: 9090
   - name: grafana
 
-global_client_log_level: debug
+global_log_level: debug
 `
 
 	config, err := FromYAML(yamlContent)
@@ -127,10 +127,10 @@ global_client_log_level: debug
 
 	// Check network params
 	require.NotNil(t, config.NetworkParams)
-	assert.Equal(t, uint64(12345), config.NetworkParams.ChainID)
-	assert.Equal(t, uint64(12345), config.NetworkParams.NetworkID)
+	assert.Equal(t, "kurtosis", config.NetworkParams.Network)
+	assert.Equal(t, "12345", config.NetworkParams.NetworkID)
 	assert.Equal(t, 12, config.NetworkParams.SecondsPerSlot)
-	assert.Equal(t, 32, config.NetworkParams.SlotsPerEpoch)
+	assert.Equal(t, 64, config.NetworkParams.NumValidatorKeysPerNode)
 
 	// Check MEV params
 	require.NotNil(t, config.MEV)
@@ -144,7 +144,7 @@ global_client_log_level: debug
 	assert.Equal(t, "grafana", config.AdditionalServices[1].Name)
 
 	// Check global log level
-	assert.Equal(t, "debug", config.GlobalClientLogLevel)
+	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
 func TestFromYAMLMinimal(t *testing.T) {
@@ -163,7 +163,7 @@ participants:
 	assert.Nil(t, config.NetworkParams)
 	assert.Nil(t, config.MEV)
 	assert.Len(t, config.AdditionalServices, 0)
-	assert.Empty(t, config.GlobalClientLogLevel)
+	assert.Empty(t, config.GlobalLogLevel)
 }
 
 func TestFromYAMLInvalid(t *testing.T) {
@@ -215,14 +215,15 @@ func TestRoundTrip(t *testing.T) {
 			},
 		},
 		NetworkParams: &NetworkParams{
-			ChainID:                     98765,
-			NetworkID:                   98765,
-			SecondsPerSlot:              12,
-			SlotsPerEpoch:               32,
-			CapellaForkEpoch:            10,
-			DenebForkEpoch:              20,
-			ElectraForkEpoch:            30,
-			MinValidatorWithdrawability: 256,
+			Network:                 "kurtosis",
+			NetworkID:               "98765",
+			SecondsPerSlot:          12,
+			NumValidatorKeysPerNode: 64,
+			AltairForkEpoch:         0,
+			BellatrixForkEpoch:      0,
+			CapellaForkEpoch:        10,
+			DenebForkEpoch:          20,
+			ElectraForkEpoch:        30,
 		},
 		MEV: &MEVConfig{
 			Type:            "full",
@@ -234,7 +235,7 @@ func TestRoundTrip(t *testing.T) {
 			{
 				Name: "prometheus",
 				Config: map[string]interface{}{
-					"port":     9090,
+					"port":      9090,
 					"retention": "15d",
 				},
 			},
@@ -242,7 +243,7 @@ func TestRoundTrip(t *testing.T) {
 				Name: "grafana",
 			},
 		},
-		GlobalClientLogLevel: "info",
+		GlobalLogLevel: "info",
 	}
 
 	// Convert to YAML
@@ -262,10 +263,10 @@ func TestRoundTrip(t *testing.T) {
 		assert.Equal(t, original.Participants[i].ValidatorCount, parsed.Participants[i].ValidatorCount)
 	}
 
-	assert.Equal(t, original.NetworkParams.ChainID, parsed.NetworkParams.ChainID)
+	assert.Equal(t, original.NetworkParams.NetworkID, parsed.NetworkParams.NetworkID)
 	assert.Equal(t, original.MEV.Type, parsed.MEV.Type)
 	assert.Equal(t, len(original.AdditionalServices), len(parsed.AdditionalServices))
-	assert.Equal(t, original.GlobalClientLogLevel, parsed.GlobalClientLogLevel)
+	assert.Equal(t, original.GlobalLogLevel, parsed.GlobalLogLevel)
 }
 
 func TestYAMLFormatting(t *testing.T) {

@@ -45,7 +45,7 @@ func WaitForGenesis(ctx context.Context, net network.Network) error {
 	// Calculate time until genesis
 	genesisTime := genesisResponse.Data.GenesisTime
 	now := time.Now()
-	
+
 	if genesisTime.Before(now) {
 		// Genesis already happened
 		return nil
@@ -53,7 +53,7 @@ func WaitForGenesis(ctx context.Context, net network.Network) error {
 
 	// Calculate sleep duration
 	sleepDuration := genesisTime.Sub(now)
-	
+
 	// Log the wait time
 	fmt.Printf("Waiting for genesis at %s (in %s)\n", genesisTime.Format(time.RFC3339), sleepDuration)
 

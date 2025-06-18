@@ -37,7 +37,7 @@ func TestConsensusClient_FetchPeerID(t *testing.T) {
 				"container-123",
 				9000,
 			),
-			mockResponse:   "16Uiu2HAkuVKJJuNnFVhfVjrw1nXJt6c2d1NcmAZqYLbA4Km7KLRZ", 
+			mockResponse:   "16Uiu2HAkuVKJJuNnFVhfVjrw1nXJt6c2d1NcmAZqYLbA4Km7KLRZ",
 			expectError:    false,
 			expectedPeerID: "16Uiu2HAkuVKJJuNnFVhfVjrw1nXJt6c2d1NcmAZqYLbA4Km7KLRZ",
 		},
@@ -62,7 +62,7 @@ func TestConsensusClient_FetchPeerID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			
+
 			// Note: This test would require mocking the attestant client
 			// For now, we'll test the structure and error handling
 			if tt.client.BeaconAPIURL() == "" {
@@ -82,10 +82,10 @@ func TestConsensusClient_FetchPeerID(t *testing.T) {
 // TestConsensusClients_PeerIDs tests the PeerIDs collection functionality
 func TestConsensusClients_PeerIDs(t *testing.T) {
 	ctx := context.Background()
-	
+
 	// Create consensus clients collection
 	clients := NewConsensusClients()
-	
+
 	// Add test clients
 	client1 := NewConsensusClient(
 		Lighthouse,
@@ -99,7 +99,7 @@ func TestConsensusClients_PeerIDs(t *testing.T) {
 		"container-1",
 		9000,
 	)
-	
+
 	client2 := NewConsensusClient(
 		Teku,
 		"teku-1",
@@ -112,23 +112,23 @@ func TestConsensusClients_PeerIDs(t *testing.T) {
 		"container-2",
 		9001,
 	)
-	
+
 	clients.Add(client1)
 	clients.Add(client2)
-	
+
 	// Test collection methods
 	assert.Equal(t, 2, clients.Count())
 	assert.Equal(t, 1, clients.CountByType(Lighthouse))
 	assert.Equal(t, 1, clients.CountByType(Teku))
-	
+
 	lighthouseClients := clients.ByType(Lighthouse)
 	assert.Len(t, lighthouseClients, 1)
 	assert.Equal(t, "lighthouse-1", lighthouseClients[0].Name())
-	
+
 	tekuClients := clients.ByType(Teku)
 	assert.Len(t, tekuClients, 1)
 	assert.Equal(t, "teku-1", tekuClients[0].Name())
-	
+
 	// Note: Testing PeerIDs() and PeerIDsByType() would require mocking the attestant client
 	// These tests demonstrate the structure is correct
 	_ = ctx // Prevent unused variable warning
@@ -148,7 +148,7 @@ func TestNewConsensusClient(t *testing.T) {
 		"lighthouse-container",
 		9000,
 	)
-	
+
 	assert.Equal(t, Lighthouse, client.Type())
 	assert.Equal(t, "lighthouse-test", client.Name())
 	assert.Equal(t, "v2.0.0", client.Version())
@@ -164,7 +164,7 @@ func TestNewConsensusClient(t *testing.T) {
 // TestConsensusClientTypes tests client type checking
 func TestConsensusClientTypes(t *testing.T) {
 	tests := []struct {
-		clientType Type
+		clientType  Type
 		isConsensus bool
 	}{
 		{Lighthouse, true},
@@ -177,7 +177,7 @@ func TestConsensusClientTypes(t *testing.T) {
 		{Besu, false},
 		{Unknown, false},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(string(tt.clientType), func(t *testing.T) {
 			assert.Equal(t, tt.isConsensus, tt.clientType.IsConsensus())
@@ -207,7 +207,7 @@ func BenchmarkConsensusClient_Creation(b *testing.B) {
 // BenchmarkConsensusClients_Add benchmarks adding clients to collection
 func BenchmarkConsensusClients_Add(b *testing.B) {
 	clients := NewConsensusClients()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		client := NewConsensusClient(

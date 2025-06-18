@@ -28,7 +28,7 @@ func TestWithPreset(t *testing.T) {
 
 			require.NotNil(t, cfg.ConfigSource)
 			assert.Equal(t, "preset", cfg.ConfigSource.Type())
-			
+
 			presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 			require.True(t, ok)
 			assert.Equal(t, tt.preset, presetSource.GetPreset())
@@ -39,13 +39,13 @@ func TestWithPreset(t *testing.T) {
 func TestWithConfigFile(t *testing.T) {
 	cfg := defaultRunConfig()
 	path := "/path/to/config.yaml"
-	
+
 	opt := WithConfigFile(path)
 	opt(cfg)
 
 	require.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, "file", cfg.ConfigSource.Type())
-	
+
 	fileSource, ok := cfg.ConfigSource.(*config.FileConfigSource)
 	require.True(t, ok)
 	assert.Equal(t, path, fileSource.GetPath())
@@ -58,13 +58,13 @@ func TestWithConfig(t *testing.T) {
 			{ELType: "geth", CLType: "lighthouse", Count: 1},
 		},
 	}
-	
+
 	opt := WithConfig(ethConfig)
 	opt(cfg)
 
 	require.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, "inline", cfg.ConfigSource.Type())
-	
+
 	inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 	require.True(t, ok)
 	assert.Equal(t, ethConfig, inlineSource.GetConfig())
@@ -73,7 +73,7 @@ func TestWithConfig(t *testing.T) {
 func TestWithChainID(t *testing.T) {
 	cfg := defaultRunConfig()
 	chainID := uint64(99999)
-	
+
 	opt := WithChainID(chainID)
 	opt(cfg)
 
@@ -83,12 +83,12 @@ func TestWithChainID(t *testing.T) {
 func TestWithNetworkParams(t *testing.T) {
 	cfg := defaultRunConfig()
 	params := &config.NetworkParams{
-		ChainID:        12345,
-		NetworkID:      12345,
-		SecondsPerSlot: 12,
-		SlotsPerEpoch:  32,
+		Network:                 "kurtosis",
+		NetworkID:               "12345",
+		SecondsPerSlot:          12,
+		NumValidatorKeysPerNode: 64,
 	}
-	
+
 	opt := WithNetworkParams(params)
 	opt(cfg)
 
@@ -101,7 +101,7 @@ func TestWithMEV(t *testing.T) {
 		Type:     "full",
 		RelayURL: "http://relay.example.com",
 	}
-	
+
 	opt := WithMEV(mevConfig)
 	opt(cfg)
 
@@ -111,7 +111,7 @@ func TestWithMEV(t *testing.T) {
 func TestWithAdditionalServices(t *testing.T) {
 	cfg := defaultRunConfig()
 	services := []string{"prometheus", "grafana", "dora"}
-	
+
 	opt := WithAdditionalServices(services...)
 	opt(cfg)
 
@@ -129,7 +129,7 @@ func TestWithAdditionalService(t *testing.T) {
 			"retention": "30d",
 		},
 	}
-	
+
 	opt := WithAdditionalService(service)
 	opt(cfg)
 
@@ -140,7 +140,7 @@ func TestWithAdditionalService(t *testing.T) {
 func TestWithGlobalLogLevel(t *testing.T) {
 	cfg := defaultRunConfig()
 	logLevel := "debug"
-	
+
 	opt := WithGlobalLogLevel(logLevel)
 	opt(cfg)
 
@@ -150,7 +150,7 @@ func TestWithGlobalLogLevel(t *testing.T) {
 func TestWithEnclaveName(t *testing.T) {
 	cfg := defaultRunConfig()
 	name := "test-enclave"
-	
+
 	opt := WithEnclaveName(name)
 	opt(cfg)
 
@@ -160,16 +160,38 @@ func TestWithEnclaveName(t *testing.T) {
 func TestWithPackageID(t *testing.T) {
 	cfg := defaultRunConfig()
 	packageID := "github.com/custom/package"
-	
+
 	opt := WithPackageID(packageID)
 	opt(cfg)
 
 	assert.Equal(t, packageID, cfg.PackageID)
 }
 
+func TestWithPackageVersion(t *testing.T) {
+	cfg := defaultRunConfig()
+	version := "2.5.0"
+
+	opt := WithPackageVersion(version)
+	opt(cfg)
+
+	assert.Equal(t, version, cfg.PackageVersion)
+}
+
+func TestWithPackageRepo(t *testing.T) {
+	cfg := defaultRunConfig()
+	repo := "github.com/custom/ethereum-package"
+	version := "1.2.3"
+
+	opt := WithPackageRepo(repo, version)
+	opt(cfg)
+
+	assert.Equal(t, repo, cfg.PackageID)
+	assert.Equal(t, version, cfg.PackageVersion)
+}
+
 func TestWithDryRun(t *testing.T) {
 	cfg := defaultRunConfig()
-	
+
 	opt := WithDryRun(true)
 	opt(cfg)
 
@@ -179,7 +201,7 @@ func TestWithDryRun(t *testing.T) {
 func TestWithParallelism(t *testing.T) {
 	cfg := defaultRunConfig()
 	parallelism := 8
-	
+
 	opt := WithParallelism(parallelism)
 	opt(cfg)
 
@@ -188,7 +210,7 @@ func TestWithParallelism(t *testing.T) {
 
 func TestWithVerbose(t *testing.T) {
 	cfg := defaultRunConfig()
-	
+
 	opt := WithVerbose(true)
 	opt(cfg)
 
@@ -198,7 +220,7 @@ func TestWithVerbose(t *testing.T) {
 func TestWithTimeout(t *testing.T) {
 	cfg := defaultRunConfig()
 	timeout := 30 * time.Minute
-	
+
 	opt := WithTimeout(timeout)
 	opt(cfg)
 
@@ -247,7 +269,7 @@ func TestConvenienceOptions(t *testing.T) {
 				assert.Equal(t, config.PresetMinimal, presetSource.GetPreset())
 			},
 		},
-				{
+		{
 			name:    "WithExplorer",
 			optFunc: WithExplorer(),
 			validate: func(t *testing.T, cfg *RunConfig) {
@@ -276,10 +298,9 @@ func TestConvenienceOptions(t *testing.T) {
 	}
 }
 
-
 func TestWithMEVBoost(t *testing.T) {
 	cfg := defaultRunConfig()
-	
+
 	opt := WithMEVBoost()
 	opt(cfg)
 
@@ -290,7 +311,7 @@ func TestWithMEVBoost(t *testing.T) {
 func TestWithMEVBoostRelay(t *testing.T) {
 	cfg := defaultRunConfig()
 	relayURL := "http://custom-relay.example.com"
-	
+
 	opt := WithMEVBoostRelay(relayURL)
 	opt(cfg)
 
@@ -301,7 +322,7 @@ func TestWithMEVBoostRelay(t *testing.T) {
 
 func TestMultipleOptions(t *testing.T) {
 	cfg := defaultRunConfig()
-	
+
 	// Apply multiple options
 	opts := []RunOption{
 		WithChainID(99999),
@@ -310,7 +331,7 @@ func TestMultipleOptions(t *testing.T) {
 		WithTimeout(20 * time.Minute),
 		WithGlobalLogLevel("debug"),
 	}
-	
+
 	for _, opt := range opts {
 		opt(cfg)
 	}

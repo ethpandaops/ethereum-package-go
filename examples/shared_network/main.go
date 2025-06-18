@@ -21,7 +21,7 @@ func main() {
 
 	// Example 2: Create a network with a specific name
 	fmt.Println("\nCreating network with specific name...")
-	network2, err := ethereum.Run(ctx, 
+	network2, err := ethereum.Run(ctx,
 		ethereum.WithEnclaveName("my-test-network"),
 		ethereum.Minimal(),
 	)
@@ -37,9 +37,9 @@ func main() {
 		log.Fatalf("Failed to find/create network: %v", err)
 	}
 	fmt.Printf("Found/created network: %s\n", network3.EnclaveName())
-	
+
 	// network3 should be the same as network2
-	fmt.Printf("Network2 and Network3 are the same: %v\n", 
+	fmt.Printf("Network2 and Network3 are the same: %v\n",
 		network2.EnclaveName() == network3.EnclaveName())
 
 	// Example 4: Create another random network (no name = unique network)

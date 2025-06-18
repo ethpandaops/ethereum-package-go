@@ -28,7 +28,7 @@ func WithConfig(cfg *config.EthereumPackageConfig) RunOption {
 	}
 }
 
-// WithChainID sets the chain ID for the network
+// WithChainID sets the network ID for the network (deprecated: use WithNetworkID)
 func WithChainID(chainID uint64) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.ChainID = chainID
@@ -85,6 +85,21 @@ func WithEnclaveName(name string) RunOption {
 func WithPackageID(packageID string) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.PackageID = packageID
+	}
+}
+
+// WithPackageVersion sets a custom ethereum-package version
+func WithPackageVersion(version string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.PackageVersion = version
+	}
+}
+
+// WithPackageRepo sets both repository and version for the ethereum-package
+func WithPackageRepo(repo, version string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.PackageID = repo
+		cfg.PackageVersion = version
 	}
 }
 
@@ -167,13 +182,13 @@ func WithParticipants(participants []config.ParticipantConfig) RunOption {
 }
 
 // WithCustomChain creates a custom chain configuration
-func WithCustomChain(chainID uint64, secondsPerSlot, slotsPerEpoch int) RunOption {
+func WithCustomChain(networkID string, secondsPerSlot, numValidatorKeys int) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.NetworkParams = &config.NetworkParams{
-			ChainID:        chainID,
-			NetworkID:      chainID,
-			SecondsPerSlot: secondsPerSlot,
-			SlotsPerEpoch:  slotsPerEpoch,
+			Network:                 "kurtosis",
+			NetworkID:               networkID,
+			SecondsPerSlot:          secondsPerSlot,
+			NumValidatorKeysPerNode: numValidatorKeys,
 		}
 	}
 }
@@ -203,4 +218,32 @@ func WithWaitForGenesis() RunOption {
 // WithSpamoor adds the spamoor service to the network
 func WithSpamoor() RunOption {
 	return WithAdditionalServices("spamoor")
+}
+
+// WithOrphanOnExit prevents automatic cleanup when the process exits
+// This is similar to testcontainers' reuse option - the enclave will persist
+// after the program terminates and must be manually cleaned up
+func WithOrphanOnExit() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.OrphanOnExit = true
+	}
+}
+
+// WithAutoCleanup explicitly enables automatic cleanup (default behavior)
+// This ensures the enclave is destroyed when the network goes out of scope
+func WithAutoCleanup() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.OrphanOnExit = false
+	}
+}
+
+// WithReuse attempts to reuse an existing enclave with the given name
+// If the enclave doesn't exist, a new one will be created
+// This is similar to testcontainers' reuse functionality
+func WithReuse(enclaveName string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.EnclaveName = enclaveName
+		cfg.ReuseExisting = true
+		cfg.OrphanOnExit = true // Reused enclaves should not be auto-cleaned
+	}
 }

@@ -93,12 +93,12 @@ func demonstratePeerIDFunctionality(ctx context.Context) {
 
 func demonstrateLogsFunctionality(ctx context.Context) {
 	// Example: Working with Log Filtering
-	
+
 	// Note: In a real scenario, you'd create the LogsClient with actual Kurtosis context
 	fmt.Println("Log filtering examples (requires running Kurtosis environment):")
-	
+
 	fmt.Println("\n1. Basic log filtering options:")
-	
+
 	// Example filter options
 	tailOptions := client.TailLogs(50, "ERROR")
 	fmt.Printf("   TailLogs(50, \"ERROR\") creates options for: last 50 lines containing 'ERROR'\n")
@@ -109,14 +109,14 @@ func demonstrateLogsFunctionality(ctx context.Context) {
 	_ = followOptions
 
 	fmt.Println("\n2. Advanced filtering with functional options:")
-	
+
 	// Chainable options example
 	advancedOptions := []client.LogOption{
-		client.WithLines(100),                    // Last 100 lines
-		client.WithGrep("peer"),                  // Lines containing "peer"
-		client.WithSince(5 * time.Minute),       // From last 5 minutes
-		client.WithCaseSensitive(false),          // Case insensitive
-		client.WithExcludeRegex("debug"),         // Exclude debug messages
+		client.WithLines(100),             // Last 100 lines
+		client.WithGrep("peer"),           // Lines containing "peer"
+		client.WithSince(5 * time.Minute), // From last 5 minutes
+		client.WithCaseSensitive(false),   // Case insensitive
+		client.WithExcludeRegex("debug"),  // Exclude debug messages
 	}
 	fmt.Printf("   Advanced options: last 100 lines, containing 'peer', from last 5 minutes, excluding 'debug'\n")
 	_ = advancedOptions
@@ -168,9 +168,9 @@ func demonstrateLogsFunctionality(ctx context.Context) {
 	fmt.Println("           for {")
 	fmt.Println("               select {")
 	fmt.Println("               case line := <-logChan:")
-	fmt.Println("                   fmt.Printf(\"[%s] %s\\n\", c.Name(), line)")
+	fmt.Printf("%s\n", "                   fmt.Printf(\"[%s] %s\\n\", c.Name(), line)")
 	fmt.Println("               case err := <-errChan:")
-	fmt.Println("                   log.Printf(\"Error streaming logs for %s: %v\", c.Name(), err)")
+	fmt.Printf("%s\n", "                   log.Printf(\"Error streaming logs for %s: %v\", c.Name(), err)")
 	fmt.Println("                   return")
 	fmt.Println("               }")
 	fmt.Println("           }")
@@ -200,7 +200,7 @@ func integrateWithNetwork() {
 	fmt.Println("}")
 	fmt.Println("")
 	fmt.Println("for clientName, peerID := range peerIDs {")
-	fmt.Println("    fmt.Printf(\"Client %s has peer ID: %s\\n\", clientName, peerID)")
+	fmt.Printf("%s\n", "    fmt.Printf(\"Client %s has peer ID: %s\\n\", clientName, peerID)")
 	fmt.Println("}")
 	fmt.Println("")
 	fmt.Println("// Monitor logs")

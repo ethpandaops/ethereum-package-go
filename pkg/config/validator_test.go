@@ -18,13 +18,15 @@ func TestValidatorValidConfig(t *testing.T) {
 			},
 		},
 		NetworkParams: &NetworkParams{
-			ChainID:          12345,
-			NetworkID:        12345,
-			SecondsPerSlot:   12,
-			SlotsPerEpoch:    32,
-			CapellaForkEpoch: 10,
-			DenebForkEpoch:   20,
-			ElectraForkEpoch: 30,
+			Network:                 "kurtosis",
+			NetworkID:               "12345",
+			SecondsPerSlot:          12,
+			NumValidatorKeysPerNode: 64,
+			AltairForkEpoch:         0,
+			BellatrixForkEpoch:      0,
+			CapellaForkEpoch:        10,
+			DenebForkEpoch:          20,
+			ElectraForkEpoch:        30,
 		},
 		MEV: &MEVConfig{
 			Type:            "full",
@@ -35,7 +37,7 @@ func TestValidatorValidConfig(t *testing.T) {
 			{Name: "prometheus"},
 			{Name: "grafana"},
 		},
-		GlobalClientLogLevel: "info",
+		GlobalLogLevel: "info",
 	}
 
 	validator := NewValidator(config)
@@ -52,7 +54,7 @@ func TestValidatorNilConfig(t *testing.T) {
 
 func TestValidatorParticipants(t *testing.T) {
 	tests := ParticipantTestCases()
-	
+
 	// Add additional participant-specific test cases
 	additionalTests := []ValidatorTestCase{
 		{
@@ -74,7 +76,7 @@ func TestValidatorParticipants(t *testing.T) {
 			WantErr: "participant 0: validator count cannot exceed 1000000",
 		},
 	}
-	
+
 	tests = append(tests, additionalTests...)
 	RunValidatorTests(t, tests)
 }
@@ -142,7 +144,7 @@ func TestValidatorGlobalSettings(t *testing.T) {
 		{
 			name:     "invalid log level",
 			logLevel: "invalid",
-			wantErr:  "invalid global client log level: invalid",
+			wantErr:  "invalid global log level: invalid",
 		},
 		{
 			name:     "valid log level lowercase",
@@ -162,7 +164,7 @@ func TestValidatorGlobalSettings(t *testing.T) {
 				Participants: []ParticipantConfig{
 					{ELType: client.Geth, CLType: client.Lighthouse},
 				},
-				GlobalClientLogLevel: tt.logLevel,
+				GlobalLogLevel: tt.logLevel,
 			}
 			validator := NewValidator(config)
 			err := validator.Validate()
@@ -180,14 +182,14 @@ func TestValidatorHelperFunctions(t *testing.T) {
 	// Test execution client validation using ParticipantConfig
 	p := ParticipantConfig{ELType: client.Geth, CLType: client.Lighthouse}
 	assert.Nil(t, p.Validate(0))
-	
+
 	p.ELType = "invalid"
 	assert.NotNil(t, p.Validate(0))
-	
+
 	// Test consensus client validation
 	p = ParticipantConfig{ELType: client.Geth, CLType: client.Lighthouse}
 	assert.Nil(t, p.Validate(0))
-	
+
 	p.CLType = "invalid"
 	assert.NotNil(t, p.Validate(0))
 
@@ -212,11 +214,11 @@ func TestValidatorHelperFunctions(t *testing.T) {
 
 	// Test log level validation
 	config := &EthereumPackageConfig{
-		Participants: []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
-		GlobalClientLogLevel: "debug",
+		Participants:   []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
+		GlobalLogLevel: "debug",
 	}
 	assert.Nil(t, config.Validate())
-	
-	config.GlobalClientLogLevel = "invalid"
+
+	config.GlobalLogLevel = "invalid"
 	assert.NotNil(t, config.Validate())
 }

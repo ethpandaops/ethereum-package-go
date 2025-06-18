@@ -10,10 +10,10 @@ import (
 
 func TestGetPresetConfig(t *testing.T) {
 	tests := []struct {
-		name          string
-		preset        Preset
-		expectErr     bool
-		validateFunc  func(*testing.T, *EthereumPackageConfig)
+		name         string
+		preset       Preset
+		expectErr    bool
+		validateFunc func(*testing.T, *EthereumPackageConfig)
 	}{
 		{
 			name:      "all ELs preset",
@@ -21,7 +21,7 @@ func TestGetPresetConfig(t *testing.T) {
 			expectErr: false,
 			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 5) // All 5 EL clients
-				
+
 				// Check that all use Lighthouse as CL
 				for _, p := range config.Participants {
 					assert.Equal(t, client.Lighthouse, p.CLType)
@@ -46,7 +46,7 @@ func TestGetPresetConfig(t *testing.T) {
 			expectErr: false,
 			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 6) // All 6 CL clients
-				
+
 				// Check that all use Geth as EL
 				for _, p := range config.Participants {
 					assert.Equal(t, client.Geth, p.ELType)
@@ -73,7 +73,7 @@ func TestGetPresetConfig(t *testing.T) {
 			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				// 5 EL clients * 6 CL clients = 30 combinations
 				assert.Len(t, config.Participants, 30)
-				
+
 				// Check that all combinations are present
 				combinations := make(map[string]bool)
 				for _, p := range config.Participants {
@@ -93,7 +93,7 @@ func TestGetPresetConfig(t *testing.T) {
 				assert.Equal(t, client.Geth, config.Participants[0].ELType)
 				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				assert.Equal(t, 1, config.Participants[0].Count)
-				assert.Equal(t, 32, config.Participants[0].ValidatorCount)
+				assert.Equal(t, 64, config.Participants[0].ValidatorCount)
 			},
 		},
 		{
@@ -106,7 +106,7 @@ func TestGetPresetConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := GetPresetConfig(tt.preset)
-			
+
 			if tt.expectErr {
 				assert.Error(t, err)
 				assert.Equal(t, ErrInvalidPreset, err)
@@ -126,7 +126,7 @@ func TestPresetBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	networkParams := &NetworkParams{
-		ChainID:        99999,
+		NetworkID:      "99999",
 		SecondsPerSlot: 6,
 	}
 
@@ -139,7 +139,7 @@ func TestPresetBuilder(t *testing.T) {
 	}
 
 	config, err := builder.
-		WithChainID(12345). // This will be overridden by network params
+		WithNetworkID("12345"). // This will be overridden by network params
 		WithNetworkParams(networkParams).
 		WithMEV(mevConfig).
 		WithAdditionalService(service).
@@ -147,27 +147,27 @@ func TestPresetBuilder(t *testing.T) {
 		Build()
 
 	require.NoError(t, err)
-	
+
 	// Should have minimal preset participants
 	assert.Len(t, config.Participants, 1)
 	assert.Equal(t, client.Geth, config.Participants[0].ELType)
 	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
-	
+
 	// Should have custom network params
 	require.NotNil(t, config.NetworkParams)
-	assert.Equal(t, uint64(99999), config.NetworkParams.ChainID)
+	assert.Equal(t, "99999", config.NetworkParams.NetworkID)
 	assert.Equal(t, 6, config.NetworkParams.SecondsPerSlot)
-	
+
 	// Should have MEV config
 	require.NotNil(t, config.MEV)
 	assert.Equal(t, "mock", config.MEV.Type)
-	
+
 	// Should have additional service
 	assert.Len(t, config.AdditionalServices, 1)
 	assert.Equal(t, "blockscout", config.AdditionalServices[0].Name)
-	
+
 	// Should have global log level
-	assert.Equal(t, "debug", config.GlobalClientLogLevel)
+	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
 func TestPresetBuilderInvalidPreset(t *testing.T) {
@@ -197,7 +197,7 @@ func TestAllPresetsValidYAML(t *testing.T) {
 			// Parse back from YAML
 			parsed, err := FromYAML(yamlStr)
 			require.NoError(t, err)
-			
+
 			// Verify participants match
 			assert.Len(t, parsed.Participants, len(config.Participants))
 		})
@@ -221,7 +221,7 @@ func TestPresetConsistency(t *testing.T) {
 			// Build using ConfigBuilder to ensure validation passes
 			builder := NewConfigBuilder()
 			builder.WithParticipants(config.Participants)
-			
+
 			_, err = builder.Build()
 			assert.NoError(t, err, "preset %s should produce valid configuration", preset)
 		})

@@ -86,7 +86,7 @@ func DetectClientType(serviceName string) client.Type {
 	// Common patterns in ethereum-package service names
 	// Check consensus clients first as they might have execution client names in them
 	// e.g., "cl-1-lighthouse-geth" should be detected as lighthouse, not geth
-	
+
 	// First check for consensus client patterns (cl- prefix or consensus keywords)
 	if contains(serviceName, "cl-") || contains(serviceName, "consensus") {
 		switch {
@@ -104,7 +104,7 @@ func DetectClientType(serviceName string) client.Type {
 			return client.Grandine
 		}
 	}
-	
+
 	// Then check for execution client patterns (el- prefix or execution keywords)
 	if contains(serviceName, "el-") || contains(serviceName, "execution") {
 		switch {
@@ -120,7 +120,7 @@ func DetectClientType(serviceName string) client.Type {
 			return client.Reth
 		}
 	}
-	
+
 	// Fallback to simple matching
 	switch {
 	case contains(serviceName, "geth"):
@@ -230,7 +230,7 @@ func extractEnodeFromService(service *ServiceInfo) string {
 	if service.IPAddress != "" {
 		for portName, portInfo := range service.Ports {
 			if portName == "p2p" || portName == "tcp" {
-				return fmt.Sprintf("enode://0000000000000000000000000000000000000000000000000000000000000000@%s:%d", 
+				return fmt.Sprintf("enode://0000000000000000000000000000000000000000000000000000000000000000@%s:%d",
 					service.IPAddress, portInfo.Number)
 			}
 		}

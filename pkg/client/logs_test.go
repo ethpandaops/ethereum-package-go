@@ -104,11 +104,11 @@ func TestLogFilter_Options(t *testing.T) {
 				lines:         100,
 				caseSensitive: false,
 			}
-			
+
 			for _, option := range tt.options {
 				option(filter)
 			}
-			
+
 			assert.Equal(t, tt.expected.lines, filter.lines)
 			assert.Equal(t, tt.expected.grep, filter.grep)
 			assert.Equal(t, tt.expected.follow, filter.follow)
@@ -121,7 +121,7 @@ func TestLogFilter_Options(t *testing.T) {
 // TestLogsClient_matchesFilter tests the filter matching logic
 func TestLogsClient_matchesFilter(t *testing.T) {
 	lc := &LogsClient{}
-	
+
 	tests := []struct {
 		name     string
 		line     string
@@ -195,7 +195,7 @@ func TestLogsClient_matchesFilter(t *testing.T) {
 // TestLogsClient_applyFilters tests the filter application logic
 func TestLogsClient_applyFilters(t *testing.T) {
 	lc := &LogsClient{}
-	
+
 	testLines := []string{
 		"2023-01-01 INFO: Application started",
 		"2023-01-01 DEBUG: Loading configuration",
@@ -204,15 +204,15 @@ func TestLogsClient_applyFilters(t *testing.T) {
 		"2023-01-01 INFO: Processing request",
 		"2023-01-01 ERROR: Invalid input provided",
 	}
-	
+
 	tests := []struct {
 		name     string
 		filter   *LogFilter
 		expected []string
 	}{
 		{
-			name:   "no filter",
-			filter: &LogFilter{},
+			name:     "no filter",
+			filter:   &LogFilter{},
 			expected: testLines,
 		},
 		{
@@ -252,17 +252,17 @@ func TestLogsClient_applyFilters(t *testing.T) {
 // TestTailLogs tests the convenience function for tailing logs
 func TestTailLogs(t *testing.T) {
 	options := TailLogs(50, "error")
-	
+
 	// Apply options to a filter
 	filter := &LogFilter{
 		lines:         100,
 		caseSensitive: false,
 	}
-	
+
 	for _, option := range options {
 		option(filter)
 	}
-	
+
 	assert.Equal(t, 50, filter.lines)
 	assert.Equal(t, "error", filter.grep)
 }
@@ -270,17 +270,17 @@ func TestTailLogs(t *testing.T) {
 // TestFollowLogs tests the convenience function for following logs
 func TestFollowLogs(t *testing.T) {
 	options := FollowLogs("warn")
-	
+
 	// Apply options to a filter
 	filter := &LogFilter{
 		lines:         100,
 		caseSensitive: false,
 	}
-	
+
 	for _, option := range options {
 		option(filter)
 	}
-	
+
 	assert.True(t, filter.follow)
 	assert.Equal(t, "warn", filter.grep)
 }
@@ -300,11 +300,11 @@ func TestServiceWithLogs_Interface(t *testing.T) {
 		"lighthouse-container",
 		9000,
 	)
-	
+
 	var _ ServiceWithLogs = consensusClient
 	assert.Equal(t, "lighthouse-service", consensusClient.ServiceName())
 	assert.Equal(t, "lighthouse-container", consensusClient.ContainerID())
-	
+
 	// Test ExecutionClient implements ServiceWithLogs
 	executionClient := NewExecutionClient(
 		Geth,
@@ -319,7 +319,7 @@ func TestServiceWithLogs_Interface(t *testing.T) {
 		"geth-container",
 		30303,
 	)
-	
+
 	var _ ServiceWithLogs = executionClient
 	assert.Equal(t, "geth-service", executionClient.ServiceName())
 	assert.Equal(t, "geth-container", executionClient.ContainerID())
@@ -330,10 +330,10 @@ func TestLogsClient_LogsReader(t *testing.T) {
 	// This would require mocking the Kurtosis context
 	// For now, we test that the method exists and can be called
 	lc := &LogsClient{}
-	
+
 	// Test that the method signature is correct
 	assert.NotNil(t, lc)
-	
+
 	// In a real test, you'd mock the Kurtosis context and test the actual functionality
 	// mockService := &MockServiceWithLogs{}
 	// mockService.On("ServiceName").Return("test-service")
@@ -350,7 +350,7 @@ func BenchmarkLogFilter_matchesFilter(b *testing.B) {
 		caseSensitive: false,
 	}
 	line := "2023-01-01 12:00:00 ERROR: This is an error message"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		lc.matchesFilter(line, filter)
@@ -364,7 +364,7 @@ func BenchmarkLogFilter_applyFilters(b *testing.B) {
 		grep:  "ERROR",
 		lines: 100,
 	}
-	
+
 	// Generate test lines
 	lines := make([]string, 1000)
 	for i := 0; i < 1000; i++ {
@@ -374,7 +374,7 @@ func BenchmarkLogFilter_applyFilters(b *testing.B) {
 			lines[i] = "INFO: This is an info message"
 		}
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		lc.applyFilters(lines, filter)
@@ -387,7 +387,7 @@ func TestLogOption_Chaining(t *testing.T) {
 		lines:         100,
 		caseSensitive: false,
 	}
-	
+
 	// Chain multiple options
 	options := []LogOption{
 		WithLines(50),
@@ -398,11 +398,11 @@ func TestLogOption_Chaining(t *testing.T) {
 		WithIncludeRegex("include"),
 		WithExcludeRegex("exclude"),
 	}
-	
+
 	for _, option := range options {
 		option(filter)
 	}
-	
+
 	assert.Equal(t, 50, filter.lines)
 	assert.Equal(t, "test", filter.grep)
 	assert.True(t, filter.follow)

@@ -54,29 +54,29 @@ func (p *ParticipantConfig) Validate(index int) error {
 	if p.CLType == "" {
 		return fmt.Errorf("participant %d: consensus layer type is required", index)
 	}
-	
+
 	if !p.ELType.IsExecution() {
 		return fmt.Errorf("participant %d: invalid execution client type: %s", index, p.ELType)
 	}
-	
+
 	if !p.CLType.IsConsensus() {
 		return fmt.Errorf("participant %d: invalid consensus client type: %s", index, p.CLType)
 	}
-	
+
 	if p.Count < 0 {
 		return fmt.Errorf("participant %d: count cannot be negative", index)
 	}
 	if p.Count > 100 {
 		return fmt.Errorf("participant %d: count %d exceeds maximum of 100", index, p.Count)
 	}
-	
+
 	if p.ValidatorCount < 0 {
 		return fmt.Errorf("participant %d: validator count cannot be negative", index)
 	}
 	if p.ValidatorCount > 1000000 {
 		return fmt.Errorf("participant %d: validator count cannot exceed 1000000", index)
 	}
-	
+
 	return nil
 }
 
@@ -89,14 +89,20 @@ func (p *ParticipantConfig) ApplyDefaults() {
 
 // NetworkParams represents network-wide parameters
 type NetworkParams struct {
-	ChainID                     uint64 `yaml:"chain_id,omitempty"`
-	NetworkID                   uint64 `yaml:"network_id,omitempty"`
+	Network                     string `yaml:"network,omitempty"`
+	NetworkID                   string `yaml:"network_id,omitempty"`
+	DepositContractAddress      string `yaml:"deposit_contract_address,omitempty"`
 	SecondsPerSlot              int    `yaml:"seconds_per_slot,omitempty"`
-	SlotsPerEpoch               int    `yaml:"slots_per_epoch,omitempty"`
+	NumValidatorKeysPerNode     int    `yaml:"num_validator_keys_per_node,omitempty"`
+	PreregisteredValidatorCount int    `yaml:"preregistered_validator_count,omitempty"`
+	GenesisDelay                int    `yaml:"genesis_delay,omitempty"`
+	GenesisGasLimit             uint64 `yaml:"genesis_gaslimit,omitempty"`
+	AltairForkEpoch             int    `yaml:"altair_fork_epoch,omitempty"`
+	BellatrixForkEpoch          int    `yaml:"bellatrix_fork_epoch,omitempty"`
 	CapellaForkEpoch            int    `yaml:"capella_fork_epoch,omitempty"`
 	DenebForkEpoch              int    `yaml:"deneb_fork_epoch,omitempty"`
 	ElectraForkEpoch            int    `yaml:"electra_fork_epoch,omitempty"`
-	MinValidatorWithdrawability int    `yaml:"min_validator_withdrawability,omitempty"`
+	FuluForkEpoch               int    `yaml:"fulu_fork_epoch,omitempty"`
 }
 
 // Validate validates the network parameters
@@ -104,35 +110,55 @@ func (n *NetworkParams) Validate() error {
 	if n.SecondsPerSlot < 1 || n.SecondsPerSlot > 60 {
 		return fmt.Errorf("seconds per slot must be between 1 and 60, got %d", n.SecondsPerSlot)
 	}
-	
-	if n.SlotsPerEpoch < 1 || n.SlotsPerEpoch > 1000 {
-		return fmt.Errorf("slots per epoch must be between 1 and 1000, got %d", n.SlotsPerEpoch)
+
+	if n.NumValidatorKeysPerNode < 0 || n.NumValidatorKeysPerNode > 1000000 {
+		return fmt.Errorf("num validator keys per node must be between 0 and 1000000, got %d", n.NumValidatorKeysPerNode)
 	}
-	
+
+	if n.GenesisDelay < 0 {
+		return fmt.Errorf("genesis delay cannot be negative")
+	}
+
 	// Validate fork epochs ordering
-	if n.CapellaForkEpoch < 0 {
-		return fmt.Errorf("capella fork epoch cannot be negative")
+	if n.AltairForkEpoch < 0 || n.BellatrixForkEpoch < 0 || n.CapellaForkEpoch < 0 ||
+		n.DenebForkEpoch < 0 || n.ElectraForkEpoch < 0 || n.FuluForkEpoch < 0 {
+		return fmt.Errorf("fork epochs cannot be negative")
 	}
-	if n.DenebForkEpoch < n.CapellaForkEpoch {
-		return fmt.Errorf("deneb fork epoch must be after capella fork epoch")
+
+	// Fork epochs should be in order
+	forkEpochs := []int{n.AltairForkEpoch, n.BellatrixForkEpoch, n.CapellaForkEpoch,
+		n.DenebForkEpoch, n.ElectraForkEpoch, n.FuluForkEpoch}
+	for i := 1; i < len(forkEpochs); i++ {
+		if forkEpochs[i] != 0 && forkEpochs[i] < forkEpochs[i-1] {
+			return fmt.Errorf("fork epochs must be in chronological order")
+		}
 	}
-	if n.ElectraForkEpoch < n.DenebForkEpoch {
-		return fmt.Errorf("electra fork epoch must be after deneb fork epoch")
-	}
-	
+
 	return nil
 }
 
 // ApplyDefaults applies default values to network parameters
 func (n *NetworkParams) ApplyDefaults() {
-	if n.NetworkID == 0 && n.ChainID > 0 {
-		n.NetworkID = n.ChainID
+	if n.Network == "" {
+		n.Network = "kurtosis"
+	}
+	if n.NetworkID == "" {
+		n.NetworkID = "3151908"
+	}
+	if n.DepositContractAddress == "" {
+		n.DepositContractAddress = "0x00000000219ab540356cBB839Cbe05303d7705Fa"
 	}
 	if n.SecondsPerSlot == 0 {
 		n.SecondsPerSlot = 12
 	}
-	if n.SlotsPerEpoch == 0 {
-		n.SlotsPerEpoch = 32
+	if n.NumValidatorKeysPerNode == 0 {
+		n.NumValidatorKeysPerNode = 64
+	}
+	if n.GenesisDelay == 0 {
+		n.GenesisDelay = 20
+	}
+	if n.GenesisGasLimit == 0 {
+		n.GenesisGasLimit = 60000000
 	}
 }
 
@@ -147,28 +173,28 @@ type MEVConfig struct {
 // Validate validates the MEV configuration
 func (m *MEVConfig) Validate() error {
 	validTypes := map[string]bool{
-		"full":  true,
-		"mock":  true,
-		"none":  true,
-		"":      true, // Empty is valid
+		"full": true,
+		"mock": true,
+		"none": true,
+		"":     true, // Empty is valid
 	}
-	
+
 	if !validTypes[m.Type] {
 		return fmt.Errorf("invalid MEV type: %s, must be one of: full, mock, none", m.Type)
 	}
-	
+
 	if m.RelayURL != "" && !strings.HasPrefix(m.RelayURL, "http://") && !strings.HasPrefix(m.RelayURL, "https://") {
 		return fmt.Errorf("invalid relay URL: %s, must start with http:// or https://", m.RelayURL)
 	}
-	
+
 	if m.MaxBundleLength < 0 {
 		return fmt.Errorf("max bundle length cannot be negative")
 	}
-	
+
 	if m.MaxBundleLength > 10000 {
 		return fmt.Errorf("max bundle length %d exceeds maximum of 10000", m.MaxBundleLength)
 	}
-	
+
 	return nil
 }
 
@@ -193,7 +219,7 @@ type EthereumPackageConfig struct {
 	AdditionalServices []AdditionalService `yaml:"additional_services,omitempty"`
 
 	// Global client settings
-	GlobalClientLogLevel string `yaml:"global_client_log_level,omitempty"`
+	GlobalLogLevel string `yaml:"global_log_level,omitempty"`
 }
 
 // Validate validates the EthereumPackageConfig
@@ -201,32 +227,32 @@ func (c *EthereumPackageConfig) Validate() error {
 	if c == nil {
 		return fmt.Errorf("configuration is nil")
 	}
-	
+
 	if len(c.Participants) == 0 {
 		return fmt.Errorf("at least one participant is required")
 	}
-	
+
 	// Validate each participant
 	for i, p := range c.Participants {
 		if err := p.Validate(i); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate network params
 	if c.NetworkParams != nil {
 		if err := c.NetworkParams.Validate(); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate MEV config
 	if c.MEV != nil {
 		if err := c.MEV.Validate(); err != nil {
 			return err
 		}
 	}
-	
+
 	// Validate additional services
 	serviceNames := make(map[string]bool)
 	for i, service := range c.AdditionalServices {
@@ -237,7 +263,7 @@ func (c *EthereumPackageConfig) Validate() error {
 			return fmt.Errorf("duplicate additional service: %s", service.Name)
 		}
 		serviceNames[service.Name] = true
-		
+
 		// Validate known service names
 		validServices := map[string]bool{
 			"prometheus": true,
@@ -250,12 +276,12 @@ func (c *EthereumPackageConfig) Validate() error {
 			return fmt.Errorf("invalid additional service name: %s", service.Name)
 		}
 	}
-	
+
 	// Validate global log level
-	if c.GlobalClientLogLevel != "" && !isValidLogLevel(c.GlobalClientLogLevel) {
-		return fmt.Errorf("invalid global client log level: %s, must be one of: debug, info, warn, error, fatal", c.GlobalClientLogLevel)
+	if c.GlobalLogLevel != "" && !isValidLogLevel(c.GlobalLogLevel) {
+		return fmt.Errorf("invalid global log level: %s, must be one of: debug, info, warn, error, fatal", c.GlobalLogLevel)
 	}
-	
+
 	return nil
 }
 
@@ -264,12 +290,12 @@ func (c *EthereumPackageConfig) ApplyDefaults() {
 	if c == nil {
 		return
 	}
-	
+
 	// Apply defaults to participants
 	for i := range c.Participants {
 		c.Participants[i].ApplyDefaults()
 	}
-	
+
 	// Apply defaults to network params
 	if c.NetworkParams != nil {
 		c.NetworkParams.ApplyDefaults()

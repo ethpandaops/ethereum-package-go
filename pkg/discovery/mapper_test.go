@@ -32,11 +32,11 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 12345,
+			NetworkID: "12345",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -47,7 +47,7 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 	// Verify clients were discovered
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.NotEmpty(t, execClients, "should have execution clients")
 	assert.NotEmpty(t, consClients, "should have consensus clients")
 
@@ -96,11 +96,11 @@ func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 			{ELType: client.Geth, CLType: client.Lighthouse, Count: 1},
 		},
 		NetworkParams: &config.NetworkParams{
-			ChainID: 54321,
+			NetworkID: "54321",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "custom-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "custom-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -111,10 +111,10 @@ func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 	// Verify we got the expected clients
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.Len(t, execClients, 1)
 	assert.Len(t, consClients, 1)
-	
+
 	assert.Equal(t, "geth-1", execClients[0].Name())
 	assert.Equal(t, "lighthouse-1", consClients[0].Name())
 }
@@ -133,11 +133,11 @@ func TestServiceMapper_MapToNetworkEmpty(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 9999,
+			NetworkID: "9999",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "empty-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "empty-enclave", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -162,11 +162,11 @@ func TestServiceMapper_MapToNetworkError(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 7777,
+			NetworkID: "7777",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "error-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "error-enclave", ethConfig, false)
 	assert.Nil(t, networkObj)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get services")
@@ -195,11 +195,11 @@ func TestServiceMapper_DiscoverApacheConfig(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 8888,
+			NetworkID: "8888",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "apache-test", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "apache-test", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
@@ -249,18 +249,18 @@ func TestServiceMapper_MultipleClientTypes(t *testing.T) {
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
-			ChainID: 1111,
+			NetworkID: "1111",
 		},
 	}
 
-	networkObj, err := mapper.MapToNetwork(ctx, "multi-client", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "multi-client", ethConfig, false)
 	require.NoError(t, err)
 	require.NotNil(t, networkObj)
 
 	// Should discover multiple execution and consensus clients
 	execClients := networkObj.ExecutionClients().All()
 	consClients := networkObj.ConsensusClients().All()
-	
+
 	assert.Len(t, execClients, 2, "should have 2 execution clients")
 	assert.Len(t, consClients, 2, "should have 2 consensus clients")
 

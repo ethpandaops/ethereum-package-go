@@ -37,13 +37,12 @@ func (b *ConfigBuilder) WithNetworkParams(params *NetworkParams) *ConfigBuilder 
 	return b
 }
 
-// WithChainID sets the chain ID
-func (b *ConfigBuilder) WithChainID(chainID uint64) *ConfigBuilder {
+// WithNetworkID sets the network ID
+func (b *ConfigBuilder) WithNetworkID(networkID string) *ConfigBuilder {
 	if b.config.NetworkParams == nil {
 		b.config.NetworkParams = &NetworkParams{}
 	}
-	b.config.NetworkParams.ChainID = chainID
-	b.config.NetworkParams.NetworkID = chainID // Often the same
+	b.config.NetworkParams.NetworkID = networkID
 	return b
 }
 
@@ -59,9 +58,9 @@ func (b *ConfigBuilder) WithAdditionalService(service AdditionalService) *Config
 	return b
 }
 
-// WithGlobalLogLevel sets the global client log level
+// WithGlobalLogLevel sets the global log level
 func (b *ConfigBuilder) WithGlobalLogLevel(level string) *ConfigBuilder {
-	b.config.GlobalClientLogLevel = level
+	b.config.GlobalLogLevel = level
 	return b
 }
 
@@ -69,7 +68,7 @@ func (b *ConfigBuilder) WithGlobalLogLevel(level string) *ConfigBuilder {
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
 	b.config.ApplyDefaults()
-	
+
 	// Validate configuration
 	if err := b.config.Validate(); err != nil {
 		return nil, err

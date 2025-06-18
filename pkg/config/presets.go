@@ -100,7 +100,7 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 		client.Erigon,
 		client.Reth,
 	}
-	
+
 	clClients := []client.Type{
 		client.Lighthouse,
 		client.Teku,
@@ -109,9 +109,9 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 		client.Lodestar,
 		client.Grandine,
 	}
-	
+
 	var participants []ParticipantConfig
-	
+
 	for _, el := range elClients {
 		for _, cl := range clClients {
 			participants = append(participants, ParticipantConfig{
@@ -121,7 +121,7 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 			})
 		}
 	}
-	
+
 	return &EthereumPackageConfig{
 		Participants: participants,
 	}
@@ -135,7 +135,7 @@ func getMinimalConfig() *EthereumPackageConfig {
 				ELType:         client.Geth,
 				CLType:         client.Lighthouse,
 				Count:          1,
-				ValidatorCount: 32,
+				ValidatorCount: 64,
 			},
 		},
 	}
@@ -159,13 +159,12 @@ func NewPresetBuilder(preset Preset) (*PresetBuilder, error) {
 	}, nil
 }
 
-// WithChainID sets the chain ID
-func (p *PresetBuilder) WithChainID(chainID uint64) *PresetBuilder {
+// WithNetworkID sets the network ID
+func (p *PresetBuilder) WithNetworkID(networkID string) *PresetBuilder {
 	if p.config.NetworkParams == nil {
 		p.config.NetworkParams = &NetworkParams{}
 	}
-	p.config.NetworkParams.ChainID = chainID
-	p.config.NetworkParams.NetworkID = chainID
+	p.config.NetworkParams.NetworkID = networkID
 	return p
 }
 
@@ -189,7 +188,7 @@ func (p *PresetBuilder) WithAdditionalService(service AdditionalService) *Preset
 
 // WithGlobalLogLevel sets the global log level
 func (p *PresetBuilder) WithGlobalLogLevel(level string) *PresetBuilder {
-	p.config.GlobalClientLogLevel = level
+	p.config.GlobalLogLevel = level
 	return p
 }
 
@@ -197,11 +196,11 @@ func (p *PresetBuilder) WithGlobalLogLevel(level string) *PresetBuilder {
 func (p *PresetBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
 	p.config.ApplyDefaults()
-	
+
 	// Validate
 	if err := p.config.Validate(); err != nil {
 		return nil, err
 	}
-	
+
 	return p.config, nil
 }

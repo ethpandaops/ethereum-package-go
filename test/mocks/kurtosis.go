@@ -18,9 +18,9 @@ type MockKurtosisClient struct {
 	WaitForServicesFunc func(ctx context.Context, enclaveName string, serviceNames []string, timeout time.Duration) error
 
 	// State tracking
-	Enclaves       map[string]*EnclaveState
-	CallCount      map[string]int
-	LastRunConfig  *kurtosis.RunPackageConfig
+	Enclaves      map[string]*EnclaveState
+	CallCount     map[string]int
+	LastRunConfig *kurtosis.RunPackageConfig
 }
 
 // EnclaveState tracks the state of a mock enclave

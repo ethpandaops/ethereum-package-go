@@ -310,7 +310,7 @@ func TestConsensusClients_PeerIDs_HTTP(t *testing.T) {
 	peerIDs, err := clients.PeerIDs(ctx)
 	require.NoError(t, err)
 	require.Len(t, peerIDs, 2)
-	
+
 	assert.Equal(t, "16Uiu2HAkLighthouse1PeerIDExample", peerIDs["lighthouse-1"])
 	assert.Equal(t, "16Uiu2HAkTeku1PeerIDExample", peerIDs["teku-1"])
 
@@ -318,14 +318,14 @@ func TestConsensusClients_PeerIDs_HTTP(t *testing.T) {
 	lighthousePeerIDs, err := clients.PeerIDsByType(ctx, Lighthouse)
 	require.NoError(t, err)
 	require.Len(t, lighthousePeerIDs, 1)
-	
+
 	assert.Equal(t, "16Uiu2HAkLighthouse1PeerIDExample", lighthousePeerIDs["lighthouse-1"])
 
 	// Test PeerIDsByType for Teku clients
 	tekuPeerIDs, err := clients.PeerIDsByType(ctx, Teku)
 	require.NoError(t, err)
 	require.Len(t, tekuPeerIDs, 1)
-	
+
 	assert.Equal(t, "16Uiu2HAkTeku1PeerIDExample", tekuPeerIDs["teku-1"])
 }
 
