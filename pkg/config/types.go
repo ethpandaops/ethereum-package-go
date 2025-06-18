@@ -120,13 +120,13 @@ func (n *NetworkParams) Validate() error {
 	}
 
 	// Validate fork epochs ordering
-	if n.AltairForkEpoch < 0 || n.BellatrixForkEpoch < 0 || n.CapellaForkEpoch < 0 || 
+	if n.AltairForkEpoch < 0 || n.BellatrixForkEpoch < 0 || n.CapellaForkEpoch < 0 ||
 		n.DenebForkEpoch < 0 || n.ElectraForkEpoch < 0 || n.FuluForkEpoch < 0 {
 		return fmt.Errorf("fork epochs cannot be negative")
 	}
 
 	// Fork epochs should be in order
-	forkEpochs := []int{n.AltairForkEpoch, n.BellatrixForkEpoch, n.CapellaForkEpoch, 
+	forkEpochs := []int{n.AltairForkEpoch, n.BellatrixForkEpoch, n.CapellaForkEpoch,
 		n.DenebForkEpoch, n.ElectraForkEpoch, n.FuluForkEpoch}
 	for i := 1; i < len(forkEpochs); i++ {
 		if forkEpochs[i] != 0 && forkEpochs[i] < forkEpochs[i-1] {

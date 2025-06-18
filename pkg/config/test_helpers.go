@@ -47,16 +47,16 @@ func DefaultValidConfig() *EthereumPackageConfig {
 func DefaultValidConfigWithNetworkParams() *EthereumPackageConfig {
 	config := DefaultValidConfig()
 	config.NetworkParams = &NetworkParams{
-		Network:              "kurtosis",
-		NetworkID:            "12345",
-		SecondsPerSlot:       12,
+		Network:                 "kurtosis",
+		NetworkID:               "12345",
+		SecondsPerSlot:          12,
 		NumValidatorKeysPerNode: 64,
-		GenesisDelay:         20,
-		AltairForkEpoch:      0,
-		BellatrixForkEpoch:   0,
-		CapellaForkEpoch:     10,
-		DenebForkEpoch:       20,
-		ElectraForkEpoch:     30,
+		GenesisDelay:            20,
+		AltairForkEpoch:         0,
+		BellatrixForkEpoch:      0,
+		CapellaForkEpoch:        10,
+		DenebForkEpoch:          20,
+		ElectraForkEpoch:        30,
 	}
 	return config
 }
@@ -195,9 +195,9 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid fork ordering",
 			Config: createConfigWithNetworkParams(&NetworkParams{
-				SecondsPerSlot:     12,
-				CapellaForkEpoch:   20,
-				DenebForkEpoch:     10,
+				SecondsPerSlot:   12,
+				CapellaForkEpoch: 20,
+				DenebForkEpoch:   10,
 			}),
 			WantErr: "fork epochs must be in chronological order",
 		},

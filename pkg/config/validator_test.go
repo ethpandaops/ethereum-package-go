@@ -214,7 +214,7 @@ func TestValidatorHelperFunctions(t *testing.T) {
 
 	// Test log level validation
 	config := &EthereumPackageConfig{
-		Participants:         []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
+		Participants:   []ParticipantConfig{{ELType: client.Geth, CLType: client.Lighthouse}},
 		GlobalLogLevel: "debug",
 	}
 	assert.Nil(t, config.Validate())
