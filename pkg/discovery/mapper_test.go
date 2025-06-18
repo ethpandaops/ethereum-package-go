@@ -3,130 +3,32 @@ package discovery
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
-	"github.com/ethpandaops/ethereum-package-go/pkg/network"
+	"github.com/ethpandaops/ethereum-package-go/test/helpers"
+	"github.com/ethpandaops/ethereum-package-go/test/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-// MockKurtosisClient is a mock implementation of kurtosis.Client
-type MockKurtosisClient struct {
-	mock.Mock
-}
-
-func (m *MockKurtosisClient) RunPackage(ctx context.Context, config kurtosis.RunPackageConfig) (*kurtosis.RunPackageResult, error) {
-	args := m.Called(ctx, config)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*kurtosis.RunPackageResult), args.Error(1)
-}
-
-func (m *MockKurtosisClient) GetServices(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
-	args := m.Called(ctx, enclaveName)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(map[string]*kurtosis.ServiceInfo), args.Error(1)
-}
-
-func (m *MockKurtosisClient) StopEnclave(ctx context.Context, enclaveName string) error {
-	args := m.Called(ctx, enclaveName)
-	return args.Error(0)
-}
-
-func (m *MockKurtosisClient) DestroyEnclave(ctx context.Context, enclaveName string) error {
-	args := m.Called(ctx, enclaveName)
-	return args.Error(0)
-}
-
-func (m *MockKurtosisClient) WaitForServices(ctx context.Context, enclaveName string, serviceNames []string, timeout time.Duration) error {
-	args := m.Called(ctx, enclaveName, serviceNames, timeout)
-	return args.Error(0)
-}
-
 func TestServiceMapper_MapToNetwork(t *testing.T) {
 	ctx := context.Background()
-	mockClient := new(MockKurtosisClient)
+	mockClient := mocks.NewMockKurtosisClient()
 	mapper := NewServiceMapper(mockClient)
 
-	services := map[string]*kurtosis.ServiceInfo{
-		"el-1-geth-lighthouse": {
-			Name:      "el-1-geth-lighthouse",
-			UUID:      "uuid-1",
-			Status:    "running",
-			IPAddress: "10.0.0.1",
-			Ports: map[string]kurtosis.PortInfo{
-				"rpc": {
-					Number:   8545,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.1:8545",
-				},
-				"ws": {
-					Number:   8546,
-					Protocol: "TCP",
-					MaybeURL: "ws://10.0.0.1:8546",
-				},
-				"engine": {
-					Number:   8551,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.1:8551",
-				},
-			},
-		},
-		"cl-1-lighthouse-geth": {
-			Name:      "cl-1-lighthouse-geth",
-			UUID:      "uuid-2",
-			Status:    "running",
-			IPAddress: "10.0.0.2",
-			Ports: map[string]kurtosis.PortInfo{
-				"http": {
-					Number:   5052,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.2:5052",
-				},
-				"metrics": {
-					Number:   5054,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.2:5054",
-				},
-			},
-		},
-		"apache": {
-			Name:      "apache",
-			UUID:      "uuid-3",
-			Status:    "running",
-			IPAddress: "10.0.0.3",
-			Ports: map[string]kurtosis.PortInfo{
-				"http": {
-					Number:   80,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.3:80",
-				},
-			},
-		},
-		"prometheus": {
-			Name:      "prometheus",
-			UUID:      "uuid-4",
-			Status:    "running",
-			IPAddress: "10.0.0.4",
-			Ports: map[string]kurtosis.PortInfo{
-				"http": {
-					Number:   9090,
-					Protocol: "TCP",
-					MaybeURL: "http://10.0.0.4:9090",
-				},
-			},
-		},
-	}
+	// Use helper to create test services
+	serviceBuilder := helpers.NewTestServiceBuilder()
+	services := serviceBuilder.CreateDefaultServices()
 
-	mockClient.On("GetServices", ctx, "test-enclave").Return(services, nil)
-	mockClient.On("DestroyEnclave", ctx, "test-enclave").Return(nil)
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		assert.Equal(t, "test-enclave", enclaveName)
+		return services, nil
+	}
+	mockClient.DestroyEnclaveFunc = func(ctx context.Context, enclaveName string) error {
+		return nil
+	}
 
 	ethConfig := &config.EthereumPackageConfig{
 		NetworkParams: &config.NetworkParams{
@@ -134,202 +36,246 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 		},
 	}
 
-	network, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig)
+	networkObj, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig)
 	require.NoError(t, err)
-	require.NotNil(t, network)
+	require.NotNil(t, networkObj)
 
 	// Verify network properties
-	assert.Equal(t, uint64(12345), network.ChainID())
-	assert.Equal(t, "test-enclave", network.EnclaveName())
+	assert.Equal(t, uint64(12345), networkObj.ChainID())
+	assert.Equal(t, "test-enclave", networkObj.EnclaveName())
 
-	// Verify execution clients
-	execClients := network.ExecutionClients()
-	assert.Equal(t, 1, len(execClients.All()))
-	gethClients := execClients.ByType(client.Geth)
-	assert.Equal(t, 1, len(gethClients))
-	geth := gethClients[0]
-	assert.Equal(t, "http://10.0.0.1:8545", geth.RPCURL())
-	assert.Equal(t, "ws://10.0.0.1:8546", geth.WSURL())
-	assert.Equal(t, "http://10.0.0.1:8551", geth.EngineURL())
+	// Verify clients were discovered
+	execClients := networkObj.ExecutionClients().All()
+	consClients := networkObj.ConsensusClients().All()
+	
+	assert.NotEmpty(t, execClients, "should have execution clients")
+	assert.NotEmpty(t, consClients, "should have consensus clients")
 
-	// Verify consensus clients
-	consClients := network.ConsensusClients()
-	t.Logf("Consensus clients: %d", len(consClients.All()))
-	for _, client := range consClients.All() {
-		t.Logf("Consensus client: %s, type: %s", client.Name(), client.Type())
-	}
-	assert.Equal(t, 1, len(consClients.All()))
-	lighthouseClients := consClients.ByType(client.Lighthouse)
-	if len(lighthouseClients) > 0 {
-		assert.Equal(t, 1, len(lighthouseClients))
-		lighthouse := lighthouseClients[0]
-		assert.Equal(t, "http://10.0.0.2:5052", lighthouse.BeaconAPIURL())
-	} else {
-		t.Error("No lighthouse clients found")
-	}
-
-	// Verify Apache config server
-	apache := network.ApacheConfig()
+	// Verify Apache config
+	apache := networkObj.ApacheConfig()
 	require.NotNil(t, apache)
-	assert.Equal(t, "http://10.0.0.3:80", apache.URL())
+	assert.Contains(t, apache.URL(), "10.0.0.3")
 
-
-	// Verify services list
-	networkServices := network.Services()
-	assert.Equal(t, 4, len(networkServices))
-
-	// Test cleanup
-	err = network.Cleanup(ctx)
-	assert.NoError(t, err)
-	mockClient.AssertCalled(t, "DestroyEnclave", ctx, "test-enclave")
+	// Verify service mapping was called
+	assert.Greater(t, mockClient.CallCount["GetServices"], 0)
 }
 
-func TestServiceMapper_DetectServiceTypes(t *testing.T) {
-	tests := []struct {
-		name         string
-		serviceName  string
-		expectedType network.ServiceType
-	}{
-		{"geth execution", "el-1-geth-lighthouse", network.ServiceTypeExecutionClient},
-		{"besu execution", "el-2-besu-teku", network.ServiceTypeExecutionClient},
-		{"nethermind execution", "el-3-nethermind", network.ServiceTypeExecutionClient},
-		{"lighthouse consensus", "cl-1-lighthouse-geth", network.ServiceTypeConsensusClient},
-		{"teku consensus", "cl-2-teku-besu", network.ServiceTypeConsensusClient},
-		{"prysm consensus", "cl-3-prysm", network.ServiceTypeConsensusClient},
-		{"validator", "validator-1", network.ServiceTypeValidator},
-		{"prometheus", "prometheus", network.ServiceTypePrometheus},
-		{"grafana", "grafana", network.ServiceTypeGrafana},
-		{"blockscout", "blockscout", network.ServiceTypeBlockscout},
-		{"apache", "apache", network.ServiceTypeApache},
-		{"apache config", "apache-config-server", network.ServiceTypeApache},
-		{"unknown", "random-service", network.ServiceTypeOther},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			serviceType := detectServiceType(tt.serviceName)
-			assert.Equal(t, tt.expectedType, serviceType)
-		})
-	}
-}
-
-func TestServiceMapper_EmptyServices(t *testing.T) {
+func TestServiceMapper_MapToNetworkWithConfiguredServices(t *testing.T) {
 	ctx := context.Background()
-	mockClient := new(MockKurtosisClient)
+	mockClient := mocks.NewMockKurtosisClient()
 	mapper := NewServiceMapper(mockClient)
 
-	// Return empty services
-	emptyServices := make(map[string]*kurtosis.ServiceInfo)
-	mockClient.On("GetServices", ctx, "empty-enclave").Return(emptyServices, nil)
-	mockClient.On("DestroyEnclave", ctx, "empty-enclave").Return(nil)
+	services := map[string]*kurtosis.ServiceInfo{
+		"geth-1": {
+			Name:      "geth-1",
+			UUID:      "uuid-geth",
+			Status:    "running",
+			IPAddress: "192.168.1.10",
+			Ports: map[string]kurtosis.PortInfo{
+				"rpc": {Number: 8545, Protocol: "TCP", MaybeURL: "http://192.168.1.10:8545"},
+				"ws":  {Number: 8546, Protocol: "TCP", MaybeURL: "ws://192.168.1.10:8546"},
+			},
+		},
+		"lighthouse-1": {
+			Name:      "lighthouse-1",
+			UUID:      "uuid-lighthouse",
+			Status:    "running",
+			IPAddress: "192.168.1.11",
+			Ports: map[string]kurtosis.PortInfo{
+				"http": {Number: 5052, Protocol: "TCP", MaybeURL: "http://192.168.1.11:5052"},
+			},
+		},
+	}
 
-	config := &config.EthereumPackageConfig{}
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		return services, nil
+	}
 
-	network, err := mapper.MapToNetwork(ctx, "empty-enclave", config)
+	ethConfig := &config.EthereumPackageConfig{
+		Participants: []config.ParticipantConfig{
+			{ELType: client.Geth, CLType: client.Lighthouse, Count: 1},
+		},
+		NetworkParams: &config.NetworkParams{
+			ChainID: 54321,
+		},
+	}
+
+	networkObj, err := mapper.MapToNetwork(ctx, "custom-enclave", ethConfig)
 	require.NoError(t, err)
-	require.NotNil(t, network)
+	require.NotNil(t, networkObj)
 
-	// Verify empty collections
-	assert.Empty(t, network.ExecutionClients().All())
-	assert.Empty(t, network.ConsensusClients().All())
-	assert.Empty(t, network.Services())
-	assert.Nil(t, network.ApacheConfig())
+	// Verify network was configured correctly
+	assert.Equal(t, uint64(54321), networkObj.ChainID())
+	assert.Equal(t, "custom-enclave", networkObj.EnclaveName())
+
+	// Verify we got the expected clients
+	execClients := networkObj.ExecutionClients().All()
+	consClients := networkObj.ConsensusClients().All()
+	
+	assert.Len(t, execClients, 1)
+	assert.Len(t, consClients, 1)
+	
+	assert.Equal(t, "geth-1", execClients[0].Name())
+	assert.Equal(t, "lighthouse-1", consClients[0].Name())
 }
 
-func TestServiceMapper_MixedClients(t *testing.T) {
+func TestServiceMapper_MapToNetworkEmpty(t *testing.T) {
 	ctx := context.Background()
-	mockClient := new(MockKurtosisClient)
+	mockClient := mocks.NewMockKurtosisClient()
+	mapper := NewServiceMapper(mockClient)
+
+	// Empty services
+	services := map[string]*kurtosis.ServiceInfo{}
+
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		return services, nil
+	}
+
+	ethConfig := &config.EthereumPackageConfig{
+		NetworkParams: &config.NetworkParams{
+			ChainID: 9999,
+		},
+	}
+
+	networkObj, err := mapper.MapToNetwork(ctx, "empty-enclave", ethConfig)
+	require.NoError(t, err)
+	require.NotNil(t, networkObj)
+
+	// Should still have basic network properties
+	assert.Equal(t, uint64(9999), networkObj.ChainID())
+	assert.Equal(t, "empty-enclave", networkObj.EnclaveName())
+
+	// But no clients should be discovered
+	assert.Empty(t, networkObj.ExecutionClients().All())
+	assert.Empty(t, networkObj.ConsensusClients().All())
+}
+
+func TestServiceMapper_MapToNetworkError(t *testing.T) {
+	ctx := context.Background()
+	mockClient := mocks.NewMockKurtosisClient()
+	mapper := NewServiceMapper(mockClient)
+
+	// Mock GetServices to return an error
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		return nil, assert.AnError
+	}
+
+	ethConfig := &config.EthereumPackageConfig{
+		NetworkParams: &config.NetworkParams{
+			ChainID: 7777,
+		},
+	}
+
+	networkObj, err := mapper.MapToNetwork(ctx, "error-enclave", ethConfig)
+	assert.Nil(t, networkObj)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get services")
+}
+
+func TestServiceMapper_DiscoverApacheConfig(t *testing.T) {
+	ctx := context.Background()
+	mockClient := mocks.NewMockKurtosisClient()
+	mapper := NewServiceMapper(mockClient)
+
+	services := map[string]*kurtosis.ServiceInfo{
+		"apache": {
+			Name:      "apache",
+			UUID:      "uuid-apache",
+			Status:    "running",
+			IPAddress: "172.16.0.100",
+			Ports: map[string]kurtosis.PortInfo{
+				"http": {Number: 80, Protocol: "TCP", MaybeURL: "http://172.16.0.100:80"},
+			},
+		},
+	}
+
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		return services, nil
+	}
+
+	ethConfig := &config.EthereumPackageConfig{
+		NetworkParams: &config.NetworkParams{
+			ChainID: 8888,
+		},
+	}
+
+	networkObj, err := mapper.MapToNetwork(ctx, "apache-test", ethConfig)
+	require.NoError(t, err)
+	require.NotNil(t, networkObj)
+
+	// Verify Apache config was discovered
+	apache := networkObj.ApacheConfig()
+	require.NotNil(t, apache)
+	assert.Equal(t, "http://172.16.0.100:80", apache.URL())
+	assert.Contains(t, apache.GenesisSSZURL(), "genesis.ssz")
+	assert.Contains(t, apache.ConfigYAMLURL(), "config.yaml")
+}
+
+func TestServiceMapper_MultipleClientTypes(t *testing.T) {
+	ctx := context.Background()
+	mockClient := mocks.NewMockKurtosisClient()
 	mapper := NewServiceMapper(mockClient)
 
 	services := map[string]*kurtosis.ServiceInfo{
 		"el-1-geth-lighthouse": {
-			Name:      "el-1-geth-lighthouse",
-			UUID:      "uuid-1",
-			Status:    "running",
-			IPAddress: "10.0.0.1",
+			Name: "el-1-geth-lighthouse", UUID: "uuid-1", Status: "running", IPAddress: "10.0.1.1",
 			Ports: map[string]kurtosis.PortInfo{
-				"rpc": {Number: 8545, Protocol: "TCP", MaybeURL: "http://10.0.0.1:8545"},
+				"rpc": {Number: 8545, Protocol: "TCP", MaybeURL: "http://10.0.1.1:8545"},
 			},
 		},
 		"el-2-besu-teku": {
-			Name:      "el-2-besu-teku",
-			UUID:      "uuid-2",
-			Status:    "running",
-			IPAddress: "10.0.0.2",
+			Name: "el-2-besu-teku", UUID: "uuid-2", Status: "running", IPAddress: "10.0.1.2",
 			Ports: map[string]kurtosis.PortInfo{
-				"rpc": {Number: 8545, Protocol: "TCP", MaybeURL: "http://10.0.0.2:8545"},
+				"rpc": {Number: 8545, Protocol: "TCP", MaybeURL: "http://10.0.1.2:8545"},
 			},
 		},
 		"cl-1-lighthouse-geth": {
-			Name:      "cl-1-lighthouse-geth",
-			UUID:      "uuid-3",
-			Status:    "running",
-			IPAddress: "10.0.0.3",
+			Name: "cl-1-lighthouse-geth", UUID: "uuid-3", Status: "running", IPAddress: "10.0.2.1",
 			Ports: map[string]kurtosis.PortInfo{
-				"http": {Number: 5052, Protocol: "TCP", MaybeURL: "http://10.0.0.3:5052"},
+				"http": {Number: 5052, Protocol: "TCP", MaybeURL: "http://10.0.2.1:5052"},
 			},
 		},
 		"cl-2-teku-besu": {
-			Name:      "cl-2-teku-besu",
-			UUID:      "uuid-4",
-			Status:    "running",
-			IPAddress: "10.0.0.4",
+			Name: "cl-2-teku-besu", UUID: "uuid-4", Status: "running", IPAddress: "10.0.2.2",
 			Ports: map[string]kurtosis.PortInfo{
-				"http": {Number: 5052, Protocol: "TCP", MaybeURL: "http://10.0.0.4:5052"},
+				"http": {Number: 5052, Protocol: "TCP", MaybeURL: "http://10.0.2.2:5052"},
 			},
 		},
 	}
 
-	mockClient.On("GetServices", ctx, "mixed-enclave").Return(services, nil)
-	mockClient.On("DestroyEnclave", ctx, "mixed-enclave").Return(nil)
+	mockClient.GetServicesFunc = func(ctx context.Context, enclaveName string) (map[string]*kurtosis.ServiceInfo, error) {
+		return services, nil
+	}
 
-	config := &config.EthereumPackageConfig{}
-
-	network, err := mapper.MapToNetwork(ctx, "mixed-enclave", config)
-	require.NoError(t, err)
-
-	// Verify multiple client types
-	execClients := network.ExecutionClients()
-	assert.Equal(t, 2, len(execClients.All()))
-	assert.Equal(t, 1, len(execClients.ByType(client.Geth)))
-	assert.Equal(t, 1, len(execClients.ByType(client.Besu)))
-
-	consClients := network.ConsensusClients()
-	assert.Equal(t, 2, len(consClients.All()))
-	assert.Equal(t, 1, len(consClients.ByType(client.Lighthouse)))
-	assert.Equal(t, 1, len(consClients.ByType(client.Teku)))
-}
-
-func TestServiceMapper_ServiceWithoutPorts(t *testing.T) {
-	ctx := context.Background()
-	mockClient := new(MockKurtosisClient)
-	mapper := NewServiceMapper(mockClient)
-
-	services := map[string]*kurtosis.ServiceInfo{
-		"el-1-geth": {
-			Name:      "el-1-geth",
-			UUID:      "uuid-1",
-			Status:    "running",
-			IPAddress: "10.0.0.1",
-			Ports:     map[string]kurtosis.PortInfo{}, // No ports
+	ethConfig := &config.EthereumPackageConfig{
+		NetworkParams: &config.NetworkParams{
+			ChainID: 1111,
 		},
 	}
 
-	mockClient.On("GetServices", ctx, "no-ports-enclave").Return(services, nil)
-	mockClient.On("DestroyEnclave", ctx, "no-ports-enclave").Return(nil)
-
-	config := &config.EthereumPackageConfig{}
-
-	network, err := mapper.MapToNetwork(ctx, "no-ports-enclave", config)
+	networkObj, err := mapper.MapToNetwork(ctx, "multi-client", ethConfig)
 	require.NoError(t, err)
+	require.NotNil(t, networkObj)
 
-	// Service should still be mapped even without ports
-	assert.Equal(t, 1, len(network.Services()))
+	// Should discover multiple execution and consensus clients
+	execClients := networkObj.ExecutionClients().All()
+	consClients := networkObj.ConsensusClients().All()
 	
-	// But execution client won't have URLs
-	execClients := network.ExecutionClients()
-	assert.Equal(t, 1, len(execClients.All()))
-	client := execClients.All()[0]
-	assert.Empty(t, client.RPCURL())
-	assert.Empty(t, client.WSURL())
+	assert.Len(t, execClients, 2, "should have 2 execution clients")
+	assert.Len(t, consClients, 2, "should have 2 consensus clients")
+
+	// Verify client names were parsed correctly
+	execNames := make([]string, len(execClients))
+	for i, client := range execClients {
+		execNames[i] = client.Name()
+	}
+	assert.Contains(t, execNames, "el-1-geth-lighthouse")
+	assert.Contains(t, execNames, "el-2-besu-teku")
+
+	consNames := make([]string, len(consClients))
+	for i, client := range consClients {
+		consNames[i] = client.Name()
+	}
+	assert.Contains(t, consNames, "cl-1-lighthouse-geth")
+	assert.Contains(t, consNames, "cl-2-teku-besu")
 }

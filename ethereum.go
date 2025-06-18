@@ -222,13 +222,6 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	case "preset":
 		preset := cfg.ConfigSource.(*config.PresetConfigSource)
 		baseConfig, err = config.GetPresetConfig(preset.GetPreset())
-	case "file":
-		file := cfg.ConfigSource.(*config.FileConfigSource)
-		yamlContent, readErr := readFile(file.GetPath())
-		if readErr != nil {
-			return nil, fmt.Errorf("failed to read config file: %w", readErr)
-		}
-		baseConfig, err = config.FromYAML(yamlContent)
 	case "inline":
 		inline := cfg.ConfigSource.(*config.InlineConfigSource)
 		baseConfig = inline.GetConfig()
@@ -266,11 +259,4 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	}
 
 	return builder.Build()
-}
-
-// readFile reads a file and returns its contents as a string
-func readFile(path string) (string, error) {
-	// In a real implementation, this would read from filesystem
-	// For now, we'll return an error since we don't implement file reading
-	return "", fmt.Errorf("file reading not implemented")
 }

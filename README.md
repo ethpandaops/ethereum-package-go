@@ -55,9 +55,7 @@ ethereum.AllClientsMatrix() // All combinations (30 nodes)
 ```go
 ethereum.WithChainID(12345)
 ethereum.WithCustomChain(12345, 6, 16) // chainID, secondsPerSlot, slotsPerEpoch
-ethereum.WithMonitoring()               // Prometheus + Grafana
-ethereum.WithExplorer()                 // Blockscout
-ethereum.WithMEVBoost()                 // MEV-boost
+ethereum.WithExplorer()                 // Dora
 ```
 
 ### Advanced Config
@@ -99,7 +97,3 @@ configURL := apache.ConfigYAMLURL()
 - Go 1.21+
 - [Kurtosis](https://docs.kurtosis.com/install) running locally
 - Docker
-
-## License
-
-Apache 2.0
