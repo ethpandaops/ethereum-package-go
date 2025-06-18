@@ -23,6 +23,17 @@ func TestBasicNetwork(t *testing.T) {
 	// Start a test network - automatically cleaned up
 	net := testutil.StartNetwork(t)
 
+	// Debug: Print network information
+	t.Logf("Network created: %s", net.EnclaveName())
+	t.Logf("Found %d execution clients", len(net.ExecutionClients().All()))
+	t.Logf("Found %d consensus clients", len(net.ConsensusClients().All()))
+	t.Logf("Found %d total services", len(net.Services()))
+	
+	// Debug: Print all services
+	for i, service := range net.Services() {
+		t.Logf("Service %d: %s (type: %s, status: %s)", i, service.Name, service.Type, service.Status)
+	}
+
 	// Assert network properties
 	testutil.Assert(t, net).
 		HasExecutionClients(1).
