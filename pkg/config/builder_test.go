@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,22 +11,22 @@ import (
 func TestConfigBuilder(t *testing.T) {
 	builder := NewConfigBuilder()
 
-	participant := types.ParticipantConfig{
-		ELType: types.ClientGeth,
-		CLType: types.ClientLighthouse,
+	participant := ParticipantConfig{
+		ELType: client.Geth,
+		CLType: client.Lighthouse,
 		Count:  2,
 	}
 
-	networkParams := &types.NetworkParams{
+	networkParams := &NetworkParams{
 		ChainID:        12345,
 		SecondsPerSlot: 12,
 	}
 
-	mevConfig := &types.MEVConfig{
+	mevConfig := &MEVConfig{
 		Type: "full",
 	}
 
-	service := types.AdditionalService{
+	service := AdditionalService{
 		Name: "prometheus",
 	}
 
@@ -40,8 +40,8 @@ func TestConfigBuilder(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, config.Participants, 1)
-	assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-	assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 	assert.Equal(t, 2, config.Participants[0].Count)
 	assert.NotNil(t, config.NetworkParams)
 	assert.Equal(t, uint64(12345), config.NetworkParams.ChainID)
@@ -55,9 +55,9 @@ func TestConfigBuilder(t *testing.T) {
 func TestConfigBuilderWithParticipants(t *testing.T) {
 	builder := NewConfigBuilder()
 
-	participants := []types.ParticipantConfig{
-		{ELType: types.ClientGeth, CLType: types.ClientLighthouse, Count: 1},
-		{ELType: types.ClientBesu, CLType: types.ClientTeku, Count: 1},
+	participants := []ParticipantConfig{
+		{ELType: client.Geth, CLType: client.Lighthouse, Count: 1},
+		{ELType: client.Besu, CLType: client.Teku, Count: 1},
 	}
 
 	config, err := builder.WithParticipants(participants).Build()
@@ -69,9 +69,9 @@ func TestConfigBuilderWithParticipants(t *testing.T) {
 func TestConfigBuilderWithChainID(t *testing.T) {
 	builder := NewConfigBuilder()
 
-	participant := types.ParticipantConfig{
-		ELType: types.ClientGeth,
-		CLType: types.ClientLighthouse,
+	participant := ParticipantConfig{
+		ELType: client.Geth,
+		CLType: client.Lighthouse,
 	}
 
 	config, err := builder.
@@ -101,8 +101,8 @@ func TestConfigBuilderValidation(t *testing.T) {
 		{
 			name: "missing EL type",
 			setup: func(b *ConfigBuilder) {
-				b.WithParticipant(types.ParticipantConfig{
-					CLType: types.ClientLighthouse,
+				b.WithParticipant(ParticipantConfig{
+					CLType: client.Lighthouse,
 				})
 			},
 			wantErr: "participant 0: execution layer type is required",
@@ -110,8 +110,8 @@ func TestConfigBuilderValidation(t *testing.T) {
 		{
 			name: "missing CL type",
 			setup: func(b *ConfigBuilder) {
-				b.WithParticipant(types.ParticipantConfig{
-					ELType: types.ClientGeth,
+				b.WithParticipant(ParticipantConfig{
+					ELType: client.Geth,
 				})
 			},
 			wantErr: "participant 0: consensus layer type is required",
@@ -133,9 +133,9 @@ func TestConfigBuilderDefaultCount(t *testing.T) {
 	builder := NewConfigBuilder()
 
 	config, err := builder.
-		WithParticipant(types.ParticipantConfig{
-			ELType: types.ClientGeth,
-			CLType: types.ClientLighthouse,
+		WithParticipant(ParticipantConfig{
+			ELType: client.Geth,
+			CLType: client.Lighthouse,
 			// Count not specified
 		}).
 		Build()
@@ -146,16 +146,16 @@ func TestConfigBuilderDefaultCount(t *testing.T) {
 
 func TestSimpleParticipantBuilder(t *testing.T) {
 	participant := NewParticipantBuilder().
-		WithEL(types.ClientGeth).
-		WithCL(types.ClientLighthouse).
+		WithEL(client.Geth).
+		WithCL(client.Lighthouse).
 		WithELVersion("v1.13.0").
 		WithCLVersion("v4.5.0").
 		WithCount(3).
 		WithValidatorCount(96).
 		Build()
 
-	assert.Equal(t, types.ClientGeth, participant.ELType)
-	assert.Equal(t, types.ClientLighthouse, participant.CLType)
+	assert.Equal(t, client.Geth, participant.ELType)
+	assert.Equal(t, client.Lighthouse, participant.CLType)
 	assert.Equal(t, "v1.13.0", participant.ELVersion)
 	assert.Equal(t, "v4.5.0", participant.CLVersion)
 	assert.Equal(t, 3, participant.Count)
@@ -164,12 +164,12 @@ func TestSimpleParticipantBuilder(t *testing.T) {
 
 func TestSimpleParticipantBuilderDefaults(t *testing.T) {
 	participant := NewParticipantBuilder().
-		WithEL(types.ClientGeth).
-		WithCL(types.ClientLighthouse).
+		WithEL(client.Geth).
+		WithCL(client.Lighthouse).
 		Build()
 
-	assert.Equal(t, types.ClientGeth, participant.ELType)
-	assert.Equal(t, types.ClientLighthouse, participant.CLType)
+	assert.Equal(t, client.Geth, participant.ELType)
+	assert.Equal(t, client.Lighthouse, participant.CLType)
 	assert.Equal(t, 1, participant.Count) // Default
 	assert.Equal(t, "", participant.ELVersion)
 	assert.Equal(t, "", participant.CLVersion)
@@ -178,9 +178,9 @@ func TestSimpleParticipantBuilderDefaults(t *testing.T) {
 
 func TestConfigBuilderImmutability(t *testing.T) {
 	builder := NewConfigBuilder()
-	participant := types.ParticipantConfig{
-		ELType: types.ClientGeth,
-		CLType: types.ClientLighthouse,
+	participant := ParticipantConfig{
+		ELType: client.Geth,
+		CLType: client.Lighthouse,
 		Count:  1,
 	}
 
@@ -188,13 +188,13 @@ func TestConfigBuilderImmutability(t *testing.T) {
 	require.NoError(t, err)
 
 	// Modify the builder after building
-	builder.WithParticipant(types.ParticipantConfig{
-		ELType: types.ClientBesu,
-		CLType: types.ClientTeku,
+	builder.WithParticipant(ParticipantConfig{
+		ELType: client.Besu,
+		CLType: client.Teku,
 		Count:  1,
 	})
 
 	// The first config should not be affected
 	assert.Len(t, config1.Participants, 1)
-	assert.Equal(t, types.ClientGeth, config1.Participants[0].ELType)
+	assert.Equal(t, client.Geth, config1.Participants[0].ELType)
 }

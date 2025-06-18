@@ -3,9 +3,12 @@ package kurtosis
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	kurtosis_core_rpc_api_bindings "github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
+	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/starlark_run_config"
 	"github.com/kurtosis-tech/kurtosis/api/golang/engine/lib/kurtosis_context"
 )
 
@@ -95,17 +98,93 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	// Store enclave reference
 	k.enclaves[config.EnclaveName] = enclaveCtx
 
-	// For now, we'll use a simplified approach
-	// In production, this would use the actual Kurtosis SDK to run the package
-	
+	// Prepare package run options
+	packageConfig := make(map[string]interface{})
+	if config.ConfigYAML != "" {
+		// Parse YAML config and convert to map
+		// For now, we'll pass the raw YAML as a string parameter
+		packageConfig["yaml_config"] = config.ConfigYAML
+	}
+
+	// Run the package using Kurtosis SDK
+	var responseLines []string
 	result := &RunPackageResult{
 		EnclaveName: config.EnclaveName,
-		ResponseLines: []string{
-			"Starting ethereum-package",
-			"Creating execution clients",
-			"Creating consensus clients",
-			"Network ready",
-		},
+	}
+
+	// Create run configuration
+	runConfig := starlark_run_config.NewRunStarlarkConfig(
+		starlark_run_config.WithSerializedParams(config.ConfigYAML),
+		starlark_run_config.WithDryRun(config.DryRun),
+		starlark_run_config.WithParallelism(int32(config.Parallelism)),
+	)
+
+	// Execute the package
+	if config.NonBlockingMode {
+		// Non-blocking mode - returns immediately with a channel
+		responseChan, cancelFunc, err := enclaveCtx.RunStarlarkPackage(ctx, config.PackageID, runConfig)
+		if err != nil {
+			result.ExecutionError = err
+			return result, nil
+		}
+		defer cancelFunc()
+
+		// Collect a few responses for non-blocking mode
+		timeout := time.After(5 * time.Second)
+		for {
+			select {
+			case response, ok := <-responseChan:
+				if !ok {
+					goto done
+				}
+				if response != nil {
+					responseLines = append(responseLines, formatStarlarkResponse(response))
+				}
+			case <-timeout:
+				responseLines = append(responseLines, "Package execution started in non-blocking mode")
+				goto done
+			}
+		}
+		done:
+	} else {
+		// Blocking mode - wait for completion
+		runResult, err := enclaveCtx.RunStarlarkPackageBlocking(ctx, config.PackageID, runConfig)
+		if err != nil {
+			result.ExecutionError = err
+			return result, nil
+		}
+
+		// Process validation errors
+		if len(runResult.ValidationErrors) > 0 {
+			for _, validationErr := range runResult.ValidationErrors {
+				result.ValidationErrors = append(result.ValidationErrors, validationErr.GetErrorMessage())
+			}
+		}
+
+		// Process interpretation error
+		if runResult.InterpretationError != nil {
+			result.InterpretationError = fmt.Errorf("interpretation error: %s", runResult.InterpretationError.GetErrorMessage())
+		}
+
+		// Process execution error
+		if runResult.ExecutionError != nil {
+			result.ExecutionError = fmt.Errorf("execution error: %s", runResult.ExecutionError.GetErrorMessage())
+		}
+
+		// Process run output (multiline string)
+		if runResult.RunOutput != "" {
+			outputLines := strings.Split(string(runResult.RunOutput), "\n")
+			for _, line := range outputLines {
+				if line != "" {
+					responseLines = append(responseLines, line)
+				}
+			}
+		}
+
+		// Add final status
+		if len(runResult.ValidationErrors) == 0 && runResult.InterpretationError == nil && runResult.ExecutionError == nil {
+			responseLines = append(responseLines, "Package run completed successfully")
+		}
 	}
 
 	return result, nil
@@ -113,42 +192,77 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 
 // GetServices returns all services in the enclave
 func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (map[string]*ServiceInfo, error) {
-	_, exists := k.enclaves[enclaveName]
+	enclaveCtx, exists := k.enclaves[enclaveName]
 	if !exists {
-		return nil, fmt.Errorf("enclave not found: %s", enclaveName)
+		// Try to get the enclave context if not cached
+		var err error
+		enclaveCtx, err = k.kurtosisCtx.GetEnclaveContext(ctx, enclaveName)
+		if err != nil {
+			return nil, fmt.Errorf("enclave not found: %s", enclaveName)
+		}
+		k.enclaves[enclaveName] = enclaveCtx
 	}
 
-	// For now, return mock services
-	// In production, this would query the actual Kurtosis enclave
-	result := make(map[string]*ServiceInfo)
-	
-	// Add mock Ethereum services
-	result["cl-1-geth-lighthouse"] = &ServiceInfo{
-		Name:      "cl-1-geth-lighthouse",
-		UUID:      "uuid-el-1",
-		Status:    "RUNNING",
-		IPAddress: "172.16.0.2",
-		Hostname:  "cl-1-geth-lighthouse.local",
-		Ports: map[string]PortInfo{
-			"rpc":     {Number: 8545, Protocol: "TCP", MaybeURL: "http://172.16.0.2:8545"},
-			"ws":      {Number: 8546, Protocol: "TCP", MaybeURL: "ws://172.16.0.2:8546"},
-			"engine":  {Number: 8551, Protocol: "TCP"},
-			"metrics": {Number: 9090, Protocol: "TCP"},
-			"p2p":     {Number: 30303, Protocol: "TCP"},
-		},
+	// Get all services from the enclave
+	serviceIdentifiers, err := enclaveCtx.GetServices()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get services: %w", err)
 	}
-	
-	result["cl-1-lighthouse-geth"] = &ServiceInfo{
-		Name:      "cl-1-lighthouse-geth",
-		UUID:      "uuid-cl-1",
-		Status:    "RUNNING",
-		IPAddress: "172.16.0.3",
-		Hostname:  "cl-1-lighthouse-geth.local",
-		Ports: map[string]PortInfo{
-			"beacon":  {Number: 5052, Protocol: "TCP", MaybeURL: "http://172.16.0.3:5052"},
-			"metrics": {Number: 5054, Protocol: "TCP"},
-			"p2p":     {Number: 9000, Protocol: "TCP"},
-		},
+
+	result := make(map[string]*ServiceInfo)
+
+	for serviceName, serviceUUID := range serviceIdentifiers {
+		// Get detailed service info
+		serviceContext, err := enclaveCtx.GetServiceContext(string(serviceUUID))
+		if err != nil {
+			// Log error but continue with other services
+			continue
+		}
+
+		// Get service status
+		serviceStatus := "UNKNOWN"
+		// Note: The actual status retrieval depends on the Kurtosis version
+		// For now, we'll assume all services are running if they exist
+		if serviceContext != nil {
+			serviceStatus = "RUNNING"
+		}
+
+		// Convert ports
+		ports := make(map[string]PortInfo)
+		publicPorts := serviceContext.GetPublicPorts()
+		for portName, portSpec := range publicPorts {
+			portInfo := PortInfo{
+				Number:            portSpec.GetNumber(),
+				Protocol:          string(portSpec.GetTransportProtocol()),
+				TransportProtocol: string(portSpec.GetTransportProtocol()),
+			}
+
+			// Build MaybeURL based on common patterns
+			if serviceContext.GetMaybePublicIPAddress() != "" {
+				host := serviceContext.GetMaybePublicIPAddress()
+				switch {
+				case strings.Contains(portName, "http") || strings.Contains(portName, "rpc") || 
+				     strings.Contains(portName, "beacon") || strings.Contains(portName, "engine"):
+					portInfo.MaybeURL = fmt.Sprintf("http://%s:%d", host, portSpec.GetNumber())
+				case strings.Contains(portName, "ws"):
+					portInfo.MaybeURL = fmt.Sprintf("ws://%s:%d", host, portSpec.GetNumber())
+				}
+			}
+
+			ports[portName] = portInfo
+		}
+
+		// Create ServiceInfo
+		serviceInfo := &ServiceInfo{
+			Name:      string(serviceName),
+			UUID:      string(serviceUUID),
+			Status:    serviceStatus,
+			IPAddress: serviceContext.GetMaybePublicIPAddress(),
+			Hostname:  string(serviceName), // Use service name as hostname
+			Ports:     ports,
+		}
+
+		result[string(serviceName)] = serviceInfo
 	}
 
 	return result, nil
@@ -257,4 +371,49 @@ func isWSPort(port uint16) bool {
 		}
 	}
 	return false
+}
+
+// formatStarlarkResponse formats a Starlark response line for display
+func formatStarlarkResponse(response *kurtosis_core_rpc_api_bindings.StarlarkRunResponseLine) string {
+	if response == nil {
+		return ""
+	}
+
+	if response.GetInstruction() != nil {
+		return fmt.Sprintf("[Instruction] %s", response.GetInstruction().GetInstructionName())
+	}
+
+	if response.GetInstructionResult() != nil {
+		return fmt.Sprintf("[Result] %s", response.GetInstructionResult().GetSerializedInstructionResult())
+	}
+
+	if response.GetError() != nil {
+		return fmt.Sprintf("[Error] %s", response.GetError().String())
+	}
+
+	if response.GetProgressInfo() != nil {
+		info := response.GetProgressInfo()
+		return fmt.Sprintf("[Progress] %d/%d - %s", 
+			info.GetCurrentStepNumber(), 
+			info.GetTotalSteps(), 
+			info.GetCurrentStepInfo())
+	}
+
+	if response.GetRunFinishedEvent() != nil {
+		event := response.GetRunFinishedEvent()
+		if event.GetIsRunSuccessful() {
+			return "[Finished] Run completed successfully"
+		}
+		return fmt.Sprintf("[Finished] Run failed: %s", event.GetSerializedOutput())
+	}
+
+	if response.GetWarning() != nil {
+		return fmt.Sprintf("[Warning] %s", response.GetWarning().GetWarningMessage())
+	}
+
+	if response.GetInfo() != nil {
+		return fmt.Sprintf("[Info] %s", response.GetInfo().GetInfoMessage())
+	}
+
+	return "[Unknown] Unknown response type"
 }

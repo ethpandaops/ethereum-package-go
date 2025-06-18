@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,12 +12,12 @@ import (
 func TestWithPreset(t *testing.T) {
 	tests := []struct {
 		name   string
-		preset types.Preset
+		preset config.Preset
 	}{
-		{"minimal preset", types.PresetMinimal},
-		{"all ELs preset", types.PresetAllELs},
-		{"all CLs preset", types.PresetAllCLs},
-		{"all clients matrix", types.PresetAllClientsMatrix},
+		{"minimal preset", config.PresetMinimal},
+		{"all ELs preset", config.PresetAllELs},
+		{"all CLs preset", config.PresetAllCLs},
+		{"all clients matrix", config.PresetAllClientsMatrix},
 	}
 
 	for _, tt := range tests {
@@ -29,7 +29,7 @@ func TestWithPreset(t *testing.T) {
 			require.NotNil(t, cfg.ConfigSource)
 			assert.Equal(t, "preset", cfg.ConfigSource.Type())
 			
-			presetSource, ok := cfg.ConfigSource.(*types.PresetConfigSource)
+			presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 			require.True(t, ok)
 			assert.Equal(t, tt.preset, presetSource.GetPreset())
 		})
@@ -46,15 +46,15 @@ func TestWithConfigFile(t *testing.T) {
 	require.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, "file", cfg.ConfigSource.Type())
 	
-	fileSource, ok := cfg.ConfigSource.(*types.FileConfigSource)
+	fileSource, ok := cfg.ConfigSource.(*config.FileConfigSource)
 	require.True(t, ok)
 	assert.Equal(t, path, fileSource.GetPath())
 }
 
 func TestWithConfig(t *testing.T) {
 	cfg := defaultRunConfig()
-	ethConfig := &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+	ethConfig := &config.EthereumPackageConfig{
+		Participants: []config.ParticipantConfig{
 			{ELType: "geth", CLType: "lighthouse", Count: 1},
 		},
 	}
@@ -65,7 +65,7 @@ func TestWithConfig(t *testing.T) {
 	require.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, "inline", cfg.ConfigSource.Type())
 	
-	inlineSource, ok := cfg.ConfigSource.(*types.InlineConfigSource)
+	inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 	require.True(t, ok)
 	assert.Equal(t, ethConfig, inlineSource.GetConfig())
 }
@@ -82,7 +82,7 @@ func TestWithChainID(t *testing.T) {
 
 func TestWithNetworkParams(t *testing.T) {
 	cfg := defaultRunConfig()
-	params := &types.NetworkParams{
+	params := &config.NetworkParams{
 		ChainID:        12345,
 		NetworkID:      12345,
 		SecondsPerSlot: 12,
@@ -97,7 +97,7 @@ func TestWithNetworkParams(t *testing.T) {
 
 func TestWithMEV(t *testing.T) {
 	cfg := defaultRunConfig()
-	mevConfig := &types.MEVConfig{
+	mevConfig := &config.MEVConfig{
 		Type:     "full",
 		RelayURL: "http://relay.example.com",
 	}
@@ -110,7 +110,7 @@ func TestWithMEV(t *testing.T) {
 
 func TestWithAdditionalServices(t *testing.T) {
 	cfg := defaultRunConfig()
-	services := []string{"prometheus", "grafana", "blockscout"}
+	services := []string{"prometheus", "grafana", "dora"}
 	
 	opt := WithAdditionalServices(services...)
 	opt(cfg)
@@ -123,7 +123,7 @@ func TestWithAdditionalServices(t *testing.T) {
 
 func TestWithAdditionalService(t *testing.T) {
 	cfg := defaultRunConfig()
-	service := types.AdditionalService{
+	service := config.AdditionalService{
 		Name: "prometheus",
 		Config: map[string]interface{}{
 			"retention": "30d",
@@ -215,53 +215,44 @@ func TestConvenienceOptions(t *testing.T) {
 			name:    "AllELs",
 			optFunc: AllELs(),
 			validate: func(t *testing.T, cfg *RunConfig) {
-				presetSource, ok := cfg.ConfigSource.(*types.PresetConfigSource)
+				presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 				require.True(t, ok)
-				assert.Equal(t, types.PresetAllELs, presetSource.GetPreset())
+				assert.Equal(t, config.PresetAllELs, presetSource.GetPreset())
 			},
 		},
 		{
 			name:    "AllCLs",
 			optFunc: AllCLs(),
 			validate: func(t *testing.T, cfg *RunConfig) {
-				presetSource, ok := cfg.ConfigSource.(*types.PresetConfigSource)
+				presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 				require.True(t, ok)
-				assert.Equal(t, types.PresetAllCLs, presetSource.GetPreset())
+				assert.Equal(t, config.PresetAllCLs, presetSource.GetPreset())
 			},
 		},
 		{
 			name:    "AllClientsMatrix",
 			optFunc: AllClientsMatrix(),
 			validate: func(t *testing.T, cfg *RunConfig) {
-				presetSource, ok := cfg.ConfigSource.(*types.PresetConfigSource)
+				presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 				require.True(t, ok)
-				assert.Equal(t, types.PresetAllClientsMatrix, presetSource.GetPreset())
+				assert.Equal(t, config.PresetAllClientsMatrix, presetSource.GetPreset())
 			},
 		},
 		{
 			name:    "Minimal",
 			optFunc: Minimal(),
 			validate: func(t *testing.T, cfg *RunConfig) {
-				presetSource, ok := cfg.ConfigSource.(*types.PresetConfigSource)
+				presetSource, ok := cfg.ConfigSource.(*config.PresetConfigSource)
 				require.True(t, ok)
-				assert.Equal(t, types.PresetMinimal, presetSource.GetPreset())
+				assert.Equal(t, config.PresetMinimal, presetSource.GetPreset())
 			},
 		},
-		{
-			name:    "WithMonitoring",
-			optFunc: WithMonitoring(),
-			validate: func(t *testing.T, cfg *RunConfig) {
-				require.Len(t, cfg.AdditionalServices, 2)
-				assert.Equal(t, "prometheus", cfg.AdditionalServices[0].Name)
-				assert.Equal(t, "grafana", cfg.AdditionalServices[1].Name)
-			},
-		},
-		{
+				{
 			name:    "WithExplorer",
 			optFunc: WithExplorer(),
 			validate: func(t *testing.T, cfg *RunConfig) {
 				require.Len(t, cfg.AdditionalServices, 1)
-				assert.Equal(t, "blockscout", cfg.AdditionalServices[0].Name)
+				assert.Equal(t, "dora", cfg.AdditionalServices[0].Name)
 			},
 		},
 		{
@@ -271,7 +262,7 @@ func TestConvenienceOptions(t *testing.T) {
 				require.Len(t, cfg.AdditionalServices, 3)
 				assert.Equal(t, "prometheus", cfg.AdditionalServices[0].Name)
 				assert.Equal(t, "grafana", cfg.AdditionalServices[1].Name)
-				assert.Equal(t, "blockscout", cfg.AdditionalServices[2].Name)
+				assert.Equal(t, "dora", cfg.AdditionalServices[2].Name)
 			},
 		},
 	}
@@ -314,7 +305,7 @@ func TestMultipleOptions(t *testing.T) {
 	// Apply multiple options
 	opts := []RunOption{
 		WithChainID(99999),
-		WithMonitoring(),
+		WithAdditionalServices("prometheus", "grafana"),
 		WithVerbose(true),
 		WithTimeout(20 * time.Minute),
 		WithGlobalLogLevel("debug"),

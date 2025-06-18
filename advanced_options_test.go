@@ -4,26 +4,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWithParticipants(t *testing.T) {
-	participants := []types.ParticipantConfig{
+	participants := []config.ParticipantConfig{
 		{
-			ELType: "geth",
-			CLType: "lighthouse",
+			ELType: client.Geth,
+			CLType: client.Lighthouse,
 			Count:  2,
 		},
 		{
-			ELType: "besu",
-			CLType: "teku",
+			ELType: client.Besu,
+			CLType: client.Teku,
 			Count:  1,
 		},
 		{
-			ELType: "nethermind",
-			CLType: "prysm",
+			ELType: client.Nethermind,
+			CLType: client.Prysm,
 			Count:  1,
 		},
 	}
@@ -35,7 +36,7 @@ func TestWithParticipants(t *testing.T) {
 	require.NotNil(t, cfg.ConfigSource)
 	assert.Equal(t, "inline", cfg.ConfigSource.Type())
 
-	inlineSource, ok := cfg.ConfigSource.(*types.InlineConfigSource)
+	inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 	require.True(t, ok)
 
 	ethConfig := inlineSource.GetConfig()
@@ -70,15 +71,15 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 		{
 			name: "custom participants with MEV",
 			options: []RunOption{
-				WithParticipants([]types.ParticipantConfig{
-					{ELType: "geth", CLType: "lighthouse", Count: 2},
+				WithParticipants([]config.ParticipantConfig{
+					{ELType: client.Geth, CLType: client.Lighthouse, Count: 2},
 				}),
 				WithMEVBoost(),
 				WithChainID(12345),
 			},
 			validate: func(t *testing.T, cfg *RunConfig) {
 				// Check participants
-				inlineSource, ok := cfg.ConfigSource.(*types.InlineConfigSource)
+				inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 				require.True(t, ok)
 				assert.Len(t, inlineSource.GetConfig().Participants, 1)
 				
@@ -94,7 +95,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 			name: "custom network params with monitoring",
 			options: []RunOption{
 				WithCustomChain(88888, 12, 32),
-				WithMonitoring(),
+				WithAdditionalServices("prometheus", "grafana"),
 				WithGlobalLogLevel("debug"),
 			},
 			validate: func(t *testing.T, cfg *RunConfig) {
@@ -116,16 +117,16 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 			name: "preset override with participants",
 			options: []RunOption{
 				AllELs(), // First set a preset
-				WithParticipants([]types.ParticipantConfig{ // Then override with participants
-					{ELType: "geth", CLType: "lighthouse", Count: 1},
+				WithParticipants([]config.ParticipantConfig{ // Then override with participants
+					{ELType: client.Geth, CLType: client.Lighthouse, Count: 1},
 				}),
 			},
 			validate: func(t *testing.T, cfg *RunConfig) {
 				// Participants should override preset
-				inlineSource, ok := cfg.ConfigSource.(*types.InlineConfigSource)
+				inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 				require.True(t, ok)
 				assert.Len(t, inlineSource.GetConfig().Participants, 1)
-				assert.Equal(t, types.ClientType("geth"), inlineSource.GetConfig().Participants[0].ELType)
+				assert.Equal(t, client.Geth, inlineSource.GetConfig().Participants[0].ELType)
 			},
 		},
 		{
@@ -144,7 +145,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 				}
 				assert.Contains(t, serviceNames, "prometheus")
 				assert.Contains(t, serviceNames, "grafana")
-				assert.Contains(t, serviceNames, "blockscout")
+				assert.Contains(t, serviceNames, "dora")
 				
 				// Check MEV relay
 				require.NotNil(t, cfg.MEV)
@@ -157,9 +158,9 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 		{
 			name: "complex configuration",
 			options: []RunOption{
-				WithParticipants([]types.ParticipantConfig{
-					{ELType: "geth", CLType: "lighthouse", Count: 2},
-					{ELType: "besu", CLType: "teku", Count: 1},
+				WithParticipants([]config.ParticipantConfig{
+					{ELType: client.Geth, CLType: client.Lighthouse, Count: 2},
+					{ELType: client.Besu, CLType: client.Teku, Count: 1},
 				}),
 				WithCustomChain(77777, 6, 32),
 				WithMEVBoost(),
@@ -170,7 +171,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 			},
 			validate: func(t *testing.T, cfg *RunConfig) {
 				// Check participants
-				inlineSource, ok := cfg.ConfigSource.(*types.InlineConfigSource)
+				inlineSource, ok := cfg.ConfigSource.(*config.InlineConfigSource)
 				require.True(t, ok)
 				assert.Len(t, inlineSource.GetConfig().Participants, 2)
 				
@@ -211,7 +212,7 @@ func TestAdditionalServiceWithConfig(t *testing.T) {
 	cfg := defaultRunConfig()
 	
 	// Add service with configuration
-	service := types.AdditionalService{
+	service := config.AdditionalService{
 		Name: "prometheus",
 		Config: map[string]interface{}{
 			"retention": "30d",
@@ -243,12 +244,12 @@ func TestAdditionalServiceWithConfig(t *testing.T) {
 func TestNetworkParamsValidation(t *testing.T) {
 	tests := []struct {
 		name   string
-		params *types.NetworkParams
+		params *config.NetworkParams
 		valid  bool
 	}{
 		{
 			name: "valid params",
-			params: &types.NetworkParams{
+			params: &config.NetworkParams{
 				ChainID:        12345,
 				NetworkID:      12345,
 				SecondsPerSlot: 12,
@@ -258,7 +259,7 @@ func TestNetworkParamsValidation(t *testing.T) {
 		},
 		{
 			name: "zero chain ID",
-			params: &types.NetworkParams{
+			params: &config.NetworkParams{
 				ChainID:        0,
 				NetworkID:      12345,
 				SecondsPerSlot: 12,
@@ -268,7 +269,7 @@ func TestNetworkParamsValidation(t *testing.T) {
 		},
 		{
 			name: "invalid seconds per slot",
-			params: &types.NetworkParams{
+			params: &config.NetworkParams{
 				ChainID:        12345,
 				NetworkID:      12345,
 				SecondsPerSlot: 0,
@@ -278,7 +279,7 @@ func TestNetworkParamsValidation(t *testing.T) {
 		},
 		{
 			name: "invalid slots per epoch",
-			params: &types.NetworkParams{
+			params: &config.NetworkParams{
 				ChainID:        12345,
 				NetworkID:      12345,
 				SecondsPerSlot: 12,

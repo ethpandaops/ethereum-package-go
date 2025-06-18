@@ -319,12 +319,15 @@ func TestEndpointExtractor_ParseEndpointURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			host, port, err := extractor.ParseEndpointURL(tt.endpoint)
+			u, err := extractor.ParseEndpointURL(tt.endpoint)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedHost, host)
+				assert.NotNil(t, u)
+				assert.Equal(t, tt.expectedHost, u.Hostname())
+				port, err := extractor.GetPortNumber(tt.endpoint)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expectedPort, port)
 			}
 		})

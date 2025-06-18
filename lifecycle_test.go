@@ -105,8 +105,21 @@ func TestRun_NetworkLifecycle(t *testing.T) {
 	// Verify network properties
 	assert.Equal(t, uint64(12345), network.ChainID())
 	assert.NotEmpty(t, network.EnclaveName())
+	
+	// Debug: log all services
+	for _, svc := range network.Services() {
+		t.Logf("Service: %s, Type: %s", svc.Name, svc.Type)
+	}
 
 	// Verify clients were discovered
+	t.Logf("Execution clients: %d", len(network.ExecutionClients().All()))
+	t.Logf("Consensus clients: %d", len(network.ConsensusClients().All()))
+	for _, client := range network.ExecutionClients().All() {
+		t.Logf("Execution client: %s", client.Name())
+	}
+	for _, client := range network.ConsensusClients().All() {
+		t.Logf("Consensus client: %s", client.Name())
+	}
 	assert.NotEmpty(t, network.ExecutionClients().All())
 	assert.NotEmpty(t, network.ConsensusClients().All())
 

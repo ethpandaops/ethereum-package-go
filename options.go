@@ -3,28 +3,28 @@ package ethereum
 import (
 	"time"
 
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
 )
 
 // WithPreset sets a predefined configuration preset
-func WithPreset(preset types.Preset) RunOption {
+func WithPreset(preset config.Preset) RunOption {
 	return func(cfg *RunConfig) {
-		cfg.ConfigSource = types.NewPresetConfigSource(preset)
+		cfg.ConfigSource = config.NewPresetConfigSource(preset)
 	}
 }
 
 // WithConfigFile loads configuration from a YAML file
 func WithConfigFile(path string) RunOption {
 	return func(cfg *RunConfig) {
-		cfg.ConfigSource = types.NewFileConfigSource(path)
+		cfg.ConfigSource = config.NewFileConfigSource(path)
 	}
 }
 
 // WithConfig uses an inline configuration
-func WithConfig(config *types.EthereumPackageConfig) RunOption {
-	return func(cfg *RunConfig) {
-		cfg.ConfigSource = types.NewInlineConfigSource(config)
+func WithConfig(cfg *config.EthereumPackageConfig) RunOption {
+	return func(rc *RunConfig) {
+		rc.ConfigSource = config.NewInlineConfigSource(cfg)
 	}
 }
 
@@ -36,14 +36,14 @@ func WithChainID(chainID uint64) RunOption {
 }
 
 // WithNetworkParams sets custom network parameters
-func WithNetworkParams(params *types.NetworkParams) RunOption {
+func WithNetworkParams(params *config.NetworkParams) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.NetworkParams = params
 	}
 }
 
 // WithMEV enables MEV configuration
-func WithMEV(mevConfig *types.MEVConfig) RunOption {
+func WithMEV(mevConfig *config.MEVConfig) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.MEV = mevConfig
 	}
@@ -53,7 +53,7 @@ func WithMEV(mevConfig *types.MEVConfig) RunOption {
 func WithAdditionalServices(services ...string) RunOption {
 	return func(cfg *RunConfig) {
 		for _, service := range services {
-			cfg.AdditionalServices = append(cfg.AdditionalServices, types.AdditionalService{
+			cfg.AdditionalServices = append(cfg.AdditionalServices, config.AdditionalService{
 				Name: service,
 			})
 		}
@@ -61,7 +61,7 @@ func WithAdditionalServices(services ...string) RunOption {
 }
 
 // WithAdditionalService adds a single additional service with configuration
-func WithAdditionalService(service types.AdditionalService) RunOption {
+func WithAdditionalService(service config.AdditionalService) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.AdditionalServices = append(cfg.AdditionalServices, service)
 	}
@@ -127,54 +127,49 @@ func WithKurtosisClient(client kurtosis.Client) RunOption {
 
 // AllELs returns a preset with all execution layer clients
 func AllELs() RunOption {
-	return WithPreset(types.PresetAllELs)
+	return WithPreset(config.PresetAllELs)
 }
 
 // AllCLs returns a preset with all consensus layer clients
 func AllCLs() RunOption {
-	return WithPreset(types.PresetAllCLs)
+	return WithPreset(config.PresetAllCLs)
 }
 
 // AllClientsMatrix returns a preset with all client combinations
 func AllClientsMatrix() RunOption {
-	return WithPreset(types.PresetAllClientsMatrix)
+	return WithPreset(config.PresetAllClientsMatrix)
 }
 
 // Minimal returns a minimal preset with one EL and one CL
 func Minimal() RunOption {
-	return WithPreset(types.PresetMinimal)
+	return WithPreset(config.PresetMinimal)
 }
 
-// WithMonitoring adds Prometheus and Grafana monitoring
-func WithMonitoring() RunOption {
-	return WithAdditionalServices("prometheus", "grafana")
-}
-
-// WithExplorer adds Blockscout block explorer
+// WithExplorer adds Dora block explorer
 func WithExplorer() RunOption {
-	return WithAdditionalServices("blockscout")
+	return WithAdditionalServices("dora")
 }
 
 // WithFullObservability adds all observability tools
 func WithFullObservability() RunOption {
-	return WithAdditionalServices("prometheus", "grafana", "blockscout")
+	return WithAdditionalServices("prometheus", "grafana", "dora")
 }
 
 // WithParticipants sets custom participant configurations
-func WithParticipants(participants []types.ParticipantConfig) RunOption {
+func WithParticipants(participants []config.ParticipantConfig) RunOption {
 	return func(cfg *RunConfig) {
 		// Create inline config with participants
-		ethConfig := &types.EthereumPackageConfig{
+		ethConfig := &config.EthereumPackageConfig{
 			Participants: participants,
 		}
-		cfg.ConfigSource = types.NewInlineConfigSource(ethConfig)
+		cfg.ConfigSource = config.NewInlineConfigSource(ethConfig)
 	}
 }
 
 // WithCustomChain creates a custom chain configuration
 func WithCustomChain(chainID uint64, secondsPerSlot, slotsPerEpoch int) RunOption {
 	return func(cfg *RunConfig) {
-		cfg.NetworkParams = &types.NetworkParams{
+		cfg.NetworkParams = &config.NetworkParams{
 			ChainID:        chainID,
 			NetworkID:      chainID,
 			SecondsPerSlot: secondsPerSlot,
@@ -185,15 +180,27 @@ func WithCustomChain(chainID uint64, secondsPerSlot, slotsPerEpoch int) RunOptio
 
 // WithMEVBoost enables MEV-boost with default configuration
 func WithMEVBoost() RunOption {
-	return WithMEV(&types.MEVConfig{
+	return WithMEV(&config.MEVConfig{
 		Type: "full",
 	})
 }
 
 // WithMEVBoostRelay enables MEV-boost with a custom relay
 func WithMEVBoostRelay(relayURL string) RunOption {
-	return WithMEV(&types.MEVConfig{
+	return WithMEV(&config.MEVConfig{
 		Type:     "full",
 		RelayURL: relayURL,
 	})
+}
+
+// WithWaitForGenesis waits for the network genesis time before returning
+func WithWaitForGenesis() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.WaitForGenesis = true
+	}
+}
+
+// WithSpamoor adds the spamoor service to the network
+func WithSpamoor() RunOption {
+	return WithAdditionalServices("spamoor")
 }

@@ -4,30 +4,30 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestToYAML(t *testing.T) {
-	config := &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType:         types.ClientGeth,
-				CLType:         types.ClientLighthouse,
+				ELType:         client.Geth,
+				CLType:         client.Lighthouse,
 				Count:          2,
 				ValidatorCount: 32,
 			},
 		},
-		NetworkParams: &types.NetworkParams{
+		NetworkParams: &NetworkParams{
 			ChainID:        12345,
 			NetworkID:      12345,
 			SecondsPerSlot: 12,
 		},
-		MEV: &types.MEVConfig{
+		MEV: &MEVConfig{
 			Type: "full",
 		},
-		AdditionalServices: []types.AdditionalService{
+		AdditionalServices: []AdditionalService{
 			{
 				Name: "prometheus",
 				Config: map[string]interface{}{
@@ -58,11 +58,11 @@ func TestToYAML(t *testing.T) {
 }
 
 func TestToYAMLMinimal(t *testing.T) {
-	config := &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientLighthouse,
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
 			},
 		},
 	}
@@ -118,12 +118,12 @@ global_client_log_level: debug
 
 	// Check participants
 	assert.Len(t, config.Participants, 2)
-	assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-	assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 	assert.Equal(t, 2, config.Participants[0].Count)
 	assert.Equal(t, 32, config.Participants[0].ValidatorCount)
-	assert.Equal(t, types.ClientBesu, config.Participants[1].ELType)
-	assert.Equal(t, types.ClientTeku, config.Participants[1].CLType)
+	assert.Equal(t, client.Besu, config.Participants[1].ELType)
+	assert.Equal(t, client.Teku, config.Participants[1].CLType)
 
 	// Check network params
 	require.NotNil(t, config.NetworkParams)
@@ -158,8 +158,8 @@ participants:
 	require.NoError(t, err)
 
 	assert.Len(t, config.Participants, 1)
-	assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-	assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 	assert.Nil(t, config.NetworkParams)
 	assert.Nil(t, config.MEV)
 	assert.Len(t, config.AdditionalServices, 0)
@@ -198,23 +198,23 @@ func TestFromYAMLInvalid(t *testing.T) {
 
 func TestRoundTrip(t *testing.T) {
 	// Create a comprehensive config
-	original := &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+	original := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType:         types.ClientGeth,
-				CLType:         types.ClientLighthouse,
+				ELType:         client.Geth,
+				CLType:         client.Lighthouse,
 				ELVersion:      "v1.13.0",
 				CLVersion:      "v4.5.0",
 				Count:          3,
 				ValidatorCount: 96,
 			},
 			{
-				ELType: types.ClientBesu,
-				CLType: types.ClientTeku,
+				ELType: client.Besu,
+				CLType: client.Teku,
 				Count:  1,
 			},
 		},
-		NetworkParams: &types.NetworkParams{
+		NetworkParams: &NetworkParams{
 			ChainID:                     98765,
 			NetworkID:                   98765,
 			SecondsPerSlot:              12,
@@ -224,13 +224,13 @@ func TestRoundTrip(t *testing.T) {
 			ElectraForkEpoch:            30,
 			MinValidatorWithdrawability: 256,
 		},
-		MEV: &types.MEVConfig{
+		MEV: &MEVConfig{
 			Type:            "full",
 			RelayURL:        "http://relay:18550",
 			MinBidEth:       "0.01",
 			MaxBundleLength: 3,
 		},
-		AdditionalServices: []types.AdditionalService{
+		AdditionalServices: []AdditionalService{
 			{
 				Name: "prometheus",
 				Config: map[string]interface{}{
@@ -269,11 +269,11 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestYAMLFormatting(t *testing.T) {
-	config := &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientLighthouse,
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
 			},
 		},
 	}

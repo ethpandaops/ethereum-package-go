@@ -58,18 +58,18 @@ type ValidatorEndpoints struct {
 
 // ServiceMetadata contains detailed information about a service
 type ServiceMetadata struct {
-	Name                 string
-	ServiceType          ServiceType
-	ClientType           ClientType
-	Status               string
-	ContainerID          string
-	IPAddress            string
-	Ports                map[string]PortMetadata
-	NodeIndex            int
-	NodeName             string
-	ChainID              uint64
-	ValidatorCount       int
-	ValidatorStartIndex  int
+	Name                string
+	ServiceType         ServiceType
+	ClientType          ClientType
+	Status              string
+	ContainerID         string
+	IPAddress           string
+	Ports               map[string]PortMetadata
+	NodeIndex           int
+	NodeName            string
+	ChainID             uint64
+	ValidatorCount      int
+	ValidatorStartIndex int
 }
 
 // Service represents a generic service in the network
@@ -134,9 +134,6 @@ type Network interface {
 	// Service accessors
 	Services() []Service
 	ApacheConfig() ApacheConfigServer
-	PrometheusURL() string
-	GrafanaURL() string
-	BlockscoutURL() string
 
 	// Lifecycle management
 	Stop(ctx context.Context) error
@@ -152,9 +149,6 @@ type network struct {
 	consensusClients *ConsensusClients
 	services         []Service
 	apacheConfig     ApacheConfigServer
-	prometheusURL    string
-	grafanaURL       string
-	blockscoutURL    string
 	cleanupFunc      func(context.Context) error
 }
 
@@ -167,9 +161,6 @@ type NetworkConfig struct {
 	ConsensusClients *ConsensusClients
 	Services         []Service
 	ApacheConfig     ApacheConfigServer
-	PrometheusURL    string
-	GrafanaURL       string
-	BlockscoutURL    string
 	CleanupFunc      func(context.Context) error
 }
 
@@ -183,23 +174,17 @@ func NewNetwork(config NetworkConfig) Network {
 		consensusClients: config.ConsensusClients,
 		services:         config.Services,
 		apacheConfig:     config.ApacheConfig,
-		prometheusURL:    config.PrometheusURL,
-		grafanaURL:       config.GrafanaURL,
-		blockscoutURL:    config.BlockscoutURL,
 		cleanupFunc:      config.CleanupFunc,
 	}
 }
 
-func (n *network) Name() string                       { return n.name }
-func (n *network) ChainID() uint64                    { return n.chainID }
-func (n *network) EnclaveName() string                { return n.enclaveName }
+func (n *network) Name() string                        { return n.name }
+func (n *network) ChainID() uint64                     { return n.chainID }
+func (n *network) EnclaveName() string                 { return n.enclaveName }
 func (n *network) ExecutionClients() *ExecutionClients { return n.executionClients }
 func (n *network) ConsensusClients() *ConsensusClients { return n.consensusClients }
-func (n *network) Services() []Service                { return n.services }
-func (n *network) ApacheConfig() ApacheConfigServer   { return n.apacheConfig }
-func (n *network) PrometheusURL() string              { return n.prometheusURL }
-func (n *network) GrafanaURL() string                 { return n.grafanaURL }
-func (n *network) BlockscoutURL() string              { return n.blockscoutURL }
+func (n *network) Services() []Service                 { return n.services }
+func (n *network) ApacheConfig() ApacheConfigServer    { return n.apacheConfig }
 
 func (n *network) Stop(ctx context.Context) error {
 	// In a real implementation, this would stop the Kurtosis enclave

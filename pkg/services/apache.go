@@ -130,27 +130,55 @@ func (a *ApacheConfigClient) ListAvailableFiles(ctx context.Context) ([]string, 
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	// Simple HTML parsing to extract file names
-	// This is a basic implementation - in a real scenario you might want to use a proper HTML parser
+	// Parse Apache directory listing HTML
 	html := string(body)
 	var files []string
+	seen := make(map[string]bool)
 	
-	// Look for href patterns in the HTML
-	lines := strings.Split(html, "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "href=") && !strings.Contains(line, "../") {
-			// Extract filename from href
-			start := strings.Index(line, "href=\"")
-			if start != -1 {
-				start += 6
-				end := strings.Index(line[start:], "\"")
-				if end != -1 {
-					filename := line[start : start+end]
-					if filename != "" && !strings.HasSuffix(filename, "/") {
-						files = append(files, filename)
-					}
-				}
+	// Apache directory listings typically have links in <a> tags
+	// We'll parse href attributes manually to extract filenames
+	for i := 0; i < len(html); i++ {
+		if idx := strings.Index(html[i:], "href="); idx != -1 {
+			i += idx + 5
+			quote := html[i]
+			if quote != '"' && quote != '\'' {
+				continue
 			}
+			i++
+			
+			endIdx := strings.IndexByte(html[i:], quote)
+			if endIdx == -1 {
+				continue
+			}
+			
+			filename := html[i : i+endIdx]
+			
+			// Skip parent directory, query parameters, and directories
+			if filename == "" || 
+			   filename == "../" || 
+			   strings.HasPrefix(filename, "?") ||
+			   strings.HasPrefix(filename, "#") ||
+			   strings.Contains(filename, "://") ||
+			   strings.HasSuffix(filename, "/") {
+				i += endIdx
+				continue
+			}
+			
+			// Clean the filename
+			if idx := strings.Index(filename, "?"); idx != -1 {
+				filename = filename[:idx]
+			}
+			if idx := strings.Index(filename, "#"); idx != -1 {
+				filename = filename[:idx]
+			}
+			
+			// Add unique files only
+			if !seen[filename] {
+				seen[filename] = true
+				files = append(files, filename)
+			}
+			
+			i += endIdx
 		}
 	}
 

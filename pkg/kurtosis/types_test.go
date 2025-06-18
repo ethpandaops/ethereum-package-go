@@ -3,7 +3,7 @@ package kurtosis
 import (
 	"testing"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,15 +21,15 @@ func TestConvertServiceInfoToExecutionClient(t *testing.T) {
 		},
 	}
 
-	client := ConvertServiceInfoToExecutionClient(service, types.ClientGeth)
-	assert.NotNil(t, client)
-	assert.Equal(t, "geth-1", client.Name())
-	assert.Equal(t, types.ClientGeth, client.Type())
-	assert.Equal(t, "http://172.16.0.2:8545", client.RPCURL())
-	assert.Equal(t, "ws://172.16.0.2:8546", client.WSURL())
-	assert.Equal(t, "http://172.16.0.2:8551", client.EngineURL())
-	assert.Equal(t, "http://172.16.0.2:9090", client.MetricsURL())
-	assert.Equal(t, 30303, client.P2PPort())
+	execClient := ConvertServiceInfoToExecutionClient(service, client.Geth)
+	assert.NotNil(t, execClient)
+	assert.Equal(t, "geth-1", execClient.Name())
+	assert.Equal(t, client.Geth, execClient.Type())
+	assert.Equal(t, "http://172.16.0.2:8545", execClient.RPCURL())
+	assert.Equal(t, "ws://172.16.0.2:8546", execClient.WSURL())
+	assert.Equal(t, "http://172.16.0.2:8551", execClient.EngineURL())
+	assert.Equal(t, "http://172.16.0.2:9090", execClient.MetricsURL())
+	assert.Equal(t, 30303, execClient.P2PPort())
 }
 
 func TestConvertServiceInfoToConsensusClient(t *testing.T) {
@@ -44,38 +44,38 @@ func TestConvertServiceInfoToConsensusClient(t *testing.T) {
 		},
 	}
 
-	client := ConvertServiceInfoToConsensusClient(service, types.ClientLighthouse)
-	assert.NotNil(t, client)
-	assert.Equal(t, "lighthouse-1", client.Name())
-	assert.Equal(t, types.ClientLighthouse, client.Type())
-	assert.Equal(t, "http://172.16.0.3:5052", client.BeaconAPIURL())
-	assert.Equal(t, "http://172.16.0.3:5054", client.MetricsURL())
-	assert.Equal(t, 9000, client.P2PPort())
+	consClient := ConvertServiceInfoToConsensusClient(service, client.Lighthouse)
+	assert.NotNil(t, consClient)
+	assert.Equal(t, "lighthouse-1", consClient.Name())
+	assert.Equal(t, client.Lighthouse, consClient.Type())
+	assert.Equal(t, "http://172.16.0.3:5052", consClient.BeaconAPIURL())
+	assert.Equal(t, "http://172.16.0.3:5054", consClient.MetricsURL())
+	assert.Equal(t, 9000, consClient.P2PPort())
 }
 
 func TestDetectClientType(t *testing.T) {
 	tests := []struct {
 		name         string
 		serviceName  string
-		expectedType types.ClientType
+		expectedType client.Type
 	}{
 		// Execution clients
-		{"detect geth", "el-1-geth-lighthouse", types.ClientGeth},
-		{"detect besu", "el-2-besu", types.ClientBesu},
-		{"detect nethermind", "nethermind-node-1", types.ClientNethermind},
-		{"detect erigon", "erigon-archive", types.ClientErigon},
-		{"detect reth", "reth-full-node", types.ClientReth},
+		{"detect geth", "el-1-geth-lighthouse", client.Geth},
+		{"detect besu", "el-2-besu", client.Besu},
+		{"detect nethermind", "nethermind-node-1", client.Nethermind},
+		{"detect erigon", "erigon-archive", client.Erigon},
+		{"detect reth", "reth-full-node", client.Reth},
 
 		// Consensus clients
-		{"detect lighthouse", "cl-1-lighthouse-geth", types.ClientLighthouse},
-		{"detect teku", "teku-validator", types.ClientTeku},
-		{"detect prysm", "prysm-beacon", types.ClientPrysm},
-		{"detect nimbus", "nimbus-eth2", types.ClientNimbus},
-		{"detect lodestar", "lodestar-beacon", types.ClientLodestar},
-		{"detect grandine", "grandine-full", types.ClientGrandine},
+		{"detect lighthouse", "cl-1-lighthouse-geth", client.Lighthouse},
+		{"detect teku", "teku-validator", client.Teku},
+		{"detect prysm", "prysm-beacon", client.Prysm},
+		{"detect nimbus", "nimbus-eth2", client.Nimbus},
+		{"detect lodestar", "lodestar-beacon", client.Lodestar},
+		{"detect grandine", "grandine-full", client.Grandine},
 
 		// Unknown
-		{"unknown client", "random-service", types.ClientType("unknown")},
+		{"unknown client", "random-service", client.Unknown},
 	}
 
 	for _, tt := range tests {
@@ -100,8 +100,8 @@ func TestConvertWithMaybeURLs(t *testing.T) {
 		},
 	}
 
-	client := ConvertServiceInfoToExecutionClient(service, types.ClientGeth)
-	assert.Equal(t, "http://custom-domain:8545", client.RPCURL())
+	execClient := ConvertServiceInfoToExecutionClient(service, client.Geth)
+	assert.Equal(t, "http://custom-domain:8545", execClient.RPCURL())
 }
 
 func TestContainsIgnoreCase(t *testing.T) {

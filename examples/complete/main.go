@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethpandaops/ethereum-package-go"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 )
 
 // Example showing complete usage of ethereum-package-go
@@ -42,14 +43,14 @@ func main() {
 	executionClients := network.ExecutionClients()
 	fmt.Printf("📦 Execution clients: %d\n", len(executionClients.All()))
 
-	if len(executionClients.Geth()) > 0 {
-		geth := executionClients.Geth()[0]
+	if gethClients := executionClients.ByType(client.Geth); len(gethClients) > 0 {
+		geth := gethClients[0]
 		fmt.Printf("   Geth RPC: %s\n", geth.RPCURL())
 		fmt.Printf("   Geth WS:  %s\n", geth.WSURL())
 	}
 
-	if len(executionClients.Besu()) > 0 {
-		besu := executionClients.Besu()[0]
+	if besuClients := executionClients.ByType(client.Besu); len(besuClients) > 0 {
+		besu := besuClients[0]
 		fmt.Printf("   Besu RPC: %s\n", besu.RPCURL())
 		fmt.Printf("   Besu WS:  %s\n", besu.WSURL())
 	}
@@ -58,13 +59,13 @@ func main() {
 	consensusClients := network.ConsensusClients()
 	fmt.Printf("🔗 Consensus clients: %d\n", len(consensusClients.All()))
 
-	if len(consensusClients.Lighthouse()) > 0 {
-		lighthouse := consensusClients.Lighthouse()[0]
+	if lighthouseClients := consensusClients.ByType(client.Lighthouse); len(lighthouseClients) > 0 {
+		lighthouse := lighthouseClients[0]
 		fmt.Printf("   Lighthouse Beacon: %s\n", lighthouse.BeaconAPIURL())
 	}
 
-	if len(consensusClients.Teku()) > 0 {
-		teku := consensusClients.Teku()[0]
+	if tekuClients := consensusClients.ByType(client.Teku); len(tekuClients) > 0 {
+		teku := tekuClients[0]
 		fmt.Printf("   Teku Beacon: %s\n", teku.BeaconAPIURL())
 	}
 
@@ -77,17 +78,14 @@ func main() {
 		fmt.Printf("   Deposit Contract: %s\n", apache.DepositContractBlockURL())
 	}
 
-	// Get monitoring services
-	if prometheusURL := network.PrometheusURL(); prometheusURL != "" {
-		fmt.Printf("📊 Prometheus: %s\n", prometheusURL)
-	}
-
-	if grafanaURL := network.GrafanaURL(); grafanaURL != "" {
-		fmt.Printf("📈 Grafana: %s\n", grafanaURL)
-	}
-
-	if blockscoutURL := network.BlockscoutURL(); blockscoutURL != "" {
-		fmt.Printf("🔍 Blockscout: %s\n", blockscoutURL)
+	// Show all services
+	fmt.Println("\n📊 Additional Services:")
+	for _, service := range network.Services() {
+		if service.Type != "execution" && 
+		   service.Type != "consensus" && 
+		   service.Type != "apache" {
+			fmt.Printf("   %s (%s): %s\n", service.Name, service.Type, service.Status)
+		}
 	}
 
 	fmt.Println("\n💡 Network is ready for testing!")

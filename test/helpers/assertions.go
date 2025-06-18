@@ -3,6 +3,7 @@ package helpers
 import (
 	"testing"
 
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,7 +87,7 @@ func AssertApacheConfig(t *testing.T, network types.Network) {
 }
 
 // AssertValidConfig checks that a configuration is valid
-func AssertValidConfig(t *testing.T, config *types.EthereumPackageConfig) {
+func AssertValidConfig(t *testing.T, config *config.EthereumPackageConfig) {
 	t.Helper()
 
 	require.NotNil(t, config, "config should not be nil")
@@ -102,7 +103,7 @@ func AssertValidConfig(t *testing.T, config *types.EthereumPackageConfig) {
 }
 
 // AssertEqualConfigs checks that two configurations are equivalent
-func AssertEqualConfigs(t *testing.T, expected, actual *types.EthereumPackageConfig) {
+func AssertEqualConfigs(t *testing.T, expected, actual *config.EthereumPackageConfig) {
 	t.Helper()
 
 	require.NotNil(t, expected, "expected config should not be nil")

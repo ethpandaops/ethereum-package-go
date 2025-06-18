@@ -1,12 +1,10 @@
-package clients
+package client
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
 )
 
 // WaitStrategy defines how to wait for a service to be ready
@@ -71,9 +69,9 @@ func (h *HTTPWaitStrategy) WaitUntilReady(ctx context.Context, target interface{
 	var url string
 	
 	switch t := target.(type) {
-	case types.ExecutionClient:
+	case ExecutionClient:
 		url = t.RPCURL()
-	case types.ConsensusClient:
+	case ConsensusClient:
 		url = t.BeaconAPIURL()
 	case string:
 		url = t

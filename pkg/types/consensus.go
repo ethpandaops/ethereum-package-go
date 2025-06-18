@@ -122,34 +122,31 @@ func NewGrandineClient(name, version, beaconAPIURL, metricsURL, enr, peerID, ser
 
 // ConsensusClients holds all consensus clients by type
 type ConsensusClients struct {
-	clients map[ClientType][]ConsensusClient
+	*ClientCollection[ConsensusClient]
 }
 
 // NewConsensusClients creates a new ConsensusClients collection
 func NewConsensusClients() *ConsensusClients {
 	return &ConsensusClients{
-		clients: make(map[ClientType][]ConsensusClient),
+		ClientCollection: NewClientCollection[ConsensusClient](),
 	}
 }
 
 // Add adds a consensus client to the collection
 func (cc *ConsensusClients) Add(client ConsensusClient) {
-	cc.clients[client.Type()] = append(cc.clients[client.Type()], client)
+	cc.ClientCollection.Add(client.Type(), client)
 }
 
-// All returns all consensus clients
-func (cc *ConsensusClients) All() []ConsensusClient {
-	var all []ConsensusClient
-	for _, clients := range cc.clients {
-		all = append(all, clients...)
-	}
-	return all
+// ByType returns all consensus clients of a specific type
+func (cc *ConsensusClients) ByType(clientType ClientType) []ConsensusClient {
+	return cc.ClientCollection.ByType(clientType)
 }
 
 // Lighthouse returns all Lighthouse clients
+// Deprecated: Use ByType(ClientLighthouse) instead
 func (cc *ConsensusClients) Lighthouse() []*ConsensusClientImpl {
 	var lighthouseClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientLighthouse] {
+	for _, client := range cc.ByType(ClientLighthouse) {
 		if lc, ok := client.(*ConsensusClientImpl); ok {
 			lighthouseClients = append(lighthouseClients, lc)
 		}
@@ -158,9 +155,10 @@ func (cc *ConsensusClients) Lighthouse() []*ConsensusClientImpl {
 }
 
 // Teku returns all Teku clients
+// Deprecated: Use ByType(ClientTeku) instead
 func (cc *ConsensusClients) Teku() []*ConsensusClientImpl {
 	var tekuClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientTeku] {
+	for _, client := range cc.ByType(ClientTeku) {
 		if tc, ok := client.(*ConsensusClientImpl); ok {
 			tekuClients = append(tekuClients, tc)
 		}
@@ -169,9 +167,10 @@ func (cc *ConsensusClients) Teku() []*ConsensusClientImpl {
 }
 
 // Prysm returns all Prysm clients
+// Deprecated: Use ByType(ClientPrysm) instead
 func (cc *ConsensusClients) Prysm() []*ConsensusClientImpl {
 	var prysmClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientPrysm] {
+	for _, client := range cc.ByType(ClientPrysm) {
 		if pc, ok := client.(*ConsensusClientImpl); ok {
 			prysmClients = append(prysmClients, pc)
 		}
@@ -180,9 +179,10 @@ func (cc *ConsensusClients) Prysm() []*ConsensusClientImpl {
 }
 
 // Nimbus returns all Nimbus clients
+// Deprecated: Use ByType(ClientNimbus) instead
 func (cc *ConsensusClients) Nimbus() []*ConsensusClientImpl {
 	var nimbusClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientNimbus] {
+	for _, client := range cc.ByType(ClientNimbus) {
 		if nc, ok := client.(*ConsensusClientImpl); ok {
 			nimbusClients = append(nimbusClients, nc)
 		}
@@ -191,9 +191,10 @@ func (cc *ConsensusClients) Nimbus() []*ConsensusClientImpl {
 }
 
 // Lodestar returns all Lodestar clients
+// Deprecated: Use ByType(ClientLodestar) instead
 func (cc *ConsensusClients) Lodestar() []*ConsensusClientImpl {
 	var lodestarClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientLodestar] {
+	for _, client := range cc.ByType(ClientLodestar) {
 		if lc, ok := client.(*ConsensusClientImpl); ok {
 			lodestarClients = append(lodestarClients, lc)
 		}
@@ -202,17 +203,13 @@ func (cc *ConsensusClients) Lodestar() []*ConsensusClientImpl {
 }
 
 // Grandine returns all Grandine clients
+// Deprecated: Use ByType(ClientGrandine) instead
 func (cc *ConsensusClients) Grandine() []*ConsensusClientImpl {
 	var grandineClients []*ConsensusClientImpl
-	for _, client := range cc.clients[ClientGrandine] {
+	for _, client := range cc.ByType(ClientGrandine) {
 		if gc, ok := client.(*ConsensusClientImpl); ok {
 			grandineClients = append(grandineClients, gc)
 		}
 	}
 	return grandineClients
-}
-
-// ByType returns all clients of a specific type
-func (cc *ConsensusClients) ByType(clientType ClientType) []ConsensusClient {
-	return cc.clients[clientType]
 }

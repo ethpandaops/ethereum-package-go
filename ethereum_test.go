@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func TestValidateRunConfig(t *testing.T) {
 			cfg: &RunConfig{
 				PackageID:    "github.com/ethpandaops/ethereum-package",
 				EnclaveName:  "test-enclave",
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
 				Timeout:      time.Minute,
 			},
 		},
@@ -44,7 +45,7 @@ func TestValidateRunConfig(t *testing.T) {
 			name: "missing package ID",
 			cfg: &RunConfig{
 				EnclaveName:  "test-enclave",
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
 				Timeout:      time.Minute,
 			},
 			wantErr: "package ID is required",
@@ -53,7 +54,7 @@ func TestValidateRunConfig(t *testing.T) {
 			name: "missing enclave name",
 			cfg: &RunConfig{
 				PackageID:    "github.com/ethpandaops/ethereum-package",
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
 				Timeout:      time.Minute,
 			},
 			wantErr: "enclave name is required",
@@ -72,7 +73,7 @@ func TestValidateRunConfig(t *testing.T) {
 			cfg: &RunConfig{
 				PackageID:    "github.com/ethpandaops/ethereum-package",
 				EnclaveName:  "test-enclave",
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
 				Timeout:      0,
 			},
 			wantErr: "timeout must be positive",
@@ -96,18 +97,18 @@ func TestBuildEthereumConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      *RunConfig
-		validate func(*testing.T, *types.EthereumPackageConfig)
+		validate func(*testing.T, *config.EthereumPackageConfig)
 	}{
 		{
 			name: "preset config",
 			cfg: &RunConfig{
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
 				ChainID:      98765,
 			},
-			validate: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validate: func(t *testing.T, config *config.EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 1)
-				assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-				assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+				assert.Equal(t, client.Geth, config.Participants[0].ELType)
+				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				require.NotNil(t, config.NetworkParams)
 				assert.Equal(t, uint64(98765), config.NetworkParams.ChainID)
 			},
@@ -115,17 +116,17 @@ func TestBuildEthereumConfig(t *testing.T) {
 		{
 			name: "inline config",
 			cfg: &RunConfig{
-				ConfigSource: types.NewInlineConfigSource(&types.EthereumPackageConfig{
-					Participants: []types.ParticipantConfig{
-						{ELType: types.ClientBesu, CLType: types.ClientTeku, Count: 2},
+				ConfigSource: config.NewInlineConfigSource(&config.EthereumPackageConfig{
+					Participants: []config.ParticipantConfig{
+						{ELType: client.Besu, CLType: client.Teku, Count: 2},
 					},
 				}),
-				MEV: &types.MEVConfig{Type: "full"},
+				MEV: &config.MEVConfig{Type: "full"},
 			},
-			validate: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validate: func(t *testing.T, config *config.EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 1)
-				assert.Equal(t, types.ClientBesu, config.Participants[0].ELType)
-				assert.Equal(t, types.ClientTeku, config.Participants[0].CLType)
+				assert.Equal(t, client.Besu, config.Participants[0].ELType)
+				assert.Equal(t, client.Teku, config.Participants[0].CLType)
 				require.NotNil(t, config.MEV)
 				assert.Equal(t, "full", config.MEV.Type)
 			},
@@ -133,14 +134,14 @@ func TestBuildEthereumConfig(t *testing.T) {
 		{
 			name: "with additional services",
 			cfg: &RunConfig{
-				ConfigSource: types.NewPresetConfigSource(types.PresetMinimal),
-				AdditionalServices: []types.AdditionalService{
+				ConfigSource: config.NewPresetConfigSource(config.PresetMinimal),
+				AdditionalServices: []config.AdditionalService{
 					{Name: "prometheus"},
 					{Name: "grafana"},
 				},
 				GlobalLogLevel: "debug",
 			},
-			validate: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validate: func(t *testing.T, config *config.EthereumPackageConfig) {
 				assert.Len(t, config.AdditionalServices, 2)
 				assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
 				assert.Equal(t, "grafana", config.AdditionalServices[1].Name)
@@ -164,7 +165,7 @@ func TestRunWithMockClient(t *testing.T) {
 	mockClient := mocks.NewMockKurtosisClient()
 
 	network, err := Run(ctx,
-		WithPreset(types.PresetMinimal),
+		WithPreset(config.PresetMinimal),
 		WithChainID(54321),
 		WithEnclaveName("test-run-enclave"),
 		WithKurtosisClient(mockClient),
@@ -185,13 +186,13 @@ func TestRunConfigOptions(t *testing.T) {
 	cfg := defaultRunConfig()
 
 	// Test individual options
-	WithPreset(types.PresetAllELs)(cfg)
+	WithPreset(config.PresetAllELs)(cfg)
 	assert.Equal(t, "preset", cfg.ConfigSource.Type())
 
 	WithChainID(99999)(cfg)
 	assert.Equal(t, uint64(99999), cfg.ChainID)
 
-	WithMEV(&types.MEVConfig{Type: "mock"})(cfg)
+	WithMEV(&config.MEVConfig{Type: "mock"})(cfg)
 	assert.NotNil(t, cfg.MEV)
 	assert.Equal(t, "mock", cfg.MEV.Type)
 
@@ -222,32 +223,26 @@ func TestConvenienceFunctions(t *testing.T) {
 
 	// Test convenience preset functions
 	AllELs()(cfg)
-	source := cfg.ConfigSource.(*types.PresetConfigSource)
-	assert.Equal(t, types.PresetAllELs, source.GetPreset())
+	source := cfg.ConfigSource.(*config.PresetConfigSource)
+	assert.Equal(t, config.PresetAllELs, source.GetPreset())
 
 	AllCLs()(cfg)
-	source = cfg.ConfigSource.(*types.PresetConfigSource)
-	assert.Equal(t, types.PresetAllCLs, source.GetPreset())
+	source = cfg.ConfigSource.(*config.PresetConfigSource)
+	assert.Equal(t, config.PresetAllCLs, source.GetPreset())
 
 	AllClientsMatrix()(cfg)
-	source = cfg.ConfigSource.(*types.PresetConfigSource)
-	assert.Equal(t, types.PresetAllClientsMatrix, source.GetPreset())
+	source = cfg.ConfigSource.(*config.PresetConfigSource)
+	assert.Equal(t, config.PresetAllClientsMatrix, source.GetPreset())
 
 	Minimal()(cfg)
-	source = cfg.ConfigSource.(*types.PresetConfigSource)
-	assert.Equal(t, types.PresetMinimal, source.GetPreset())
+	source = cfg.ConfigSource.(*config.PresetConfigSource)
+	assert.Equal(t, config.PresetMinimal, source.GetPreset())
 
-	// Test monitoring functions
-	cfg.AdditionalServices = nil
-	WithMonitoring()(cfg)
-	assert.Len(t, cfg.AdditionalServices, 2)
-	assert.Equal(t, "prometheus", cfg.AdditionalServices[0].Name)
-	assert.Equal(t, "grafana", cfg.AdditionalServices[1].Name)
-
+	// Test explorer function
 	cfg.AdditionalServices = nil
 	WithExplorer()(cfg)
 	assert.Len(t, cfg.AdditionalServices, 1)
-	assert.Equal(t, "blockscout", cfg.AdditionalServices[0].Name)
+	assert.Equal(t, "dora", cfg.AdditionalServices[0].Name)
 
 	cfg.AdditionalServices = nil
 	WithFullObservability()(cfg)

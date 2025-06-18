@@ -7,119 +7,149 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLighthouseClient(t *testing.T) {
-	client := NewLighthouseClient(
-		"lighthouse-1",
-		"v4.5.0",
-		"http://localhost:5052",
-		"http://localhost:5054",
-		"enr:-abc123",
-		"16Uiu2HAm123",
-		"lighthouse-service",
-		"container-123",
-		9000,
-	)
-
-	assert.Equal(t, "lighthouse-1", client.Name())
-	assert.Equal(t, ClientLighthouse, client.Type())
-	assert.Equal(t, "v4.5.0", client.Version())
-	assert.Equal(t, "http://localhost:5052", client.BeaconAPIURL())
-	assert.Equal(t, "http://localhost:5054", client.MetricsURL())
-	assert.Equal(t, "enr:-abc123", client.ENR())
-	assert.Equal(t, "16Uiu2HAm123", client.PeerID())
-	assert.Equal(t, 9000, client.P2PPort())
-	assert.Equal(t, "lighthouse-service", client.ServiceName())
-	assert.Equal(t, "container-123", client.ContainerID())
+// consensusClientTestCase represents a test case for consensus client constructors
+type consensusClientTestCase struct {
+	name         string
+	clientType   ClientType
+	constructor  func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient
+	clientName   string
+	version      string
+	beaconURL    string
+	metricsURL   string
+	enr          string
+	peerID       string
+	serviceName  string
+	containerID  string
+	p2pPort      int
 }
 
-func TestTekuClient(t *testing.T) {
-	client := NewTekuClient(
-		"teku-1",
-		"v23.10.0",
-		"http://localhost:5052",
-		"http://localhost:8008",
-		"enr:-def456",
-		"16Uiu2HAm456",
-		"teku-service",
-		"container-456",
-		9000,
-	)
+func TestConsensusClientConstructors(t *testing.T) {
+	tests := []consensusClientTestCase{
+		{
+			name:       "Lighthouse",
+			clientType: ClientLighthouse,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewLighthouseClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "lighthouse-1",
+			version:     "v4.5.0",
+			beaconURL:   "http://localhost:5052",
+			metricsURL:  "http://localhost:5054",
+			enr:         "enr:-abc123",
+			peerID:      "16Uiu2HAm123",
+			serviceName: "lighthouse-service",
+			containerID: "container-123",
+			p2pPort:     9000,
+		},
+		{
+			name:       "Teku",
+			clientType: ClientTeku,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewTekuClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "teku-1",
+			version:     "v23.10.0",
+			beaconURL:   "http://localhost:5052",
+			metricsURL:  "http://localhost:8008",
+			enr:         "enr:-def456",
+			peerID:      "16Uiu2HAm456",
+			serviceName: "teku-service",
+			containerID: "container-456",
+			p2pPort:     9000,
+		},
+		{
+			name:       "Prysm",
+			clientType: ClientPrysm,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewPrysmClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "prysm-1",
+			version:     "v4.1.0",
+			beaconURL:   "http://localhost:3500",
+			metricsURL:  "http://localhost:8080",
+			enr:         "enr:-ghi789",
+			peerID:      "16Uiu2HAm789",
+			serviceName: "prysm-service",
+			containerID: "container-789",
+			p2pPort:     13000,
+		},
+		{
+			name:       "Nimbus",
+			clientType: ClientNimbus,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewNimbusClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "nimbus-1",
+			version:     "v23.10.0",
+			beaconURL:   "http://localhost:5052",
+			metricsURL:  "http://localhost:8008",
+			enr:         "enr:-jkl012",
+			peerID:      "16Uiu2HAm012",
+			serviceName: "nimbus-service",
+			containerID: "container-012",
+			p2pPort:     9000,
+		},
+		{
+			name:       "Lodestar",
+			clientType: ClientLodestar,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewLodestarClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "lodestar-1",
+			version:     "v1.12.0",
+			beaconURL:   "http://localhost:9596",
+			metricsURL:  "http://localhost:8008",
+			enr:         "enr:-mno345",
+			peerID:      "16Uiu2HAm345",
+			serviceName: "lodestar-service",
+			containerID: "container-345",
+			p2pPort:     9000,
+		},
+		{
+			name:       "Grandine",
+			clientType: ClientGrandine,
+			constructor: func(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID string, p2pPort int) ConsensusClient {
+				return NewGrandineClient(name, version, beaconURL, metricsURL, enr, peerID, serviceName, containerID, p2pPort)
+			},
+			clientName:  "grandine-1",
+			version:     "v0.3.0",
+			beaconURL:   "http://localhost:5052",
+			metricsURL:  "http://localhost:8008",
+			enr:         "enr:-pqr678",
+			peerID:      "16Uiu2HAm678",
+			serviceName: "grandine-service",
+			containerID: "container-678",
+			p2pPort:     9000,
+		},
+	}
 
-	assert.Equal(t, "teku-1", client.Name())
-	assert.Equal(t, ClientTeku, client.Type())
-	assert.Equal(t, "v23.10.0", client.Version())
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := tt.constructor(
+				tt.clientName,
+				tt.version,
+				tt.beaconURL,
+				tt.metricsURL,
+				tt.enr,
+				tt.peerID,
+				tt.serviceName,
+				tt.containerID,
+				tt.p2pPort,
+			)
 
-func TestPrysmClient(t *testing.T) {
-	client := NewPrysmClient(
-		"prysm-1",
-		"v4.1.0",
-		"http://localhost:3500",
-		"http://localhost:8080",
-		"enr:-ghi789",
-		"16Uiu2HAm789",
-		"prysm-service",
-		"container-789",
-		13000,
-	)
-
-	assert.Equal(t, "prysm-1", client.Name())
-	assert.Equal(t, ClientPrysm, client.Type())
-	assert.Equal(t, "v4.1.0", client.Version())
-}
-
-func TestNimbusClient(t *testing.T) {
-	client := NewNimbusClient(
-		"nimbus-1",
-		"v23.10.0",
-		"http://localhost:5052",
-		"http://localhost:8008",
-		"enr:-jkl012",
-		"16Uiu2HAm012",
-		"nimbus-service",
-		"container-012",
-		9000,
-	)
-
-	assert.Equal(t, "nimbus-1", client.Name())
-	assert.Equal(t, ClientNimbus, client.Type())
-	assert.Equal(t, "v23.10.0", client.Version())
-}
-
-func TestLodestarClient(t *testing.T) {
-	client := NewLodestarClient(
-		"lodestar-1",
-		"v1.12.0",
-		"http://localhost:9596",
-		"http://localhost:8008",
-		"enr:-mno345",
-		"16Uiu2HAm345",
-		"lodestar-service",
-		"container-345",
-		9000,
-	)
-
-	assert.Equal(t, "lodestar-1", client.Name())
-	assert.Equal(t, ClientLodestar, client.Type())
-	assert.Equal(t, "v1.12.0", client.Version())
-}
-
-func TestGrandineClient(t *testing.T) {
-	client := NewGrandineClient(
-		"grandine-1",
-		"v0.3.0",
-		"http://localhost:5052",
-		"http://localhost:8008",
-		"enr:-pqr678",
-		"16Uiu2HAm678",
-		"grandine-service",
-		"container-678",
-		9000,
-	)
-
-	assert.Equal(t, "grandine-1", client.Name())
-	assert.Equal(t, ClientGrandine, client.Type())
-	assert.Equal(t, "v0.3.0", client.Version())
+			// Common assertions for all consensus clients
+			assert.Equal(t, tt.clientName, client.Name())
+			assert.Equal(t, tt.clientType, client.Type())
+			assert.Equal(t, tt.version, client.Version())
+			assert.Equal(t, tt.beaconURL, client.BeaconAPIURL())
+			assert.Equal(t, tt.metricsURL, client.MetricsURL())
+			assert.Equal(t, tt.enr, client.ENR())
+			assert.Equal(t, tt.peerID, client.PeerID())
+			assert.Equal(t, tt.p2pPort, client.P2PPort())
+			assert.Equal(t, tt.serviceName, client.ServiceName())
+			assert.Equal(t, tt.containerID, client.ContainerID())
+		})
+	}
 }
 
 func TestConsensusClients(t *testing.T) {

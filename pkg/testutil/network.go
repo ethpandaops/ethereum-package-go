@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/ethpandaops/ethereum-package-go"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
+	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 )
 
 // TestNetwork wraps a network with test-specific functionality
 type TestNetwork struct {
-	types.Network
+	network.Network
 	t       testing.TB
 	cleanup []func()
 	mu      sync.Mutex
@@ -82,7 +84,7 @@ func StartNetworkWithChainID(t testing.TB, chainID uint64) *TestNetwork {
 }
 
 // StartNetworkWithParticipants starts a test network with custom participants
-func StartNetworkWithParticipants(t testing.TB, participants []types.ParticipantConfig) *TestNetwork {
+func StartNetworkWithParticipants(t testing.TB, participants []config.ParticipantConfig) *TestNetwork {
 	return NewTestNetwork(t,
 		ethereum.WithParticipants(participants),
 	)
@@ -92,12 +94,12 @@ func StartNetworkWithParticipants(t testing.TB, participants []types.Participant
 func StartNetworkWithMonitoring(t testing.TB) *TestNetwork {
 	return NewTestNetwork(t,
 		ethereum.Minimal(),
-		ethereum.WithMonitoring(),
+		ethereum.WithAdditionalServices("prometheus", "grafana"),
 	)
 }
 
 // GetExecutionClient returns the first execution client or fails the test
-func (tn *TestNetwork) GetExecutionClient() types.ExecutionClient {
+func (tn *TestNetwork) GetExecutionClient() client.ExecutionClient {
 	tn.t.Helper()
 	
 	clients := tn.ExecutionClients().All()
@@ -109,7 +111,7 @@ func (tn *TestNetwork) GetExecutionClient() types.ExecutionClient {
 }
 
 // GetConsensusClient returns the first consensus client or fails the test
-func (tn *TestNetwork) GetConsensusClient() types.ConsensusClient {
+func (tn *TestNetwork) GetConsensusClient() client.ConsensusClient {
 	tn.t.Helper()
 	
 	clients := tn.ConsensusClients().All()
@@ -194,7 +196,7 @@ func (tn *TestNetwork) Cleanup(ctx context.Context) error {
 }
 
 // CleanupNetwork is a helper to cleanup a network in tests
-func CleanupNetwork(t testing.TB, network types.Network) {
+func CleanupNetwork(t testing.TB, network network.Network) {
 	t.Helper()
 	
 	if network == nil {
@@ -262,14 +264,14 @@ func (pn *ParallelNetworks) GetAllNetworks() []*TestNetwork {
 // NetworkAssertion provides assertion helpers for networks
 type NetworkAssertion struct {
 	t       testing.TB
-	network types.Network
+	network network.Network
 }
 
 // Assert creates a new network assertion helper
-func Assert(t testing.TB, network types.Network) *NetworkAssertion {
+func Assert(t testing.TB, net network.Network) *NetworkAssertion {
 	return &NetworkAssertion{
 		t:       t,
-		network: network,
+		network: net,
 	}
 }
 
@@ -310,7 +312,7 @@ func (na *NetworkAssertion) HasChainID(chainID uint64) *NetworkAssertion {
 }
 
 // HasService asserts that the network has a specific service
-func (na *NetworkAssertion) HasService(serviceType types.ServiceType) *NetworkAssertion {
+func (na *NetworkAssertion) HasService(serviceType network.ServiceType) *NetworkAssertion {
 	na.t.Helper()
 	
 	found := false

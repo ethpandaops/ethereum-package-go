@@ -8,7 +8,7 @@ import (
 	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/pkg/discovery"
 	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 )
 
 // RunOption configures how the Ethereum network is started
@@ -19,24 +19,25 @@ type RunConfig struct {
 	// Package configuration
 	PackageID     string
 	EnclaveName   string
-	ConfigSource  types.ConfigSource
-	NetworkParams *types.NetworkParams
+	ConfigSource  config.ConfigSource
+	NetworkParams *config.NetworkParams
 	ChainID       uint64
 
 	// MEV configuration
-	MEV *types.MEVConfig
+	MEV *config.MEVConfig
 
 	// Additional services
-	AdditionalServices []types.AdditionalService
+	AdditionalServices []config.AdditionalService
 
 	// Global settings
 	GlobalLogLevel string
 
 	// Runtime options
-	DryRun       bool
-	Parallelism  int
-	VerboseMode  bool
-	Timeout      time.Duration
+	DryRun         bool
+	Parallelism    int
+	VerboseMode    bool
+	Timeout        time.Duration
+	WaitForGenesis bool
 
 	// Dependencies (can be injected for testing)
 	KurtosisClient kurtosis.Client
@@ -47,7 +48,7 @@ func defaultRunConfig() *RunConfig {
 	return &RunConfig{
 		PackageID:      "github.com/ethpandaops/ethereum-package",
 		EnclaveName:    generateEnclaveName(),
-		ConfigSource:   types.NewPresetConfigSource(types.PresetMinimal),
+		ConfigSource:   config.NewPresetConfigSource(config.PresetMinimal),
 		ChainID:        12345,
 		DryRun:         false,
 		Parallelism:    4,
@@ -64,7 +65,7 @@ func generateEnclaveName() string {
 }
 
 // Run starts an Ethereum network and returns a Network interface
-func Run(ctx context.Context, opts ...RunOption) (types.Network, error) {
+func Run(ctx context.Context, opts ...RunOption) (network.Network, error) {
 	// Apply configuration
 	cfg := defaultRunConfig()
 	for _, opt := range opts {
@@ -134,12 +135,20 @@ func Run(ctx context.Context, opts ...RunOption) (types.Network, error) {
 		return nil, fmt.Errorf("failed to discover services: %w", err)
 	}
 
+	// Wait for genesis if requested
+	if cfg.WaitForGenesis && !cfg.DryRun {
+		if err := WaitForGenesis(ctx, network); err != nil {
+			// Don't cleanup on genesis wait failure - network is already running
+			return network, fmt.Errorf("failed to wait for genesis: %w", err)
+		}
+	}
+
 	return network, nil
 }
 
 // FindOrCreateNetwork finds an existing network by enclave name or creates a new one
 // If enclaveName is empty, a new network with a random name will be created
-func FindOrCreateNetwork(ctx context.Context, enclaveName string, opts ...RunOption) (types.Network, error) {
+func FindOrCreateNetwork(ctx context.Context, enclaveName string, opts ...RunOption) (network.Network, error) {
 	// If no enclave name provided, just create a new network
 	if enclaveName == "" {
 		return Run(ctx, opts...)
@@ -204,24 +213,24 @@ func validateRunConfig(cfg *RunConfig) error {
 }
 
 // buildEthereumConfig builds the ethereum-package configuration from RunConfig
-func buildEthereumConfig(cfg *RunConfig) (*types.EthereumPackageConfig, error) {
+func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) {
 	// Get base configuration from source
-	var baseConfig *types.EthereumPackageConfig
+	var baseConfig *config.EthereumPackageConfig
 	var err error
 
 	switch cfg.ConfigSource.Type() {
 	case "preset":
-		preset := cfg.ConfigSource.(*types.PresetConfigSource)
+		preset := cfg.ConfigSource.(*config.PresetConfigSource)
 		baseConfig, err = config.GetPresetConfig(preset.GetPreset())
 	case "file":
-		file := cfg.ConfigSource.(*types.FileConfigSource)
+		file := cfg.ConfigSource.(*config.FileConfigSource)
 		yamlContent, readErr := readFile(file.GetPath())
 		if readErr != nil {
 			return nil, fmt.Errorf("failed to read config file: %w", readErr)
 		}
 		baseConfig, err = config.FromYAML(yamlContent)
 	case "inline":
-		inline := cfg.ConfigSource.(*types.InlineConfigSource)
+		inline := cfg.ConfigSource.(*config.InlineConfigSource)
 		baseConfig = inline.GetConfig()
 	default:
 		return nil, fmt.Errorf("unsupported config source type: %s", cfg.ConfigSource.Type())

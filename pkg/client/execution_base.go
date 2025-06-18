@@ -1,4 +1,4 @@
-package execution
+package client
 
 import (
 	"bytes"
@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
 )
 
 // ClientConfig holds configuration for creating an execution client
@@ -25,7 +23,7 @@ type ClientConfig struct {
 // BaseExecutionClient provides common functionality for all execution clients
 type BaseExecutionClient struct {
 	name       string
-	clientType types.ClientType
+	clientType Type
 	rpcURL     string
 	wsURL      string
 	engineURL  string
@@ -57,7 +55,7 @@ func (b *BaseExecutionClient) Name() string {
 }
 
 // Type returns the client type
-func (b *BaseExecutionClient) Type() types.ClientType {
+func (b *BaseExecutionClient) Type() Type {
 	return b.clientType
 }
 

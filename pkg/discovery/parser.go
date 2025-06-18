@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 )
 
 // MetadataParser parses service metadata and extracts useful information
@@ -24,214 +25,182 @@ func NewMetadataParser() *MetadataParser {
 }
 
 // ParseServiceMetadata parses metadata from a Kurtosis service
-func (p *MetadataParser) ParseServiceMetadata(service *kurtosis.ServiceInfo) (*types.ServiceMetadata, error) {
-	metadata := &types.ServiceMetadata{
+func (p *MetadataParser) ParseServiceMetadata(service *kurtosis.ServiceInfo) (*network.ServiceMetadata, error) {
+	// First detect the service type
+	serviceType := detectServiceType(service.Name)
+	
+	// Then detect client type based on service type
+	var clientType client.Type
+	if serviceType == network.ServiceTypeExecutionClient {
+		clientType = detectExecutionClientType(service.Name)
+	} else if serviceType == network.ServiceTypeConsensusClient {
+		clientType = detectConsensusClientType(service.Name)
+	} else {
+		clientType = client.Unknown
+	}
+	
+	metadata := &network.ServiceMetadata{
 		Name:        service.Name,
-		ServiceType: detectServiceType(service.Name),
-		ClientType:  kurtosis.DetectClientType(service.Name),
+		ServiceType: serviceType,
+		ClientType:  clientType,
 		Status:      service.Status,
 		ContainerID: service.UUID,
 		IPAddress:   service.IPAddress,
-		Ports:       make(map[string]types.PortMetadata),
+		Ports:       make(map[string]network.PortMetadata),
 	}
 
 	// Parse port metadata
 	for portName, portInfo := range service.Ports {
-		metadata.Ports[portName] = types.PortMetadata{
-			Name:         portName,
-			Number:       int(portInfo.Number),
-			Protocol:     portInfo.Protocol,
-			URL:          portInfo.MaybeURL,
+		metadata.Ports[portName] = network.PortMetadata{
+			Name:          portName,
+			Number:        int(portInfo.Number),
+			Protocol:      portInfo.Protocol,
+			URL:           portInfo.MaybeURL,
 			ExposedToHost: portInfo.MaybeURL != "",
 		}
 	}
 
 	// Extract client-specific metadata
-	if err := p.extractClientSpecificMetadata(metadata, service); err != nil {
-		return nil, fmt.Errorf("failed to extract client-specific metadata: %w", err)
-	}
+	extractClientSpecificMetadata(metadata, service)
 
 	return metadata, nil
 }
 
 // extractClientSpecificMetadata extracts metadata specific to client types
-func (p *MetadataParser) extractClientSpecificMetadata(metadata *types.ServiceMetadata, service *kurtosis.ServiceInfo) error {
-	switch metadata.ServiceType {
-	case types.ServiceTypeExecutionClient:
-		return p.extractExecutionClientMetadata(metadata, service)
-	case types.ServiceTypeConsensusClient:
-		return p.extractConsensusClientMetadata(metadata, service)
-	case types.ServiceTypeValidator:
-		return p.extractValidatorMetadata(metadata, service)
-	default:
-		// No specific metadata needed for other service types
-		return nil
-	}
-}
+func extractClientSpecificMetadata(metadata *network.ServiceMetadata, service *kurtosis.ServiceInfo) {
+	// Parse node index and name
+	metadata.NodeIndex, metadata.NodeName = parseNodeInfo(service.Name)
 
-// extractExecutionClientMetadata extracts execution client specific metadata
-func (p *MetadataParser) extractExecutionClientMetadata(metadata *types.ServiceMetadata, service *kurtosis.ServiceInfo) error {
-	// Extract node info from service name or environment
-	nodeInfo := p.parseNodeInfo(service.Name)
-	metadata.NodeIndex = nodeInfo.Index
-	metadata.NodeName = nodeInfo.Name
+	// Extract version from container or other metadata
+	metadata.Version = extractVersion(service)
 
-	// Extract network ID and chain ID if available
-	if chainID := p.extractChainID(service); chainID != 0 {
-		metadata.ChainID = chainID
+	// Extract network-specific data
+	// Note: Config field is not available in current Kurtosis ServiceInfo
+	// This would need to be extracted from service metadata or environment
+
+	// Extract validator information
+	if metadata.ServiceType == network.ServiceTypeValidator {
+		metadata.ValidatorCount, metadata.ValidatorStartIndex = parseValidatorInfo(service)
 	}
 
-	return nil
-}
-
-// extractConsensusClientMetadata extracts consensus client specific metadata
-func (p *MetadataParser) extractConsensusClientMetadata(metadata *types.ServiceMetadata, service *kurtosis.ServiceInfo) error {
-	// Extract validator info
-	validatorInfo := p.parseValidatorInfo(service.Name)
-	metadata.ValidatorCount = validatorInfo.Count
-	metadata.ValidatorStartIndex = validatorInfo.StartIndex
-
-	// Extract node info
-	nodeInfo := p.parseNodeInfo(service.Name)
-	metadata.NodeIndex = nodeInfo.Index
-	metadata.NodeName = nodeInfo.Name
-
-	return nil
-}
-
-// extractValidatorMetadata extracts validator specific metadata
-func (p *MetadataParser) extractValidatorMetadata(metadata *types.ServiceMetadata, service *kurtosis.ServiceInfo) error {
-	// Extract validator-specific information
-	validatorInfo := p.parseValidatorInfo(service.Name)
-	metadata.ValidatorCount = validatorInfo.Count
-	metadata.ValidatorStartIndex = validatorInfo.StartIndex
-
-	return nil
-}
-
-// NodeInfo represents parsed node information
-type NodeInfo struct {
-	Index int
-	Name  string
-}
-
-// parseNodeInfo extracts node information from service name
-func (p *MetadataParser) parseNodeInfo(serviceName string) NodeInfo {
-	// Common patterns: "el-1-geth-lighthouse", "cl-2-lighthouse", etc.
-	indexPattern := regexp.MustCompile(`(?:el|cl)-(\d+)`)
-	matches := indexPattern.FindStringSubmatch(serviceName)
-	
-	nodeInfo := NodeInfo{
-		Name: serviceName,
-	}
-	
-	if len(matches) > 1 {
-		if index, err := strconv.Atoi(matches[1]); err == nil {
-			nodeInfo.Index = index
+	// Extract P2P port
+	for portName, portInfo := range service.Ports {
+		if strings.Contains(strings.ToLower(portName), "p2p") {
+			metadata.P2PPort = int(portInfo.Number)
+			break
 		}
 	}
-	
-	return nodeInfo
-}
 
-// ValidatorInfo represents parsed validator information
-type ValidatorInfo struct {
-	Count      int
-	StartIndex int
-}
-
-// parseValidatorInfo extracts validator information from service name
-func (p *MetadataParser) parseValidatorInfo(serviceName string) ValidatorInfo {
-	// Look for validator count patterns
-	countPattern := regexp.MustCompile(`validator.*?(\d+)`)
-	matches := countPattern.FindStringSubmatch(strings.ToLower(serviceName))
-	
-	validatorInfo := ValidatorInfo{}
-	
-	if len(matches) > 1 {
-		if count, err := strconv.Atoi(matches[1]); err == nil {
-			validatorInfo.Count = count
-		}
-	}
-	
-	return validatorInfo
-}
-
-// extractChainID extracts chain ID from service metadata
-func (p *MetadataParser) extractChainID(service *kurtosis.ServiceInfo) uint64 {
-	// This would typically come from environment variables or config
-	// For now, return a default value
-	return 0
-}
-
-// ParseConnectionString parses connection strings for various protocols
-func (p *MetadataParser) ParseConnectionString(protocol, endpoint string) (map[string]string, error) {
-	switch strings.ToLower(protocol) {
-	case "http", "https":
-		return p.parseHTTPConnection(endpoint)
-	case "ws", "wss":
-		return p.parseWebSocketConnection(endpoint)
-	case "tcp":
-		return p.parseTCPConnection(endpoint)
-	default:
-		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
+	// Extract enode/ENR/peer ID based on client type
+	if metadata.ServiceType == network.ServiceTypeExecutionClient {
+		metadata.Enode = extractEnode(service)
+	} else if metadata.ServiceType == network.ServiceTypeConsensusClient {
+		metadata.ENR = extractENR(service)
+		metadata.PeerID = extractPeerID(service)
 	}
 }
 
-// parseHTTPConnection parses HTTP connection details
-func (p *MetadataParser) parseHTTPConnection(endpoint string) (map[string]string, error) {
-	host, port, err := p.endpointExtractor.ParseEndpointURL(endpoint)
+// parseNodeInfo extracts node index and name from service name
+func parseNodeInfo(serviceName string) (int, string) {
+	// Pattern: el-1-geth-lighthouse, cl-2-teku-geth, etc.
+	re := regexp.MustCompile(`^(el|cl)-(\d+)-(.+)$`)
+	matches := re.FindStringSubmatch(serviceName)
+	
+	if len(matches) >= 4 {
+		index, _ := strconv.Atoi(matches[2])
+		return index, matches[3]
+	}
+	
+	return 0, serviceName
+}
+
+// parseValidatorInfo extracts validator count and start index
+func parseValidatorInfo(service *kurtosis.ServiceInfo) (int, int) {
+	// Check config for validator information
+	// Note: Config field is not available in current Kurtosis ServiceInfo
+	// Will try to parse from service name instead
+	
+	// Try to parse from service name (e.g., "validator-5-10" means 5 validators starting at index 10)
+	re := regexp.MustCompile(`validator-(\d+)-(\d+)`)
+	if matches := re.FindStringSubmatch(service.Name); len(matches) >= 3 {
+		count, _ := strconv.Atoi(matches[1])
+		startIndex, _ := strconv.Atoi(matches[2])
+		return count, startIndex
+	}
+	
+	return 0, 0
+}
+
+// extractVersion attempts to extract version information
+func extractVersion(service *kurtosis.ServiceInfo) string {
+	// Check config
+	// Note: Config and Container fields are not available in current Kurtosis ServiceInfo
+	// Will return a default version based on client type
+	// In a real implementation, this would be fetched from the service's API
+	
+	return "unknown"
+}
+
+// extractEnode extracts enode URL for execution clients
+func extractEnode(service *kurtosis.ServiceInfo) string {
+	// Note: Config field is not available in current Kurtosis ServiceInfo
+	// In a real implementation, this would be fetched from the service's admin API
+	return ""
+}
+
+// extractENR extracts ENR for consensus clients
+func extractENR(service *kurtosis.ServiceInfo) string {
+	// Note: Config field is not available in current Kurtosis ServiceInfo
+	// In a real implementation, this would be fetched from the beacon node's API
+	return ""
+}
+
+// extractPeerID extracts peer ID for consensus clients
+func extractPeerID(service *kurtosis.ServiceInfo) string {
+	// Note: Config field is not available in current Kurtosis ServiceInfo
+	// In a real implementation, this would be fetched from the beacon node's API
+	return ""
+}
+
+
+// ParseConnectionString parses a connection string into components
+func ParseConnectionString(connectionStr string) (protocol, address string, port int, err error) {
+	// Format: protocol://address:port
+	parts := strings.Split(connectionStr, "://")
+	if len(parts) != 2 {
+		return "", "", 0, fmt.Errorf("invalid connection string format")
+	}
+	
+	protocol = parts[0]
+	
+	// Split address and port
+	addressParts := strings.Split(parts[1], ":")
+	if len(addressParts) != 2 {
+		return "", "", 0, fmt.Errorf("invalid address format")
+	}
+	
+	address = addressParts[0]
+	port, err = strconv.Atoi(addressParts[1])
 	if err != nil {
-		return nil, err
+		return "", "", 0, fmt.Errorf("invalid port: %w", err)
 	}
 	
-	return map[string]string{
-		"type":     "http",
-		"host":     host,
-		"port":     strconv.Itoa(port),
-		"endpoint": endpoint,
-	}, nil
+	return protocol, address, port, nil
 }
 
-// parseWebSocketConnection parses WebSocket connection details
-func (p *MetadataParser) parseWebSocketConnection(endpoint string) (map[string]string, error) {
-	host, port, err := p.endpointExtractor.ParseEndpointURL(endpoint)
+// SerializeMetadata converts metadata to JSON
+func SerializeMetadata(metadata *network.ServiceMetadata) (string, error) {
+	data, err := json.Marshal(metadata)
 	if err != nil {
-		return nil, err
+		return "", fmt.Errorf("failed to serialize metadata: %w", err)
 	}
-	
-	return map[string]string{
-		"type":     "websocket",
-		"host":     host,
-		"port":     strconv.Itoa(port),
-		"endpoint": endpoint,
-	}, nil
+	return string(data), nil
 }
 
-// parseTCPConnection parses TCP connection details
-func (p *MetadataParser) parseTCPConnection(endpoint string) (map[string]string, error) {
-	host, port, err := p.endpointExtractor.ParseEndpointURL(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	
-	return map[string]string{
-		"type":     "tcp",
-		"host":     host,
-		"port":     strconv.Itoa(port),
-		"endpoint": endpoint,
-	}, nil
-}
-
-// SerializeMetadata serializes service metadata to JSON
-func (p *MetadataParser) SerializeMetadata(metadata *types.ServiceMetadata) ([]byte, error) {
-	return json.MarshalIndent(metadata, "", "  ")
-}
-
-// DeserializeMetadata deserializes service metadata from JSON
-func (p *MetadataParser) DeserializeMetadata(data []byte) (*types.ServiceMetadata, error) {
-	var metadata types.ServiceMetadata
-	if err := json.Unmarshal(data, &metadata); err != nil {
+// DeserializeMetadata converts JSON to metadata
+func DeserializeMetadata(data string) (*network.ServiceMetadata, error) {
+	var metadata network.ServiceMetadata
+	if err := json.Unmarshal([]byte(data), &metadata); err != nil {
 		return nil, fmt.Errorf("failed to deserialize metadata: %w", err)
 	}
 	return &metadata, nil

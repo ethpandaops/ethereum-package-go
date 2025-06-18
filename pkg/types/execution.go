@@ -123,34 +123,31 @@ func NewRethClient(name, version, rpcURL, wsURL, engineURL, metricsURL, enode, s
 
 // ExecutionClients holds all execution clients by type
 type ExecutionClients struct {
-	clients map[ClientType][]ExecutionClient
+	*ClientCollection[ExecutionClient]
 }
 
 // NewExecutionClients creates a new ExecutionClients collection
 func NewExecutionClients() *ExecutionClients {
 	return &ExecutionClients{
-		clients: make(map[ClientType][]ExecutionClient),
+		ClientCollection: NewClientCollection[ExecutionClient](),
 	}
 }
 
 // Add adds an execution client to the collection
 func (ec *ExecutionClients) Add(client ExecutionClient) {
-	ec.clients[client.Type()] = append(ec.clients[client.Type()], client)
+	ec.ClientCollection.Add(client.Type(), client)
 }
 
-// All returns all execution clients
-func (ec *ExecutionClients) All() []ExecutionClient {
-	var all []ExecutionClient
-	for _, clients := range ec.clients {
-		all = append(all, clients...)
-	}
-	return all
+// ByType returns all execution clients of a specific type
+func (ec *ExecutionClients) ByType(clientType ClientType) []ExecutionClient {
+	return ec.ClientCollection.ByType(clientType)
 }
 
 // Geth returns all Geth clients
+// Deprecated: Use ByType(ClientGeth) instead
 func (ec *ExecutionClients) Geth() []*ExecutionClientImpl {
 	var gethClients []*ExecutionClientImpl
-	for _, client := range ec.clients[ClientGeth] {
+	for _, client := range ec.ByType(ClientGeth) {
 		if gc, ok := client.(*ExecutionClientImpl); ok {
 			gethClients = append(gethClients, gc)
 		}
@@ -159,9 +156,10 @@ func (ec *ExecutionClients) Geth() []*ExecutionClientImpl {
 }
 
 // Besu returns all Besu clients
+// Deprecated: Use ByType(ClientBesu) instead
 func (ec *ExecutionClients) Besu() []*ExecutionClientImpl {
 	var besuClients []*ExecutionClientImpl
-	for _, client := range ec.clients[ClientBesu] {
+	for _, client := range ec.ByType(ClientBesu) {
 		if bc, ok := client.(*ExecutionClientImpl); ok {
 			besuClients = append(besuClients, bc)
 		}
@@ -170,9 +168,10 @@ func (ec *ExecutionClients) Besu() []*ExecutionClientImpl {
 }
 
 // Nethermind returns all Nethermind clients
+// Deprecated: Use ByType(ClientNethermind) instead
 func (ec *ExecutionClients) Nethermind() []*ExecutionClientImpl {
 	var nethermindClients []*ExecutionClientImpl
-	for _, client := range ec.clients[ClientNethermind] {
+	for _, client := range ec.ByType(ClientNethermind) {
 		if nc, ok := client.(*ExecutionClientImpl); ok {
 			nethermindClients = append(nethermindClients, nc)
 		}
@@ -181,9 +180,10 @@ func (ec *ExecutionClients) Nethermind() []*ExecutionClientImpl {
 }
 
 // Erigon returns all Erigon clients
+// Deprecated: Use ByType(ClientErigon) instead
 func (ec *ExecutionClients) Erigon() []*ExecutionClientImpl {
 	var erigonClients []*ExecutionClientImpl
-	for _, client := range ec.clients[ClientErigon] {
+	for _, client := range ec.ByType(ClientErigon) {
 		if ec, ok := client.(*ExecutionClientImpl); ok {
 			erigonClients = append(erigonClients, ec)
 		}
@@ -192,17 +192,13 @@ func (ec *ExecutionClients) Erigon() []*ExecutionClientImpl {
 }
 
 // Reth returns all Reth clients
+// Deprecated: Use ByType(ClientReth) instead
 func (ec *ExecutionClients) Reth() []*ExecutionClientImpl {
 	var rethClients []*ExecutionClientImpl
-	for _, client := range ec.clients[ClientReth] {
+	for _, client := range ec.ByType(ClientReth) {
 		if rc, ok := client.(*ExecutionClientImpl); ok {
 			rethClients = append(rethClients, rc)
 		}
 	}
 	return rethClients
-}
-
-// ByType returns all clients of a specific type
-func (ec *ExecutionClients) ByType(clientType ClientType) []ExecutionClient {
-	return ec.clients[clientType]
 }

@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,66 +11,66 @@ import (
 func TestGetPresetConfig(t *testing.T) {
 	tests := []struct {
 		name          string
-		preset        types.Preset
+		preset        Preset
 		expectErr     bool
-		validateFunc  func(*testing.T, *types.EthereumPackageConfig)
+		validateFunc  func(*testing.T, *EthereumPackageConfig)
 	}{
 		{
 			name:      "all ELs preset",
-			preset:    types.PresetAllELs,
+			preset:    PresetAllELs,
 			expectErr: false,
-			validateFunc: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 5) // All 5 EL clients
 				
 				// Check that all use Lighthouse as CL
 				for _, p := range config.Participants {
-					assert.Equal(t, types.ClientLighthouse, p.CLType)
+					assert.Equal(t, client.Lighthouse, p.CLType)
 					assert.Equal(t, 1, p.Count)
 				}
 
 				// Check all different EL clients are present
-				elTypes := make(map[types.ClientType]bool)
+				elTypes := make(map[client.Type]bool)
 				for _, p := range config.Participants {
 					elTypes[p.ELType] = true
 				}
-				assert.True(t, elTypes[types.ClientGeth])
-				assert.True(t, elTypes[types.ClientBesu])
-				assert.True(t, elTypes[types.ClientNethermind])
-				assert.True(t, elTypes[types.ClientErigon])
-				assert.True(t, elTypes[types.ClientReth])
+				assert.True(t, elTypes[client.Geth])
+				assert.True(t, elTypes[client.Besu])
+				assert.True(t, elTypes[client.Nethermind])
+				assert.True(t, elTypes[client.Erigon])
+				assert.True(t, elTypes[client.Reth])
 			},
 		},
 		{
 			name:      "all CLs preset",
-			preset:    types.PresetAllCLs,
+			preset:    PresetAllCLs,
 			expectErr: false,
-			validateFunc: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 6) // All 6 CL clients
 				
 				// Check that all use Geth as EL
 				for _, p := range config.Participants {
-					assert.Equal(t, types.ClientGeth, p.ELType)
+					assert.Equal(t, client.Geth, p.ELType)
 					assert.Equal(t, 1, p.Count)
 				}
 
 				// Check all different CL clients are present
-				clTypes := make(map[types.ClientType]bool)
+				clTypes := make(map[client.Type]bool)
 				for _, p := range config.Participants {
 					clTypes[p.CLType] = true
 				}
-				assert.True(t, clTypes[types.ClientLighthouse])
-				assert.True(t, clTypes[types.ClientTeku])
-				assert.True(t, clTypes[types.ClientPrysm])
-				assert.True(t, clTypes[types.ClientNimbus])
-				assert.True(t, clTypes[types.ClientLodestar])
-				assert.True(t, clTypes[types.ClientGrandine])
+				assert.True(t, clTypes[client.Lighthouse])
+				assert.True(t, clTypes[client.Teku])
+				assert.True(t, clTypes[client.Prysm])
+				assert.True(t, clTypes[client.Nimbus])
+				assert.True(t, clTypes[client.Lodestar])
+				assert.True(t, clTypes[client.Grandine])
 			},
 		},
 		{
 			name:      "all clients matrix preset",
-			preset:    types.PresetAllClientsMatrix,
+			preset:    PresetAllClientsMatrix,
 			expectErr: false,
-			validateFunc: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				// 5 EL clients * 6 CL clients = 30 combinations
 				assert.Len(t, config.Participants, 30)
 				
@@ -86,19 +86,19 @@ func TestGetPresetConfig(t *testing.T) {
 		},
 		{
 			name:      "minimal preset",
-			preset:    types.PresetMinimal,
+			preset:    PresetMinimal,
 			expectErr: false,
-			validateFunc: func(t *testing.T, config *types.EthereumPackageConfig) {
+			validateFunc: func(t *testing.T, config *EthereumPackageConfig) {
 				assert.Len(t, config.Participants, 1)
-				assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-				assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+				assert.Equal(t, client.Geth, config.Participants[0].ELType)
+				assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 				assert.Equal(t, 1, config.Participants[0].Count)
 				assert.Equal(t, 32, config.Participants[0].ValidatorCount)
 			},
 		},
 		{
 			name:      "invalid preset",
-			preset:    types.Preset("invalid"),
+			preset:    Preset("invalid"),
 			expectErr: true,
 		},
 	}
@@ -109,7 +109,7 @@ func TestGetPresetConfig(t *testing.T) {
 			
 			if tt.expectErr {
 				assert.Error(t, err)
-				assert.Equal(t, types.ErrInvalidPreset, err)
+				assert.Equal(t, ErrInvalidPreset, err)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, config)
@@ -122,19 +122,19 @@ func TestGetPresetConfig(t *testing.T) {
 }
 
 func TestPresetBuilder(t *testing.T) {
-	builder, err := NewPresetBuilder(types.PresetMinimal)
+	builder, err := NewPresetBuilder(PresetMinimal)
 	require.NoError(t, err)
 
-	networkParams := &types.NetworkParams{
+	networkParams := &NetworkParams{
 		ChainID:        99999,
 		SecondsPerSlot: 6,
 	}
 
-	mevConfig := &types.MEVConfig{
+	mevConfig := &MEVConfig{
 		Type: "mock",
 	}
 
-	service := types.AdditionalService{
+	service := AdditionalService{
 		Name: "blockscout",
 	}
 
@@ -150,8 +150,8 @@ func TestPresetBuilder(t *testing.T) {
 	
 	// Should have minimal preset participants
 	assert.Len(t, config.Participants, 1)
-	assert.Equal(t, types.ClientGeth, config.Participants[0].ELType)
-	assert.Equal(t, types.ClientLighthouse, config.Participants[0].CLType)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
 	
 	// Should have custom network params
 	require.NotNil(t, config.NetworkParams)
@@ -171,17 +171,17 @@ func TestPresetBuilder(t *testing.T) {
 }
 
 func TestPresetBuilderInvalidPreset(t *testing.T) {
-	_, err := NewPresetBuilder(types.Preset("invalid"))
+	_, err := NewPresetBuilder(Preset("invalid"))
 	assert.Error(t, err)
-	assert.Equal(t, types.ErrInvalidPreset, err)
+	assert.Equal(t, ErrInvalidPreset, err)
 }
 
 func TestAllPresetsValidYAML(t *testing.T) {
-	presets := []types.Preset{
-		types.PresetAllELs,
-		types.PresetAllCLs,
-		types.PresetAllClientsMatrix,
-		types.PresetMinimal,
+	presets := []Preset{
+		PresetAllELs,
+		PresetAllCLs,
+		PresetAllClientsMatrix,
+		PresetMinimal,
 	}
 
 	for _, preset := range presets {
@@ -206,11 +206,11 @@ func TestAllPresetsValidYAML(t *testing.T) {
 
 func TestPresetConsistency(t *testing.T) {
 	// Verify that all presets produce valid configurations
-	presets := []types.Preset{
-		types.PresetAllELs,
-		types.PresetAllCLs,
-		types.PresetAllClientsMatrix,
-		types.PresetMinimal,
+	presets := []Preset{
+		PresetAllELs,
+		PresetAllCLs,
+		PresetAllClientsMatrix,
+		PresetMinimal,
 	}
 
 	for _, preset := range presets {

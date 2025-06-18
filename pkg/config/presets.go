@@ -1,52 +1,52 @@
 package config
 
 import (
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 )
 
 // GetPresetConfig returns the configuration for a given preset
-func GetPresetConfig(preset types.Preset) (*types.EthereumPackageConfig, error) {
+func GetPresetConfig(preset Preset) (*EthereumPackageConfig, error) {
 	switch preset {
-	case types.PresetAllELs:
+	case PresetAllELs:
 		return getAllELsConfig(), nil
-	case types.PresetAllCLs:
+	case PresetAllCLs:
 		return getAllCLsConfig(), nil
-	case types.PresetAllClientsMatrix:
+	case PresetAllClientsMatrix:
 		return getAllClientsMatrixConfig(), nil
-	case types.PresetMinimal:
+	case PresetMinimal:
 		return getMinimalConfig(), nil
 	default:
-		return nil, types.ErrInvalidPreset
+		return nil, ErrInvalidPreset
 	}
 }
 
 // getAllELsConfig returns a configuration with all execution layer clients
-func getAllELsConfig() *types.EthereumPackageConfig {
-	return &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+func getAllELsConfig() *EthereumPackageConfig {
+	return &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientLighthouse,
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientBesu,
-				CLType: types.ClientLighthouse,
+				ELType: client.Besu,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientNethermind,
-				CLType: types.ClientLighthouse,
+				ELType: client.Nethermind,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientErigon,
-				CLType: types.ClientLighthouse,
+				ELType: client.Erigon,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientReth,
-				CLType: types.ClientLighthouse,
+				ELType: client.Reth,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 		},
@@ -54,37 +54,37 @@ func getAllELsConfig() *types.EthereumPackageConfig {
 }
 
 // getAllCLsConfig returns a configuration with all consensus layer clients
-func getAllCLsConfig() *types.EthereumPackageConfig {
-	return &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+func getAllCLsConfig() *EthereumPackageConfig {
+	return &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientLighthouse,
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientTeku,
+				ELType: client.Geth,
+				CLType: client.Teku,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientPrysm,
+				ELType: client.Geth,
+				CLType: client.Prysm,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientNimbus,
+				ELType: client.Geth,
+				CLType: client.Nimbus,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientLodestar,
+				ELType: client.Geth,
+				CLType: client.Lodestar,
 				Count:  1,
 			},
 			{
-				ELType: types.ClientGeth,
-				CLType: types.ClientGrandine,
+				ELType: client.Geth,
+				CLType: client.Grandine,
 				Count:  1,
 			},
 		},
@@ -92,49 +92,48 @@ func getAllCLsConfig() *types.EthereumPackageConfig {
 }
 
 // getAllClientsMatrixConfig returns a configuration with all client combinations
-func getAllClientsMatrixConfig() *types.EthereumPackageConfig {
-	elClients := []types.ClientType{
-		types.ClientGeth,
-		types.ClientBesu,
-		types.ClientNethermind,
-		types.ClientErigon,
-		types.ClientReth,
+func getAllClientsMatrixConfig() *EthereumPackageConfig {
+	elClients := []client.Type{
+		client.Geth,
+		client.Besu,
+		client.Nethermind,
+		client.Erigon,
+		client.Reth,
 	}
-
-	clClients := []types.ClientType{
-		types.ClientLighthouse,
-		types.ClientTeku,
-		types.ClientPrysm,
-		types.ClientNimbus,
-		types.ClientLodestar,
-		types.ClientGrandine,
+	
+	clClients := []client.Type{
+		client.Lighthouse,
+		client.Teku,
+		client.Prysm,
+		client.Nimbus,
+		client.Lodestar,
+		client.Grandine,
 	}
-
-	var participants []types.ParticipantConfig
-
-	// Create a matrix of all combinations
+	
+	var participants []ParticipantConfig
+	
 	for _, el := range elClients {
 		for _, cl := range clClients {
-			participants = append(participants, types.ParticipantConfig{
+			participants = append(participants, ParticipantConfig{
 				ELType: el,
 				CLType: cl,
 				Count:  1,
 			})
 		}
 	}
-
-	return &types.EthereumPackageConfig{
+	
+	return &EthereumPackageConfig{
 		Participants: participants,
 	}
 }
 
-// getMinimalConfig returns a minimal configuration with one node
-func getMinimalConfig() *types.EthereumPackageConfig {
-	return &types.EthereumPackageConfig{
-		Participants: []types.ParticipantConfig{
+// getMinimalConfig returns a minimal configuration
+func getMinimalConfig() *EthereumPackageConfig {
+	return &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
 			{
-				ELType:         types.ClientGeth,
-				CLType:         types.ClientLighthouse,
+				ELType:         client.Geth,
+				CLType:         client.Lighthouse,
 				Count:          1,
 				ValidatorCount: 32,
 			},
@@ -142,59 +141,67 @@ func getMinimalConfig() *types.EthereumPackageConfig {
 	}
 }
 
-// PresetBuilder helps build configurations based on presets with customizations
+// PresetBuilder helps build configurations from presets
 type PresetBuilder struct {
-	baseConfig *types.EthereumPackageConfig
-	builder    *ConfigBuilder
+	preset Preset
+	config *EthereumPackageConfig
 }
 
 // NewPresetBuilder creates a new preset builder
-func NewPresetBuilder(preset types.Preset) (*PresetBuilder, error) {
-	baseConfig, err := GetPresetConfig(preset)
+func NewPresetBuilder(preset Preset) (*PresetBuilder, error) {
+	config, err := GetPresetConfig(preset)
 	if err != nil {
 		return nil, err
 	}
-
-	builder := NewConfigBuilder()
-	builder.WithParticipants(baseConfig.Participants)
-
 	return &PresetBuilder{
-		baseConfig: baseConfig,
-		builder:    builder,
+		preset: preset,
+		config: config,
 	}, nil
 }
 
-// WithChainID sets a custom chain ID
+// WithChainID sets the chain ID
 func (p *PresetBuilder) WithChainID(chainID uint64) *PresetBuilder {
-	p.builder.WithChainID(chainID)
+	if p.config.NetworkParams == nil {
+		p.config.NetworkParams = &NetworkParams{}
+	}
+	p.config.NetworkParams.ChainID = chainID
+	p.config.NetworkParams.NetworkID = chainID
 	return p
 }
 
-// WithNetworkParams sets custom network parameters
-func (p *PresetBuilder) WithNetworkParams(params *types.NetworkParams) *PresetBuilder {
-	p.builder.WithNetworkParams(params)
+// WithNetworkParams sets the network parameters
+func (p *PresetBuilder) WithNetworkParams(params *NetworkParams) *PresetBuilder {
+	p.config.NetworkParams = params
 	return p
 }
 
-// WithMEV enables MEV configuration
-func (p *PresetBuilder) WithMEV(mevConfig *types.MEVConfig) *PresetBuilder {
-	p.builder.WithMEV(mevConfig)
+// WithMEV sets the MEV configuration
+func (p *PresetBuilder) WithMEV(mev *MEVConfig) *PresetBuilder {
+	p.config.MEV = mev
 	return p
 }
 
 // WithAdditionalService adds an additional service
-func (p *PresetBuilder) WithAdditionalService(service types.AdditionalService) *PresetBuilder {
-	p.builder.WithAdditionalService(service)
+func (p *PresetBuilder) WithAdditionalService(service AdditionalService) *PresetBuilder {
+	p.config.AdditionalServices = append(p.config.AdditionalServices, service)
 	return p
 }
 
-// WithGlobalLogLevel sets the global client log level
+// WithGlobalLogLevel sets the global log level
 func (p *PresetBuilder) WithGlobalLogLevel(level string) *PresetBuilder {
-	p.builder.WithGlobalLogLevel(level)
+	p.config.GlobalClientLogLevel = level
 	return p
 }
 
-// Build returns the built configuration
-func (p *PresetBuilder) Build() (*types.EthereumPackageConfig, error) {
-	return p.builder.Build()
+// Build returns the configuration for the preset
+func (p *PresetBuilder) Build() (*EthereumPackageConfig, error) {
+	// Apply defaults
+	p.config.ApplyDefaults()
+	
+	// Validate
+	if err := p.config.Validate(); err != nil {
+		return nil, err
+	}
+	
+	return p.config, nil
 }

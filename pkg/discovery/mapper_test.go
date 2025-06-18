@@ -5,8 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
 	"github.com/ethpandaops/ethereum-package-go/pkg/kurtosis"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -126,13 +128,13 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 	mockClient.On("GetServices", ctx, "test-enclave").Return(services, nil)
 	mockClient.On("DestroyEnclave", ctx, "test-enclave").Return(nil)
 
-	config := &types.EthereumPackageConfig{
-		NetworkParams: &types.NetworkParams{
+	ethConfig := &config.EthereumPackageConfig{
+		NetworkParams: &config.NetworkParams{
 			ChainID: 12345,
 		},
 	}
 
-	network, err := mapper.MapToNetwork(ctx, "test-enclave", config)
+	network, err := mapper.MapToNetwork(ctx, "test-enclave", ethConfig)
 	require.NoError(t, err)
 	require.NotNil(t, network)
 
@@ -143,8 +145,9 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 	// Verify execution clients
 	execClients := network.ExecutionClients()
 	assert.Equal(t, 1, len(execClients.All()))
-	assert.Equal(t, 1, len(execClients.Geth()))
-	geth := execClients.Geth()[0]
+	gethClients := execClients.ByType(client.Geth)
+	assert.Equal(t, 1, len(gethClients))
+	geth := gethClients[0]
 	assert.Equal(t, "http://10.0.0.1:8545", geth.RPCURL())
 	assert.Equal(t, "ws://10.0.0.1:8546", geth.WSURL())
 	assert.Equal(t, "http://10.0.0.1:8551", geth.EngineURL())
@@ -156,9 +159,10 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 		t.Logf("Consensus client: %s, type: %s", client.Name(), client.Type())
 	}
 	assert.Equal(t, 1, len(consClients.All()))
-	if len(consClients.Lighthouse()) > 0 {
-		assert.Equal(t, 1, len(consClients.Lighthouse()))
-		lighthouse := consClients.Lighthouse()[0]
+	lighthouseClients := consClients.ByType(client.Lighthouse)
+	if len(lighthouseClients) > 0 {
+		assert.Equal(t, 1, len(lighthouseClients))
+		lighthouse := lighthouseClients[0]
 		assert.Equal(t, "http://10.0.0.2:5052", lighthouse.BeaconAPIURL())
 	} else {
 		t.Error("No lighthouse clients found")
@@ -169,8 +173,6 @@ func TestServiceMapper_MapToNetwork(t *testing.T) {
 	require.NotNil(t, apache)
 	assert.Equal(t, "http://10.0.0.3:80", apache.URL())
 
-	// Verify Prometheus
-	assert.Equal(t, "http://10.0.0.4:9090", network.PrometheusURL())
 
 	// Verify services list
 	networkServices := network.Services()
@@ -186,21 +188,21 @@ func TestServiceMapper_DetectServiceTypes(t *testing.T) {
 	tests := []struct {
 		name         string
 		serviceName  string
-		expectedType types.ServiceType
+		expectedType network.ServiceType
 	}{
-		{"geth execution", "el-1-geth-lighthouse", types.ServiceTypeExecutionClient},
-		{"besu execution", "el-2-besu-teku", types.ServiceTypeExecutionClient},
-		{"nethermind execution", "el-3-nethermind", types.ServiceTypeExecutionClient},
-		{"lighthouse consensus", "cl-1-lighthouse-geth", types.ServiceTypeConsensusClient},
-		{"teku consensus", "cl-2-teku-besu", types.ServiceTypeConsensusClient},
-		{"prysm consensus", "cl-3-prysm", types.ServiceTypeConsensusClient},
-		{"validator", "validator-1", types.ServiceTypeValidator},
-		{"prometheus", "prometheus", types.ServiceTypePrometheus},
-		{"grafana", "grafana", types.ServiceTypeGrafana},
-		{"blockscout", "blockscout", types.ServiceTypeBlockscout},
-		{"apache", "apache", types.ServiceTypeApache},
-		{"apache config", "apache-config-server", types.ServiceTypeApache},
-		{"unknown", "random-service", types.ServiceTypeOther},
+		{"geth execution", "el-1-geth-lighthouse", network.ServiceTypeExecutionClient},
+		{"besu execution", "el-2-besu-teku", network.ServiceTypeExecutionClient},
+		{"nethermind execution", "el-3-nethermind", network.ServiceTypeExecutionClient},
+		{"lighthouse consensus", "cl-1-lighthouse-geth", network.ServiceTypeConsensusClient},
+		{"teku consensus", "cl-2-teku-besu", network.ServiceTypeConsensusClient},
+		{"prysm consensus", "cl-3-prysm", network.ServiceTypeConsensusClient},
+		{"validator", "validator-1", network.ServiceTypeValidator},
+		{"prometheus", "prometheus", network.ServiceTypePrometheus},
+		{"grafana", "grafana", network.ServiceTypeGrafana},
+		{"blockscout", "blockscout", network.ServiceTypeBlockscout},
+		{"apache", "apache", network.ServiceTypeApache},
+		{"apache config", "apache-config-server", network.ServiceTypeApache},
+		{"unknown", "random-service", network.ServiceTypeOther},
 	}
 
 	for _, tt := range tests {
@@ -221,7 +223,7 @@ func TestServiceMapper_EmptyServices(t *testing.T) {
 	mockClient.On("GetServices", ctx, "empty-enclave").Return(emptyServices, nil)
 	mockClient.On("DestroyEnclave", ctx, "empty-enclave").Return(nil)
 
-	config := &types.EthereumPackageConfig{}
+	config := &config.EthereumPackageConfig{}
 
 	network, err := mapper.MapToNetwork(ctx, "empty-enclave", config)
 	require.NoError(t, err)
@@ -232,7 +234,6 @@ func TestServiceMapper_EmptyServices(t *testing.T) {
 	assert.Empty(t, network.ConsensusClients().All())
 	assert.Empty(t, network.Services())
 	assert.Nil(t, network.ApacheConfig())
-	assert.Empty(t, network.PrometheusURL())
 }
 
 func TestServiceMapper_MixedClients(t *testing.T) {
@@ -282,7 +283,7 @@ func TestServiceMapper_MixedClients(t *testing.T) {
 	mockClient.On("GetServices", ctx, "mixed-enclave").Return(services, nil)
 	mockClient.On("DestroyEnclave", ctx, "mixed-enclave").Return(nil)
 
-	config := &types.EthereumPackageConfig{}
+	config := &config.EthereumPackageConfig{}
 
 	network, err := mapper.MapToNetwork(ctx, "mixed-enclave", config)
 	require.NoError(t, err)
@@ -290,13 +291,13 @@ func TestServiceMapper_MixedClients(t *testing.T) {
 	// Verify multiple client types
 	execClients := network.ExecutionClients()
 	assert.Equal(t, 2, len(execClients.All()))
-	assert.Equal(t, 1, len(execClients.Geth()))
-	assert.Equal(t, 1, len(execClients.Besu()))
+	assert.Equal(t, 1, len(execClients.ByType(client.Geth)))
+	assert.Equal(t, 1, len(execClients.ByType(client.Besu)))
 
 	consClients := network.ConsensusClients()
 	assert.Equal(t, 2, len(consClients.All()))
-	assert.Equal(t, 1, len(consClients.Lighthouse()))
-	assert.Equal(t, 1, len(consClients.Teku()))
+	assert.Equal(t, 1, len(consClients.ByType(client.Lighthouse)))
+	assert.Equal(t, 1, len(consClients.ByType(client.Teku)))
 }
 
 func TestServiceMapper_ServiceWithoutPorts(t *testing.T) {
@@ -317,7 +318,7 @@ func TestServiceMapper_ServiceWithoutPorts(t *testing.T) {
 	mockClient.On("GetServices", ctx, "no-ports-enclave").Return(services, nil)
 	mockClient.On("DestroyEnclave", ctx, "no-ports-enclave").Return(nil)
 
-	config := &types.EthereumPackageConfig{}
+	config := &config.EthereumPackageConfig{}
 
 	network, err := mapper.MapToNetwork(ctx, "no-ports-enclave", config)
 	require.NoError(t, err)

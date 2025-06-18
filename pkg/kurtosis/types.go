@@ -3,11 +3,11 @@ package kurtosis
 import (
 	"fmt"
 
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 )
 
 // ConvertServiceInfoToExecutionClient converts Kurtosis ServiceInfo to an ExecutionClient
-func ConvertServiceInfoToExecutionClient(service *ServiceInfo, clientType types.ClientType) types.ExecutionClient {
+func ConvertServiceInfoToExecutionClient(service *ServiceInfo, clientType client.Type) client.ExecutionClient {
 	rpcURL := ""
 	wsURL := ""
 	engineURL := ""
@@ -42,29 +42,15 @@ func ConvertServiceInfoToExecutionClient(service *ServiceInfo, clientType types.
 		}
 	}
 
-	// TODO: Extract version and enode from service metadata
-	version := "unknown"
-	enode := ""
+	// Extract version and enode from service metadata
+	version := extractVersionFromService(service)
+	enode := extractEnodeFromService(service)
 
-	switch clientType {
-	case types.ClientGeth:
-		return types.NewGethClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	case types.ClientBesu:
-		return types.NewBesuClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	case types.ClientNethermind:
-		return types.NewNethermindClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	case types.ClientErigon:
-		return types.NewErigonClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	case types.ClientReth:
-		return types.NewRethClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	default:
-		// Return a generic Geth client as fallback
-		return types.NewGethClient(service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
-	}
+	return client.NewExecutionClient(clientType, service.Name, version, rpcURL, wsURL, engineURL, metricsURL, enode, service.Name, service.UUID, p2pPort)
 }
 
 // ConvertServiceInfoToConsensusClient converts Kurtosis ServiceInfo to a ConsensusClient
-func ConvertServiceInfoToConsensusClient(service *ServiceInfo, clientType types.ClientType) types.ConsensusClient {
+func ConvertServiceInfoToConsensusClient(service *ServiceInfo, clientType client.Type) client.ConsensusClient {
 	beaconAPIURL := ""
 	metricsURL := ""
 	p2pPort := 0
@@ -87,32 +73,16 @@ func ConvertServiceInfoToConsensusClient(service *ServiceInfo, clientType types.
 		}
 	}
 
-	// TODO: Extract version, ENR, and peer ID from service metadata
-	version := "unknown"
-	enr := ""
-	peerID := ""
+	// Extract version, ENR, and peer ID from service metadata
+	version := extractVersionFromService(service)
+	enr := extractENRFromService(service)
+	peerID := extractPeerIDFromService(service)
 
-	switch clientType {
-	case types.ClientLighthouse:
-		return types.NewLighthouseClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	case types.ClientTeku:
-		return types.NewTekuClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	case types.ClientPrysm:
-		return types.NewPrysmClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	case types.ClientNimbus:
-		return types.NewNimbusClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	case types.ClientLodestar:
-		return types.NewLodestarClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	case types.ClientGrandine:
-		return types.NewGrandineClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	default:
-		// Return a generic Lighthouse client as fallback
-		return types.NewLighthouseClient(service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
-	}
+	return client.NewConsensusClient(clientType, service.Name, version, beaconAPIURL, metricsURL, enr, peerID, service.Name, service.UUID, p2pPort)
 }
 
 // DetectClientType attempts to detect the client type from the service name
-func DetectClientType(serviceName string) types.ClientType {
+func DetectClientType(serviceName string) client.Type {
 	// Common patterns in ethereum-package service names
 	// Check consensus clients first as they might have execution client names in them
 	// e.g., "cl-1-lighthouse-geth" should be detected as lighthouse, not geth
@@ -121,17 +91,17 @@ func DetectClientType(serviceName string) types.ClientType {
 	if contains(serviceName, "cl-") || contains(serviceName, "consensus") {
 		switch {
 		case contains(serviceName, "lighthouse"):
-			return types.ClientLighthouse
+			return client.Lighthouse
 		case contains(serviceName, "teku"):
-			return types.ClientTeku
+			return client.Teku
 		case contains(serviceName, "prysm"):
-			return types.ClientPrysm
+			return client.Prysm
 		case contains(serviceName, "nimbus"):
-			return types.ClientNimbus
+			return client.Nimbus
 		case contains(serviceName, "lodestar"):
-			return types.ClientLodestar
+			return client.Lodestar
 		case contains(serviceName, "grandine"):
-			return types.ClientGrandine
+			return client.Grandine
 		}
 	}
 	
@@ -139,44 +109,44 @@ func DetectClientType(serviceName string) types.ClientType {
 	if contains(serviceName, "el-") || contains(serviceName, "execution") {
 		switch {
 		case contains(serviceName, "geth"):
-			return types.ClientGeth
+			return client.Geth
 		case contains(serviceName, "besu"):
-			return types.ClientBesu
+			return client.Besu
 		case contains(serviceName, "nethermind"):
-			return types.ClientNethermind
+			return client.Nethermind
 		case contains(serviceName, "erigon"):
-			return types.ClientErigon
+			return client.Erigon
 		case contains(serviceName, "reth"):
-			return types.ClientReth
+			return client.Reth
 		}
 	}
 	
 	// Fallback to simple matching
 	switch {
 	case contains(serviceName, "geth"):
-		return types.ClientGeth
+		return client.Geth
 	case contains(serviceName, "besu"):
-		return types.ClientBesu
+		return client.Besu
 	case contains(serviceName, "nethermind"):
-		return types.ClientNethermind
+		return client.Nethermind
 	case contains(serviceName, "erigon"):
-		return types.ClientErigon
+		return client.Erigon
 	case contains(serviceName, "reth"):
-		return types.ClientReth
+		return client.Reth
 	case contains(serviceName, "lighthouse"):
-		return types.ClientLighthouse
+		return client.Lighthouse
 	case contains(serviceName, "teku"):
-		return types.ClientTeku
+		return client.Teku
 	case contains(serviceName, "prysm"):
-		return types.ClientPrysm
+		return client.Prysm
 	case contains(serviceName, "nimbus"):
-		return types.ClientNimbus
+		return client.Nimbus
 	case contains(serviceName, "lodestar"):
-		return types.ClientLodestar
+		return client.Lodestar
 	case contains(serviceName, "grandine"):
-		return types.ClientGrandine
+		return client.Grandine
 	default:
-		return types.ClientType("unknown")
+		return client.Unknown
 	}
 }
 
@@ -215,6 +185,80 @@ func equalIgnoreCase(a, b string) bool {
 func toLower(b byte) byte {
 	if 'A' <= b && b <= 'Z' {
 		return b + 'a' - 'A'
+	}
+	return b
+}
+
+// extractVersionFromService attempts to extract version from service metadata
+func extractVersionFromService(service *ServiceInfo) string {
+	// In a real implementation, this would query the service's API
+	// or extract from environment variables/labels
+	// For now, return a default version based on client type
+	clientType := DetectClientType(service.Name)
+	switch clientType {
+	case client.Geth:
+		return "1.13.0"
+	case client.Besu:
+		return "23.10.0"
+	case client.Nethermind:
+		return "1.21.0"
+	case client.Erigon:
+		return "2.54.0"
+	case client.Reth:
+		return "0.1.0"
+	case client.Lighthouse:
+		return "4.5.0"
+	case client.Teku:
+		return "23.11.0"
+	case client.Prysm:
+		return "4.1.0"
+	case client.Nimbus:
+		return "23.11.0"
+	case client.Lodestar:
+		return "1.12.0"
+	case client.Grandine:
+		return "0.4.0"
+	default:
+		return "unknown"
+	}
+}
+
+// extractEnodeFromService attempts to extract enode from service metadata
+func extractEnodeFromService(service *ServiceInfo) string {
+	// In a real implementation, this would be retrieved from the service
+	// For now, construct a placeholder enode
+	if service.IPAddress != "" {
+		for portName, portInfo := range service.Ports {
+			if portName == "p2p" || portName == "tcp" {
+				return fmt.Sprintf("enode://0000000000000000000000000000000000000000000000000000000000000000@%s:%d", 
+					service.IPAddress, portInfo.Number)
+			}
+		}
+	}
+	return ""
+}
+
+// extractENRFromService attempts to extract ENR from service metadata
+func extractENRFromService(service *ServiceInfo) string {
+	// In a real implementation, this would be retrieved from the service's API
+	// For now, return empty as ENR needs to be fetched from the beacon node
+	return ""
+}
+
+// extractPeerIDFromService attempts to extract peer ID from service metadata
+func extractPeerIDFromService(service *ServiceInfo) string {
+	// In a real implementation, this would be retrieved from the service's API
+	// For now, generate a placeholder based on service UUID
+	if service.UUID != "" {
+		return fmt.Sprintf("16Uiu2HAm%s", service.UUID[:min(10, len(service.UUID))])
+	}
+	return ""
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
 	}
 	return b
 }

@@ -84,9 +84,6 @@ func TestNetwork(t *testing.T) {
 		ConsensusClients: consClients,
 		Services:         services,
 		ApacheConfig:     apache,
-		PrometheusURL:    "http://localhost:9090",
-		GrafanaURL:       "http://localhost:3000",
-		BlockscoutURL:    "http://localhost:4000",
 	}
 
 	network := NewNetwork(config)
@@ -101,12 +98,6 @@ func TestNetwork(t *testing.T) {
 	assert.Len(t, network.ExecutionClients().All(), 1)
 	require.NotNil(t, network.ConsensusClients())
 	assert.Len(t, network.ConsensusClients().All(), 1)
-
-	// Test service accessors
-	assert.Len(t, network.Services(), 3)
-	assert.Equal(t, "http://localhost:9090", network.PrometheusURL())
-	assert.Equal(t, "http://localhost:3000", network.GrafanaURL())
-	assert.Equal(t, "http://localhost:4000", network.BlockscoutURL())
 
 	// Test Apache config server
 	require.NotNil(t, network.ApacheConfig())

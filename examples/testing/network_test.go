@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/ethpandaops/ethereum-package-go"
+	"github.com/ethpandaops/ethereum-package-go/pkg/client"
+	"github.com/ethpandaops/ethereum-package-go/pkg/config"
+	"github.com/ethpandaops/ethereum-package-go/pkg/network"
 	"github.com/ethpandaops/ethereum-package-go/pkg/testutil"
-	"github.com/ethpandaops/ethereum-package-go/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,26 +22,26 @@ func TestBasicNetwork(t *testing.T) {
 	}
 
 	// Start a test network - automatically cleaned up
-	network := testutil.StartNetwork(t)
+	net := testutil.StartNetwork(t)
 	
 	// Assert network properties
-	testutil.Assert(t, network).
+	testutil.Assert(t, net).
 		HasExecutionClients(1).
 		HasConsensusClients(1).
 		HasChainID(12345)
 	
 	// Get clients
-	execClient := network.GetExecutionClient()
-	consClient := network.GetConsensusClient()
+	execClient := net.GetExecutionClient()
+	consClient := net.GetConsensusClient()
 	
 	assert.NotEmpty(t, execClient.RPCURL())
 	assert.NotEmpty(t, consClient.BeaconAPIURL())
 	
 	// Wait for network to be ready
-	network.WaitForSync(30 * time.Second)
+	net.WaitForSync(30 * time.Second)
 	
 	// Verify network is healthy
-	network.RequireHealthy()
+	net.RequireHealthy()
 }
 
 // TestCustomParticipants demonstrates testing with custom client configurations
@@ -50,16 +52,16 @@ func TestCustomParticipants(t *testing.T) {
 
 	// Define participants - in practice, Kurtosis may not deploy exactly
 	// the number requested, so we'll verify what we get
-	participants := []types.ParticipantConfig{
-		{ELType: "geth", CLType: "lighthouse", Count: 2},
-		{ELType: "besu", CLType: "teku", Count: 1},
+	participants := []config.ParticipantConfig{
+		{ELType: client.Geth, CLType: client.Lighthouse, Count: 2},
+		{ELType: client.Besu, CLType: client.Teku, Count: 1},
 	}
 	
-	network := testutil.StartNetworkWithParticipants(t, participants)
+	net := testutil.StartNetworkWithParticipants(t, participants)
 	
 	// Verify we have clients
-	execClients := network.ExecutionClients()
-	consClients := network.ConsensusClients()
+	execClients := net.ExecutionClients()
+	consClients := net.ConsensusClients()
 	
 	// We should have at least one execution and consensus client
 	require.NotEmpty(t, execClients.All(), "Should have at least one execution client")
@@ -86,31 +88,35 @@ func TestMonitoringServices(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
-	network := testutil.StartNetworkWithMonitoring(t)
+	net := testutil.StartNetworkWithMonitoring(t)
 	
 	// Check if monitoring services are available
 	// Note: The actual deployment may not include monitoring services
 	// depending on the Kurtosis configuration
-	prometheusURL := network.PrometheusURL()
-	grafanaURL := network.GrafanaURL()
+	hasMonitoring := false
+	for _, service := range net.Services() {
+		if service.Type == network.ServiceTypePrometheus || service.Type == network.ServiceTypeGrafana {
+			hasMonitoring = true
+			break
+		}
+	}
 	
-	if prometheusURL == "" && grafanaURL == "" {
+	if !hasMonitoring {
 		t.Skip("Monitoring services not deployed in this configuration")
 	}
 	
-	// If we have monitoring services, verify they're accessible
-	if prometheusURL != "" {
-		t.Logf("Prometheus available at: %s", prometheusURL)
-		assert.NotEmpty(t, prometheusURL)
-	}
-	
-	if grafanaURL != "" {
-		t.Logf("Grafana available at: %s", grafanaURL)
-		assert.NotEmpty(t, grafanaURL)
+	// Log available monitoring services
+	for _, service := range net.Services() {
+		if service.Type == network.ServiceTypePrometheus {
+			t.Logf("Prometheus service available: %s", service.Name)
+		}
+		if service.Type == network.ServiceTypeGrafana {
+			t.Logf("Grafana service available: %s", service.Name)
+		}
 	}
 	
 	// Custom cleanup example
-	network.AddCleanup(func() {
+	net.AddCleanup(func() {
 		t.Log("Performing custom cleanup...")
 		// Could export metrics, save logs, etc.
 	})
@@ -126,17 +132,17 @@ func TestSharedNetwork(t *testing.T) {
 	
 	// Create a network with a specific name that can be reused
 	enclaveName := "test-shared-network"
-	network, err := ethereum.FindOrCreateNetwork(ctx, enclaveName, ethereum.Minimal())
+	net, err := ethereum.FindOrCreateNetwork(ctx, enclaveName, ethereum.Minimal())
 	require.NoError(t, err)
 	
 	// Log the enclave name for reference
-	t.Logf("Using network: %s", network.EnclaveName())
+	t.Logf("Using network: %s", net.EnclaveName())
 	
 	// Run multiple tests against the same network
 	t.Run("TestClients", func(t *testing.T) {
 		// This test runs against the existing network
-		execClients := network.ExecutionClients()
-		consClients := network.ConsensusClients()
+		execClients := net.ExecutionClients()
+		consClients := net.ConsensusClients()
 		
 		assert.NotEmpty(t, execClients.All())
 		assert.NotEmpty(t, consClients.All())
@@ -144,7 +150,7 @@ func TestSharedNetwork(t *testing.T) {
 	
 	t.Run("TestEndpoints", func(t *testing.T) {
 		// This test also runs against the same network
-		execClient := network.ExecutionClients().All()[0]
+		execClient := net.ExecutionClients().All()[0]
 		assert.NotEmpty(t, execClient.RPCURL())
 	})
 	
@@ -152,7 +158,11 @@ func TestSharedNetwork(t *testing.T) {
 	t.Cleanup(func() {
 		// Only clean up if this is the main test
 		if t.Name() == "TestSharedNetwork" {
-			network.Cleanup(ctx)
+			ctx := context.Background()
+			err := net.Cleanup(ctx)
+			if err != nil {
+				t.Logf("Failed to cleanup network: %v", err)
+			}
 		}
 	})
 }
