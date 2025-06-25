@@ -64,6 +64,13 @@ func (b *ConfigBuilder) WithGlobalLogLevel(level string) *ConfigBuilder {
 	return b
 }
 
+// WithPortPublisher sets the port publisher configuration.
+func (b *ConfigBuilder) WithPortPublisher(portPublisher *PortPublisherConfig) *ConfigBuilder {
+	b.config.PortPublisher = portPublisher
+
+	return b
+}
+
 // Build returns the built configuration
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults

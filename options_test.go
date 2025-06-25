@@ -342,3 +342,124 @@ func TestMultipleOptions(t *testing.T) {
 	assert.Equal(t, 20*time.Minute, cfg.Timeout)
 	assert.Equal(t, "debug", cfg.GlobalLogLevel)
 }
+
+func TestWithPortPublisher(t *testing.T) {
+	cfg := defaultRunConfig()
+	portPublisher := &config.PortPublisherConfig{
+		NatExitIP: "192.168.1.100",
+		EL: &config.PortPublisherComponent{
+			Enabled:         true,
+			PublicPortStart: 32000,
+		},
+		CL: &config.PortPublisherComponent{
+			Enabled:         true,
+			PublicPortStart: 33000,
+		},
+		VC: &config.PortPublisherComponent{
+			Enabled:         true,
+			PublicPortStart: 34000,
+		},
+	}
+
+	opt := WithPortPublisher(portPublisher)
+	opt(cfg)
+
+	assert.Equal(t, portPublisher, cfg.PortPublisher)
+	assert.Equal(t, "192.168.1.100", cfg.PortPublisher.NatExitIP)
+	assert.True(t, cfg.PortPublisher.EL.Enabled)
+	assert.Equal(t, 32000, cfg.PortPublisher.EL.PublicPortStart)
+}
+
+func TestWithNATExitIP(t *testing.T) {
+	tests := []struct {
+		name              string
+		ip                string
+		existingConfig    *config.PortPublisherConfig
+		expectedNatExitIP string
+		expectedELEnabled bool
+		expectedCLEnabled bool
+	}{
+		{
+			name:              "set NAT exit IP on nil config",
+			ip:                "127.0.0.1",
+			existingConfig:    nil,
+			expectedNatExitIP: "127.0.0.1",
+			expectedELEnabled: true,
+			expectedCLEnabled: true,
+		},
+		{
+			name:              "set NAT exit IP on empty config",
+			ip:                "192.168.1.100",
+			existingConfig:    &config.PortPublisherConfig{},
+			expectedNatExitIP: "192.168.1.100",
+			expectedELEnabled: true,
+			expectedCLEnabled: true,
+		},
+		{
+			name:              "override existing NAT exit IP",
+			ip:                "10.0.0.1",
+			existingConfig:    &config.PortPublisherConfig{NatExitIP: "192.168.1.1"},
+			expectedNatExitIP: "10.0.0.1",
+			expectedELEnabled: true,
+			expectedCLEnabled: true,
+		},
+		{
+			name: "preserve existing component settings",
+			ip:   "172.16.0.1",
+			existingConfig: &config.PortPublisherConfig{
+				EL: &config.PortPublisherComponent{Enabled: false},
+				CL: &config.PortPublisherComponent{Enabled: false},
+			},
+			expectedNatExitIP: "172.16.0.1",
+			expectedELEnabled: false,
+			expectedCLEnabled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := defaultRunConfig()
+			cfg.PortPublisher = tt.existingConfig
+
+			opt := WithNATExitIP(tt.ip)
+			opt(cfg)
+
+			require.NotNil(t, cfg.PortPublisher)
+			assert.Equal(t, tt.expectedNatExitIP, cfg.PortPublisher.NatExitIP)
+
+			if cfg.PortPublisher.EL != nil {
+				assert.Equal(t, tt.expectedELEnabled, cfg.PortPublisher.EL.Enabled)
+			}
+			if cfg.PortPublisher.CL != nil {
+				assert.Equal(t, tt.expectedCLEnabled, cfg.PortPublisher.CL.Enabled)
+			}
+		})
+	}
+}
+
+func TestPortPublisherWithOtherOptions(t *testing.T) {
+	cfg := defaultRunConfig()
+
+	// Apply multiple options including port publisher
+	opts := []RunOption{
+		WithChainID(12345),
+		WithNATExitIP("127.0.0.1"),
+		WithAdditionalServices("prometheus"),
+		WithGlobalLogLevel("debug"),
+	}
+
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	// Verify all options were applied
+	assert.Equal(t, uint64(12345), cfg.ChainID)
+	assert.Equal(t, "debug", cfg.GlobalLogLevel)
+	assert.Len(t, cfg.AdditionalServices, 1)
+
+	// Verify port publisher was configured
+	require.NotNil(t, cfg.PortPublisher)
+	assert.Equal(t, "127.0.0.1", cfg.PortPublisher.NatExitIP)
+	assert.True(t, cfg.PortPublisher.EL.Enabled)
+	assert.True(t, cfg.PortPublisher.CL.Enabled)
+}

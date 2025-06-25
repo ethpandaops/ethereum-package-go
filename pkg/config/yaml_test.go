@@ -291,3 +291,144 @@ func TestYAMLFormatting(t *testing.T) {
 		}
 	}
 }
+
+func TestToYAMLWithPortPublisher(t *testing.T) {
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				Count:  1,
+			},
+		},
+		PortPublisher: &PortPublisherConfig{
+			NatExitIP: "192.168.1.100",
+			EL: &PortPublisherComponent{
+				Enabled:         true,
+				PublicPortStart: 32000,
+			},
+			CL: &PortPublisherComponent{
+				Enabled:         true,
+				PublicPortStart: 33000,
+			},
+			VC: &PortPublisherComponent{
+				Enabled:         true,
+				PublicPortStart: 34000,
+			},
+			AdditionalServices: &PortPublisherComponent{
+				Enabled: false,
+			},
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlStr)
+
+	// Check that port publisher elements are present
+	assert.Contains(t, yamlStr, "port_publisher:")
+	assert.Contains(t, yamlStr, "nat_exit_ip: 192.168.1.100")
+	assert.Contains(t, yamlStr, "el:")
+	assert.Contains(t, yamlStr, "enabled: true")
+	assert.Contains(t, yamlStr, "public_port_start: 32000")
+	assert.Contains(t, yamlStr, "cl:")
+	assert.Contains(t, yamlStr, "public_port_start: 33000")
+	assert.Contains(t, yamlStr, "vc:")
+	assert.Contains(t, yamlStr, "public_port_start: 34000")
+	assert.Contains(t, yamlStr, "additional_services:")
+	assert.Contains(t, yamlStr, "enabled: false")
+}
+
+func TestFromYAMLWithPortPublisher(t *testing.T) {
+	yamlContent := `
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+    count: 2
+
+port_publisher:
+  nat_exit_ip: "127.0.0.1"
+  el:
+    enabled: true
+    public_port_start: 32000
+  cl:
+    enabled: true
+    public_port_start: 33000
+  vc:
+    enabled: false
+  additional_services:
+    enabled: true
+    public_port_start: 35000
+`
+
+	config, err := FromYAML(yamlContent)
+	require.NoError(t, err)
+
+	// Check participants
+	assert.Len(t, config.Participants, 1)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
+	assert.Equal(t, 2, config.Participants[0].Count)
+
+	// Check port publisher
+	require.NotNil(t, config.PortPublisher)
+	assert.Equal(t, "127.0.0.1", config.PortPublisher.NatExitIP)
+
+	require.NotNil(t, config.PortPublisher.EL)
+	assert.True(t, config.PortPublisher.EL.Enabled)
+	assert.Equal(t, 32000, config.PortPublisher.EL.PublicPortStart)
+
+	require.NotNil(t, config.PortPublisher.CL)
+	assert.True(t, config.PortPublisher.CL.Enabled)
+	assert.Equal(t, 33000, config.PortPublisher.CL.PublicPortStart)
+
+	require.NotNil(t, config.PortPublisher.VC)
+	assert.False(t, config.PortPublisher.VC.Enabled)
+
+	require.NotNil(t, config.PortPublisher.AdditionalServices)
+	assert.True(t, config.PortPublisher.AdditionalServices.Enabled)
+	assert.Equal(t, 35000, config.PortPublisher.AdditionalServices.PublicPortStart)
+}
+
+func TestPortPublisherRoundTrip(t *testing.T) {
+	// Create a config with port publisher
+	original := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Prysm,
+				Count:  1,
+			},
+		},
+		NetworkParams: &NetworkParams{
+			NetworkID: "12345",
+		},
+		PortPublisher: &PortPublisherConfig{
+			NatExitIP: "auto",
+			EL: &PortPublisherComponent{
+				Enabled:         true,
+				PublicPortStart: 40000,
+			},
+			CL: &PortPublisherComponent{
+				Enabled:         true,
+				PublicPortStart: 41000,
+			},
+		},
+	}
+
+	// Convert to YAML
+	yamlStr, err := ToYAML(original)
+	require.NoError(t, err)
+
+	// Parse back from YAML
+	parsed, err := FromYAML(yamlStr)
+	require.NoError(t, err)
+
+	// Verify port publisher fields match
+	require.NotNil(t, parsed.PortPublisher)
+	assert.Equal(t, original.PortPublisher.NatExitIP, parsed.PortPublisher.NatExitIP)
+	assert.Equal(t, original.PortPublisher.EL.Enabled, parsed.PortPublisher.EL.Enabled)
+	assert.Equal(t, original.PortPublisher.EL.PublicPortStart, parsed.PortPublisher.EL.PublicPortStart)
+	assert.Equal(t, original.PortPublisher.CL.Enabled, parsed.PortPublisher.CL.Enabled)
+	assert.Equal(t, original.PortPublisher.CL.PublicPortStart, parsed.PortPublisher.CL.PublicPortStart)
+}
