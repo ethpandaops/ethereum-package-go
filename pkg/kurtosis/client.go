@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	kurtosis_core_rpc_api_bindings "github.com/kurtosis-tech/kurtosis/api/golang/core/kurtosis_core_rpc_api_bindings"
@@ -25,6 +26,7 @@ type Client interface {
 type KurtosisClient struct {
 	kurtosisCtx *kurtosis_context.KurtosisContext
 	enclaves    map[string]*enclaves.EnclaveContext
+	mu          sync.RWMutex
 }
 
 // NewKurtosisClient creates a new Kurtosis client
@@ -96,7 +98,9 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	}
 
 	// Store enclave reference
+	k.mu.Lock()
 	k.enclaves[config.EnclaveName] = enclaveCtx
+	k.mu.Unlock()
 
 	// Prepare package run options
 	packageConfig := make(map[string]interface{})
@@ -212,7 +216,9 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 
 // GetServices returns all services in the enclave
 func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (map[string]*ServiceInfo, error) {
+	k.mu.RLock()
 	enclaveCtx, exists := k.enclaves[enclaveName]
+	k.mu.RUnlock()
 	if !exists {
 		// Try to get the enclave context if not cached
 		var err error
@@ -220,7 +226,10 @@ func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (m
 		if err != nil {
 			return nil, fmt.Errorf("enclave not found: %s", enclaveName)
 		}
+
+		k.mu.Lock()
 		k.enclaves[enclaveName] = enclaveCtx
+		k.mu.Unlock()
 	}
 
 	// Get all services from the enclave
@@ -290,7 +299,9 @@ func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (m
 
 // StopEnclave stops the specified enclave
 func (k *KurtosisClient) StopEnclave(ctx context.Context, enclaveName string) error {
+	k.mu.RLock()
 	_, exists := k.enclaves[enclaveName]
+	k.mu.RUnlock()
 	if !exists {
 		return fmt.Errorf("enclave not found: %s", enclaveName)
 	}
@@ -302,9 +313,11 @@ func (k *KurtosisClient) StopEnclave(ctx context.Context, enclaveName string) er
 
 // DestroyEnclave destroys the specified enclave
 func (k *KurtosisClient) DestroyEnclave(ctx context.Context, enclaveName string) error {
+	k.mu.Lock()
 	if _, exists := k.enclaves[enclaveName]; exists {
 		delete(k.enclaves, enclaveName)
 	}
+	k.mu.Unlock()
 
 	// Destroy the enclave using the Kurtosis context
 	err := k.kurtosisCtx.DestroyEnclave(ctx, enclaveName)
@@ -352,9 +365,12 @@ func (k *KurtosisClient) WaitForServices(ctx context.Context, enclaveName string
 // getOrCreateEnclave gets an existing enclave or creates a new one
 func (k *KurtosisClient) getOrCreateEnclave(ctx context.Context, enclaveName string) (*enclaves.EnclaveContext, error) {
 	// Check if we already have it
+	k.mu.RLock()
 	if enclaveCtx, exists := k.enclaves[enclaveName]; exists {
+		k.mu.RUnlock()
 		return enclaveCtx, nil
 	}
+	k.mu.RUnlock()
 
 	// Try to get existing enclave
 	enclaveCtx, err := k.kurtosisCtx.GetEnclaveContext(ctx, enclaveName)
