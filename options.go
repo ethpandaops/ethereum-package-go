@@ -208,6 +208,33 @@ func WithMEVBoostRelay(relayURL string) RunOption {
 	})
 }
 
+// WithPortPublisher enables port publishing with the given configuration.
+func WithPortPublisher(portPublisher *config.PortPublisherConfig) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.PortPublisher = portPublisher
+	}
+}
+
+// WithNATExitIP sets the NAT exit IP for all nodes (convenience function).
+func WithNATExitIP(ip string) RunOption {
+	return func(cfg *RunConfig) {
+		if cfg.PortPublisher == nil {
+			cfg.PortPublisher = &config.PortPublisherConfig{}
+		}
+
+		cfg.PortPublisher.NatExitIP = ip
+
+		// Enable all components by default when NAT exit IP is set
+		if cfg.PortPublisher.EL == nil {
+			cfg.PortPublisher.EL = &config.PortPublisherComponent{Enabled: true}
+		}
+
+		if cfg.PortPublisher.CL == nil {
+			cfg.PortPublisher.CL = &config.PortPublisherComponent{Enabled: true}
+		}
+	}
+}
+
 // WithWaitForGenesis waits for the network genesis time before returning
 func WithWaitForGenesis() RunOption {
 	return func(cfg *RunConfig) {

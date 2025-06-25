@@ -34,6 +34,9 @@ type RunConfig struct {
 	// MEV configuration
 	MEV *config.MEVConfig
 
+	// Port publisher configuration
+	PortPublisher *config.PortPublisherConfig
+
 	// Additional services
 	AdditionalServices []config.AdditionalService
 
@@ -335,6 +338,11 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	// Apply MEV configuration
 	if cfg.MEV != nil {
 		builder.WithMEV(cfg.MEV)
+	}
+
+	// Apply port publisher configuration
+	if cfg.PortPublisher != nil {
+		builder.WithPortPublisher(cfg.PortPublisher)
 	}
 
 	// Apply additional services

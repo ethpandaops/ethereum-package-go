@@ -204,6 +204,66 @@ type AdditionalService struct {
 	Config map[string]interface{} `yaml:"config,omitempty"`
 }
 
+// PortPublisherComponent represents port publishing configuration for a component.
+type PortPublisherComponent struct {
+	Enabled         bool `yaml:"enabled"`
+	PublicPortStart int  `yaml:"public_port_start,omitempty"`
+}
+
+// PortPublisherConfig represents the port publisher configuration.
+type PortPublisherConfig struct {
+	NatExitIP          string                  `yaml:"nat_exit_ip,omitempty"`
+	EL                 *PortPublisherComponent `yaml:"el,omitempty"`
+	CL                 *PortPublisherComponent `yaml:"cl,omitempty"`
+	VC                 *PortPublisherComponent `yaml:"vc,omitempty"`
+	AdditionalServices *PortPublisherComponent `yaml:"additional_services,omitempty"`
+}
+
+// Validate validates the port publisher configuration.
+func (p *PortPublisherConfig) Validate() error {
+	// Validate port ranges
+	components := map[string]*PortPublisherComponent{
+		"el":                  p.EL,
+		"cl":                  p.CL,
+		"vc":                  p.VC,
+		"additional_services": p.AdditionalServices,
+	}
+
+	for name, comp := range components {
+		if comp != nil && comp.Enabled {
+			if comp.PublicPortStart < 1024 || comp.PublicPortStart > 65535 {
+				return fmt.Errorf("port publisher %s: public_port_start must be between 1024 and 65535, got %d", name, comp.PublicPortStart)
+			}
+		}
+	}
+
+	return nil
+}
+
+// ApplyDefaults applies default values to port publisher configuration.
+func (p *PortPublisherConfig) ApplyDefaults() {
+	if p.NatExitIP == "" {
+		p.NatExitIP = "KURTOSIS_IP_ADDR_PLACEHOLDER"
+	}
+
+	// Apply default port ranges if components are enabled but no port specified
+	if p.EL != nil && p.EL.Enabled && p.EL.PublicPortStart == 0 {
+		p.EL.PublicPortStart = 32000
+	}
+
+	if p.CL != nil && p.CL.Enabled && p.CL.PublicPortStart == 0 {
+		p.CL.PublicPortStart = 33000
+	}
+
+	if p.VC != nil && p.VC.Enabled && p.VC.PublicPortStart == 0 {
+		p.VC.PublicPortStart = 34000
+	}
+
+	if p.AdditionalServices != nil && p.AdditionalServices.Enabled && p.AdditionalServices.PublicPortStart == 0 {
+		p.AdditionalServices.PublicPortStart = 35000
+	}
+}
+
 // EthereumPackageConfig represents the full configuration for ethereum-package
 type EthereumPackageConfig struct {
 	// Participants in the network
@@ -214,6 +274,9 @@ type EthereumPackageConfig struct {
 
 	// MEV configuration
 	MEV *MEVConfig `yaml:"mev_params,omitempty"`
+
+	// Port publisher configuration
+	PortPublisher *PortPublisherConfig `yaml:"port_publisher,omitempty"`
 
 	// Additional services
 	AdditionalServices []AdditionalService `yaml:"additional_services,omitempty"`
@@ -249,6 +312,13 @@ func (c *EthereumPackageConfig) Validate() error {
 	// Validate MEV config
 	if c.MEV != nil {
 		if err := c.MEV.Validate(); err != nil {
+			return err
+		}
+	}
+
+	// Validate port publisher config
+	if c.PortPublisher != nil {
+		if err := c.PortPublisher.Validate(); err != nil {
 			return err
 		}
 	}
@@ -299,6 +369,11 @@ func (c *EthereumPackageConfig) ApplyDefaults() {
 	// Apply defaults to network params
 	if c.NetworkParams != nil {
 		c.NetworkParams.ApplyDefaults()
+	}
+
+	// Apply defaults to port publisher config
+	if c.PortPublisher != nil {
+		c.PortPublisher.ApplyDefaults()
 	}
 }
 
