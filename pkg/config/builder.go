@@ -71,6 +71,13 @@ func (b *ConfigBuilder) WithPortPublisher(portPublisher *PortPublisherConfig) *C
 	return b
 }
 
+// WithDockerCacheParams sets the Docker cache configuration.
+func (b *ConfigBuilder) WithDockerCacheParams(dockerCache *DockerCacheParams) *ConfigBuilder {
+	b.config.DockerCacheParams = dockerCache
+
+	return b
+}
+
 // Build returns the built configuration
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults

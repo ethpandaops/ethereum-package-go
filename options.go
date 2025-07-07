@@ -274,3 +274,13 @@ func WithReuse(enclaveName string) RunOption {
 		cfg.OrphanOnExit = true // Reused enclaves should not be auto-cleaned
 	}
 }
+
+// WithDockerCacheParams sets the Docker cache parameters
+func WithDockerCacheParams(enabled bool, url string) RunOption {
+	return func(cfg *RunConfig) {
+		cfg.DockerCacheParams = &config.DockerCacheParams{
+			Enabled: enabled,
+			URL:     url,
+		}
+	}
+}

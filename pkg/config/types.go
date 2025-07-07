@@ -204,6 +204,12 @@ type AdditionalService struct {
 	Config map[string]interface{} `yaml:"config,omitempty"`
 }
 
+// DockerCacheParams represents Docker cache configuration.
+type DockerCacheParams struct {
+	Enabled bool   `yaml:"enabled"`
+	URL     string `yaml:"url,omitempty"`
+}
+
 // PortPublisherComponent represents port publishing configuration for a component.
 type PortPublisherComponent struct {
 	Enabled         bool `yaml:"enabled"`
@@ -277,6 +283,9 @@ type EthereumPackageConfig struct {
 
 	// Port publisher configuration
 	PortPublisher *PortPublisherConfig `yaml:"port_publisher,omitempty"`
+
+	// Docker cache parameters
+	DockerCacheParams *DockerCacheParams `yaml:"docker_cache_params,omitempty"`
 
 	// Additional services
 	AdditionalServices []AdditionalService `yaml:"additional_services,omitempty"`

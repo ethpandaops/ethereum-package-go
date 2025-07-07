@@ -37,6 +37,9 @@ type RunConfig struct {
 	// Port publisher configuration
 	PortPublisher *config.PortPublisherConfig
 
+	// Docker cache configuration
+	DockerCacheParams *config.DockerCacheParams
+
 	// Additional services
 	AdditionalServices []config.AdditionalService
 
@@ -343,6 +346,11 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	// Apply port publisher configuration
 	if cfg.PortPublisher != nil {
 		builder.WithPortPublisher(cfg.PortPublisher)
+	}
+
+	// Apply docker cache configuration
+	if cfg.DockerCacheParams != nil {
+		builder.WithDockerCacheParams(cfg.DockerCacheParams)
 	}
 
 	// Apply additional services
