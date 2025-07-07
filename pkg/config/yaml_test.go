@@ -432,3 +432,87 @@ func TestPortPublisherRoundTrip(t *testing.T) {
 	assert.Equal(t, original.PortPublisher.CL.Enabled, parsed.PortPublisher.CL.Enabled)
 	assert.Equal(t, original.PortPublisher.CL.PublicPortStart, parsed.PortPublisher.CL.PublicPortStart)
 }
+
+func TestToYAMLWithDockerCacheParams(t *testing.T) {
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				Count:  1,
+			},
+		},
+		DockerCacheParams: &DockerCacheParams{
+			Enabled: true,
+			URL:     "docker.ethquokkaops.io",
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlStr)
+
+	// Check that docker cache params elements are present
+	assert.Contains(t, yamlStr, "docker_cache_params:")
+	assert.Contains(t, yamlStr, "enabled: true")
+	assert.Contains(t, yamlStr, "url: docker.ethquokkaops.io")
+}
+
+func TestFromYAMLWithDockerCacheParams(t *testing.T) {
+	yamlContent := `
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+    count: 1
+
+docker_cache_params:
+  enabled: true
+  url: "docker.ethquokkaops.io"
+`
+
+	config, err := FromYAML(yamlContent)
+	require.NoError(t, err)
+
+	// Check participants
+	assert.Len(t, config.Participants, 1)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
+
+	// Check docker cache params
+	require.NotNil(t, config.DockerCacheParams)
+	assert.True(t, config.DockerCacheParams.Enabled)
+	assert.Equal(t, "docker.ethquokkaops.io", config.DockerCacheParams.URL)
+}
+
+func TestDockerCacheParamsRoundTrip(t *testing.T) {
+	// Create a config with docker cache params
+	original := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Prysm,
+				Count:  1,
+			},
+		},
+		NetworkParams: &NetworkParams{
+			NetworkID: "12345",
+		},
+		DockerCacheParams: &DockerCacheParams{
+			Enabled: true,
+			URL:     "docker.ethquokkaops.io",
+		},
+	}
+
+	// Convert to YAML
+	yamlStr, err := ToYAML(original)
+	require.NoError(t, err)
+
+	// Parse back from YAML
+	parsed, err := FromYAML(yamlStr)
+	require.NoError(t, err)
+
+	// Verify docker cache params fields match
+	require.NotNil(t, parsed.DockerCacheParams)
+	assert.Equal(t, original.DockerCacheParams.Enabled, parsed.DockerCacheParams.Enabled)
+	assert.Equal(t, original.DockerCacheParams.URL, parsed.DockerCacheParams.URL)
+}
