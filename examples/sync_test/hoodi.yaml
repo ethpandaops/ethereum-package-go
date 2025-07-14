@@ -1,0 +1,25 @@
+participants:
+  - el_type: geth
+    cl_type: teku
+    validator_count: 0
+  #- el_type: nethermind
+  #  cl_type: teku
+  #  validator_count: 0
+  #- el_type: reth
+  #  cl_type: teku
+  #  validator_count: 0
+  #- el_type: erigon
+  #  cl_type: teku
+  #  validator_count: 0
+  #- el_type: besu
+  #  cl_type: teku
+  #  validator_count: 0
+network_params:
+  network: hoodi
+persistent: false
+ethereum_metrics_exporter_enabled: true
+docker_cache_params:
+  enabled: true
+  url: "docker.ethquokkaops.io"
+additional_services:
+  - prometheus
