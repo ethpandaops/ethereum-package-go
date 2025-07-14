@@ -53,9 +53,7 @@ func WithMEV(mevConfig *config.MEVConfig) RunOption {
 func WithAdditionalServices(services ...string) RunOption {
 	return func(cfg *RunConfig) {
 		for _, service := range services {
-			cfg.AdditionalServices = append(cfg.AdditionalServices, config.AdditionalService{
-				Name: service,
-			})
+			cfg.AdditionalServices = append(cfg.AdditionalServices, config.AdditionalService(service))
 		}
 	}
 }

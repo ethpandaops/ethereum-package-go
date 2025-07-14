@@ -252,6 +252,11 @@ func detectConsensusClientType(name string) client.Type {
 func detectServiceType(name string) network.ServiceType {
 	nameLower := strings.ToLower(name)
 
+	// Check ethereum-metrics-exporter
+	if strings.Contains(nameLower, "ethereum-metrics-exporter") {
+		return network.ServiceTypeEthereumMetricsExporter
+	}
+
 	// Check for validator services first (most specific)
 	if strings.Contains(nameLower, "validator-key-generation") ||
 		strings.HasPrefix(nameLower, "vc-") ||

@@ -78,6 +78,12 @@ func (b *ConfigBuilder) WithDockerCacheParams(dockerCache *DockerCacheParams) *C
 	return b
 }
 
+// WithEthereumMetricsExporterEnabled sets the ethereum metrics exporter enabled
+func (b *ConfigBuilder) WithEthereumMetricsExporterEnabled(enabled bool) *ConfigBuilder {
+	b.config.EthereumMetricsExporterEnabled = &enabled
+	return b
+}
+
 // Build returns the built configuration
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
@@ -120,14 +126,14 @@ func (p *SimpleParticipantBuilder) WithCL(clientType client.Type) *SimplePartici
 }
 
 // WithELVersion sets the execution layer version
-func (p *SimpleParticipantBuilder) WithELVersion(version string) *SimpleParticipantBuilder {
-	p.participant.ELVersion = version
+func (p *SimpleParticipantBuilder) WithELImage(image string) *SimpleParticipantBuilder {
+	p.participant.ELImage = &image
 	return p
 }
 
 // WithCLVersion sets the consensus layer version
-func (p *SimpleParticipantBuilder) WithCLVersion(version string) *SimpleParticipantBuilder {
-	p.participant.CLVersion = version
+func (p *SimpleParticipantBuilder) WithCLImage(image string) *SimpleParticipantBuilder {
+	p.participant.CLImage = &image
 	return p
 }
 
