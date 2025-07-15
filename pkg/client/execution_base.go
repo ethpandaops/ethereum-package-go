@@ -18,9 +18,6 @@ type ClientConfig struct {
 	P2PURL     string
 	MetricsURL string
 	Enode      string
-	Image      string
-	Entrypoint []string
-	Cmd        []string
 }
 
 // BaseExecutionClient provides common functionality for all execution clients

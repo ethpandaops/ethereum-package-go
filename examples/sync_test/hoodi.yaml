@@ -14,8 +14,8 @@ participants:
   #- el_type: besu
   #  cl_type: teku
   #  validator_count: 0
-network_params:
-  network: hoodi
+#network_params:
+#  network: hoodi
 persistent: false
 ethereum_metrics_exporter_enabled: true
 docker_cache_params:

@@ -6,172 +6,83 @@ import (
 	"log"
 	"time"
 
-	"github.com/ethpandaops/ethereum-package-go"
-	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-// ExecutionSyncStatus holds sync status information
-type ExecutionSyncStatus struct {
-	BlockNumber  uint64
-	IsSyncing    bool
-	PeerCount    int
-	SyncProgress *client.SyncProgress
+var (
+	checkInterval time.Duration
+	elClient      string
+	clClient      string
+	elImage       string
+	clImage       string
+	networkName   string
+	enclaveName   string
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "sync_test",
+	Short: "Test Ethereum client synchronization",
+	Long:  "A tool to test and monitor Ethereum execution and consensus client synchronization",
+	Run:   runSyncTest,
 }
 
-// getExecutionSyncStatus returns all sync-related information from an execution client
-func getExecutionSyncStatus(ctx context.Context, client *client.BaseExecutionClient) (*ExecutionSyncStatus, error) {
-	// Get block number
-	blockNumber, err := client.GetBlockNumber(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get block number: %w", err)
-	}
-
-	// Check if syncing
-	isSyncing, err := client.IsSyncing(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check sync status: %w", err)
-	}
-
-	// Get peer count
-	peerCount, err := client.GetPeerCount(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get peer count: %w", err)
-	}
-
-	// Get sync progress
-	syncProgress, err := client.SyncProgress(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sync progress: %w", err)
-	}
-
-	return &ExecutionSyncStatus{
-		BlockNumber:  blockNumber,
-		IsSyncing:    isSyncing,
-		PeerCount:    peerCount,
-		SyncProgress: syncProgress,
-	}, nil
+func init() {
+	rootCmd.Flags().DurationVar(&checkInterval, "check-interval", 10*time.Second, "Interval in seconds between sync status checks")
+	rootCmd.Flags().StringVar(&elClient, "el-client", "geth", "Execution layer client type (geth, besu, nethermind, erigon, reth)")
+	rootCmd.Flags().StringVar(&clClient, "cl-client", "teku", "Consensus layer client type (lighthouse, teku, prysm, nimbus, lodestar, grandine)")
+	rootCmd.Flags().StringVar(&elImage, "el-image", "", "Execution layer client image (optional)")
+	rootCmd.Flags().StringVar(&clImage, "cl-image", "", "Consensus layer client image (optional)")
+	rootCmd.Flags().StringVar(&networkName, "network", "hoodi", "Network to connect to (e.g., hoodi, sepolia, mainnet)")
+	rootCmd.Flags().StringVar(&enclaveName, "enclave", "", "Enclave name (optional - defaults to sync-test-$network-$el-client-$cl-client)")
 }
 
-// Example showing complete usage of ethereum-package-go
 func main() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatalf("Failed to execute command: %v", err)
+	}
+}
+
+func runSyncTest(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
-	// Start a simple network with default settings
-	network, err := ethereum.Run(ctx,
-		//ethereum.Minimal(),
-		//ethereum.WithNetworkParams(&config.NetworkParams{
-		//	Network: "hoodi",
-		//}),
-		ethereum.WithTimeout(5*time.Minute),
-		ethereum.WithOrphanOnExit(),
-		ethereum.WithReuse("sync-test"),
-		ethereum.WithEnclaveName("sync-test"),
-		ethereum.WithConfigFile("hoodi.yaml"),
-	)
-	if err != nil {
-		log.Fatalf("Failed to start network: %v", err)
+	// Set default enclave name if not provided
+	if enclaveName == "" {
+		enclaveName = fmt.Sprintf("sync-test-%s-%s-%s", networkName, elClient, clClient)
 	}
 
-	// Network will auto-cleanup when process exits (testcontainers-style)
-	// If you want to prevent this, use ethereum.WithOrphanOnExit()
-	// If you want explicit control, you can still call network.Cleanup(ctx)
-
-	// Iterate over all execution clients
-	for _, executionClient := range network.ExecutionClients().All() {
-		// Create a BaseExecutionClient from the execution client info
-		baseClient := client.NewBaseExecutionClient(client.ClientConfig{
-			Name:       executionClient.Name(),
-			RPCURL:     executionClient.RPCURL(),
-			WSURL:      executionClient.WSURL(),
-			EngineURL:  executionClient.EngineURL(),
-			MetricsURL: executionClient.MetricsURL(),
-			Enode:      executionClient.Enode(),
-		})
-
-		logrus.WithFields(logrus.Fields{
-			"client":     executionClient.Name(),
-			"rpc_url":    baseClient.RPCURL(),
-			"ws_url":     executionClient.WSURL(),
-			"engine_url": executionClient.EngineURL(),
-			"enode":      executionClient.Enode(),
-			"type":       executionClient.Type(),
-			"image":      executionClient.Image(),
-			"entrypoint": executionClient.Entrypoint(),
-			"cmd":        executionClient.Cmd(),
-		}).Info("Client info")
-
-		// Start goroutine for this execution client
-		go func(baseClient *client.BaseExecutionClient) {
-			for {
-				syncStatus, err := getExecutionSyncStatus(ctx, baseClient)
-				if err != nil {
-					log.Printf("Failed to get sync status for %s: %v", baseClient.Name(), err)
-				} else {
-					logrus.WithFields(logrus.Fields{
-						"client":        baseClient.Name(),
-						"current_block": syncStatus.BlockNumber,
-						"is_syncing":    syncStatus.IsSyncing,
-						"peer_count":    syncStatus.PeerCount,
-					}).Info("Execution client sync status")
-
-					if syncStatus.SyncProgress != nil && syncStatus.SyncProgress.CurrentBlock > 0 {
-						percent := float64(syncStatus.SyncProgress.CurrentBlock) / float64(syncStatus.SyncProgress.HighestBlock) * 100
-						logrus.WithFields(logrus.Fields{
-							"client":         baseClient.Name(),
-							"current_block":  syncStatus.SyncProgress.CurrentBlock,
-							"highest_block":  syncStatus.SyncProgress.HighestBlock,
-							"starting_block": syncStatus.SyncProgress.StartingBlock,
-							"progress":       fmt.Sprintf("%.2f%%", percent),
-						}).Info("Execution client sync progress")
-					}
-				}
-				time.Sleep(10 * time.Second)
-			}
-		}(baseClient)
+	// Create sync test config from command line flags
+	config := SyncTestConfig{
+		CheckInterval: checkInterval,
+		ELClient:      elClient,
+		CLClient:      clClient,
+		ELImage:       elImage,
+		CLImage:       clImage,
+		Network:       networkName,
+		EnclaveName:   enclaveName,
+		ConfigFile:    "hoodi.yaml",
 	}
 
-	// Iterate over all consensus clients
-	for _, consensusClient := range network.ConsensusClients().All() {
-		logrus.WithFields(logrus.Fields{
-			"client":         consensusClient.Name(),
-			"type":           consensusClient.Type(),
-			"version":        consensusClient.Version(),
-			"beacon_api_url": consensusClient.BeaconAPIURL(),
-			"metrics_url":    consensusClient.MetricsURL(),
-			"enr":            consensusClient.ENR(),
-		}).Info("Consensus client info")
+	// Create new sync test instance
+	syncTest := NewSyncTest(config)
 
-		// Start goroutine for this consensus client
-		go func(consensusClient client.ConsensusClient) {
-			for {
-				syncStatus, err := getConsensusSyncStatus(ctx, consensusClient)
-				if err != nil {
-					log.Printf("Failed to get sync status for consensus client %s: %v", consensusClient.Name(), err)
-				} else {
-					logrus.WithFields(logrus.Fields{
-						"client":        consensusClient.Name(),
-						"head_slot":     syncStatus.HeadSlot,
-						"sync_distance": syncStatus.SyncDistance,
-						"is_syncing":    syncStatus.IsSyncing,
-						"is_optimistic": syncStatus.IsOptimistic,
-						"el_offline":    syncStatus.ElOffline,
-					}).Info("Consensus client sync status")
-				}
-				time.Sleep(10 * time.Second)
-			}
-		}(consensusClient)
+	// Start the network
+	if err := syncTest.Start(ctx); err != nil {
+		log.Fatalf("Failed to start sync test: %v", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"enclave":           network.EnclaveName(),
-		"execution_clients": len(network.ExecutionClients().All()),
-		"consensus_clients": len(network.ConsensusClients().All()),
+		"enclave":           syncTest.network.EnclaveName(),
+		"execution_clients": len(syncTest.network.ExecutionClients().All()),
+		"consensus_clients": len(syncTest.network.ConsensusClients().All()),
 	}).Info("Network info")
 
-	// Keep running until interrupted
-	select {
-	case <-ctx.Done():
-		fmt.Println("Context cancelled, shutting down...")
+	// Start sync checking
+	if err := syncTest.WaitForSync(ctx); err != nil {
+		if err == context.Canceled {
+			fmt.Println("Context cancelled, shutting down...")
+		} else {
+			log.Fatalf("Sync check failed: %v", err)
+		}
 	}
 }

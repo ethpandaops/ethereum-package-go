@@ -11,7 +11,6 @@ import (
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/enclaves"
 	"github.com/kurtosis-tech/kurtosis/api/golang/core/lib/starlark_run_config"
 	"github.com/kurtosis-tech/kurtosis/api/golang/engine/lib/kurtosis_context"
-	"github.com/kurtosis-tech/kurtosis/cli/cli/commands/service/service_helpers"
 )
 
 // Client defines the interface for Kurtosis operations
@@ -66,15 +65,12 @@ type RunPackageResult struct {
 
 // ServiceInfo contains information about a service
 type ServiceInfo struct {
-	Name       string
-	UUID       string
-	Status     string
-	Ports      map[string]PortInfo
-	IPAddress  string
-	Hostname   string
-	Image      string
-	Entrypoint []string
-	Cmd        []string
+	Name      string
+	UUID      string
+	Status    string
+	Ports     map[string]PortInfo
+	IPAddress string
+	Hostname  string
 }
 
 // PortInfo contains information about a service port
@@ -285,22 +281,14 @@ func (k *KurtosisClient) GetServices(ctx context.Context, enclaveName string) (m
 			ports[portName] = portInfo
 		}
 
-		si, _, err := service_helpers.GetServiceInfo(ctx, enclaveName, serviceName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get service info: %w", err)
-		}
-
 		// Create ServiceInfo
 		serviceInfo := &ServiceInfo{
-			Name:       string(serviceName),
-			UUID:       string(serviceUUID),
-			Status:     serviceStatus,
-			IPAddress:  serviceContext.GetMaybePublicIPAddress(),
-			Hostname:   string(serviceName), // Use service name as hostname
-			Ports:      ports,
-			Image:      si.GetContainer().GetImageName(),
-			Entrypoint: si.GetContainer().GetEntrypointArgs(),
-			Cmd:        si.GetContainer().GetCmdArgs(),
+			Name:      string(serviceName),
+			UUID:      string(serviceUUID),
+			Status:    serviceStatus,
+			IPAddress: serviceContext.GetMaybePublicIPAddress(),
+			Hostname:  string(serviceName), // Use service name as hostname
+			Ports:     ports,
 		}
 
 		result[string(serviceName)] = serviceInfo
