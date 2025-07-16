@@ -340,6 +340,13 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 		return nil, err
 	}
 
+	if cfg.ChainID != 0 {
+		if baseConfig.NetworkParams == nil {
+			baseConfig.NetworkParams = &config.NetworkParams{}
+		}
+		baseConfig.NetworkParams.NetworkID = fmt.Sprintf("%d", cfg.ChainID)
+	}
+
 	// Apply overrides using ConfigBuilder
 	builder := config.NewConfigBuilderFromConfig(baseConfig)
 

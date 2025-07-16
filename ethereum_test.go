@@ -144,8 +144,8 @@ func TestBuildEthereumConfig(t *testing.T) {
 			},
 			validate: func(t *testing.T, config *config.EthereumPackageConfig) {
 				assert.Len(t, config.AdditionalServices, 2)
-				assert.Equal(t, "prometheus", config.AdditionalServices[0])
-				assert.Equal(t, "grafana", config.AdditionalServices[1])
+				assert.Equal(t, "prometheus", string(config.AdditionalServices[0]))
+				assert.Equal(t, "grafana", string(config.AdditionalServices[1]))
 				assert.Equal(t, "debug", config.GlobalLogLevel)
 			},
 		},
@@ -243,7 +243,7 @@ func TestConvenienceFunctions(t *testing.T) {
 	cfg.AdditionalServices = nil
 	WithExplorer()(cfg)
 	assert.Len(t, cfg.AdditionalServices, 1)
-	assert.Equal(t, "dora", cfg.AdditionalServices[0])
+	assert.Equal(t, "dora", string(cfg.AdditionalServices[0]))
 
 	cfg.AdditionalServices = nil
 	WithFullObservability()(cfg)

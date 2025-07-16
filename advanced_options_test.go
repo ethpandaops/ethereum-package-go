@@ -106,8 +106,8 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 
 				// Check monitoring services
 				assert.Len(t, cfg.AdditionalServices, 2)
-				assert.Equal(t, "prometheus", cfg.AdditionalServices[0])
-				assert.Equal(t, "grafana", cfg.AdditionalServices[1])
+				assert.Equal(t, "prometheus", string(cfg.AdditionalServices[0]))
+				assert.Equal(t, "grafana", string(cfg.AdditionalServices[1]))
 
 				// Check log level
 				assert.Equal(t, "debug", cfg.GlobalLogLevel)
@@ -139,9 +139,9 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 			validate: func(t *testing.T, cfg *RunConfig) {
 				// Check all observability services
 				assert.Len(t, cfg.AdditionalServices, 3)
-				serviceNames := []config.AdditionalService{}
+				serviceNames := []string{}
 				for _, svc := range cfg.AdditionalServices {
-					serviceNames = append(serviceNames, svc)
+					serviceNames = append(serviceNames, string(svc))
 				}
 				assert.Contains(t, serviceNames, "prometheus")
 				assert.Contains(t, serviceNames, "grafana")

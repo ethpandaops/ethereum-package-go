@@ -117,7 +117,7 @@ func TestWithAdditionalServices(t *testing.T) {
 
 	require.Len(t, cfg.AdditionalServices, 3)
 	for i, service := range services {
-		assert.Equal(t, service, cfg.AdditionalServices[i])
+		assert.Equal(t, service, string(cfg.AdditionalServices[i]))
 	}
 }
 
@@ -269,7 +269,7 @@ func TestConvenienceOptions(t *testing.T) {
 			optFunc: WithExplorer(),
 			validate: func(t *testing.T, cfg *RunConfig) {
 				require.Len(t, cfg.AdditionalServices, 1)
-				assert.Equal(t, "dora", cfg.AdditionalServices[0])
+				assert.Equal(t, "dora", string(cfg.AdditionalServices[0]))
 			},
 		},
 		{
@@ -277,9 +277,9 @@ func TestConvenienceOptions(t *testing.T) {
 			optFunc: WithFullObservability(),
 			validate: func(t *testing.T, cfg *RunConfig) {
 				require.Len(t, cfg.AdditionalServices, 3)
-				assert.Equal(t, "prometheus", cfg.AdditionalServices[0])
-				assert.Equal(t, "grafana", cfg.AdditionalServices[1])
-				assert.Equal(t, "dora", cfg.AdditionalServices[2])
+				assert.Equal(t, "prometheus", string(cfg.AdditionalServices[0]))
+				assert.Equal(t, "grafana", string(cfg.AdditionalServices[1]))
+				assert.Equal(t, "dora", string(cfg.AdditionalServices[2]))
 			},
 		},
 	}
