@@ -7,7 +7,10 @@ toolchain go1.24.1
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
 	github.com/kurtosis-tech/kurtosis/api/golang v1.10.1
+	github.com/prometheus/client_model v0.3.0
+	github.com/prometheus/common v0.42.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -51,14 +54,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.16.0 // indirect
-	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/prysmaticlabs/go-bitfield v0.0.0-20240618144021-706c95b2dd15 // indirect
 	github.com/r3labs/sse/v2 v2.10.0 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/zerolog v1.32.0 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect

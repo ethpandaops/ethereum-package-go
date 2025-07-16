@@ -307,6 +307,9 @@ type EthereumPackageConfig struct {
 
 	// Ethereum metrics exporter enabled
 	EthereumMetricsExporterEnabled *bool `yaml:"ethereum_metrics_exporter_enabled,omitempty"`
+
+	// Persistent
+	Persistent bool `yaml:"persistent,omitempty"`
 }
 
 // Validate validates the EthereumPackageConfig

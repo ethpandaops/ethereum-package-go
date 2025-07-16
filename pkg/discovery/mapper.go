@@ -68,6 +68,7 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cf
 			ContainerID: service.UUID,
 			Ports:       m.convertPorts(service.Ports),
 			Status:      service.Status,
+			IPAddress:   service.IPAddress,
 		})
 	}
 

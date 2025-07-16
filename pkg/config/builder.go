@@ -19,6 +19,12 @@ func NewConfigBuilder() *ConfigBuilder {
 	}
 }
 
+func NewConfigBuilderFromConfig(config *EthereumPackageConfig) *ConfigBuilder {
+	return &ConfigBuilder{
+		config: config,
+	}
+}
+
 // WithParticipant adds a participant to the configuration
 func (b *ConfigBuilder) WithParticipant(participant ParticipantConfig) *ConfigBuilder {
 	b.config.Participants = append(b.config.Participants, participant)
@@ -81,6 +87,12 @@ func (b *ConfigBuilder) WithDockerCacheParams(dockerCache *DockerCacheParams) *C
 // WithEthereumMetricsExporterEnabled sets the ethereum metrics exporter enabled
 func (b *ConfigBuilder) WithEthereumMetricsExporterEnabled(enabled bool) *ConfigBuilder {
 	b.config.EthereumMetricsExporterEnabled = &enabled
+	return b
+}
+
+// WithPersistent sets the persistent configuration
+func (b *ConfigBuilder) WithPersistent(persistent bool) *ConfigBuilder {
+	b.config.Persistent = persistent
 	return b
 }
 

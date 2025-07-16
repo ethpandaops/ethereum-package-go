@@ -341,13 +341,11 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	}
 
 	// Apply overrides using ConfigBuilder
-	builder := config.NewConfigBuilder().WithParticipants(baseConfig.Participants)
+	builder := config.NewConfigBuilderFromConfig(baseConfig)
 
 	// Apply network parameters
 	if cfg.NetworkParams != nil {
 		builder.WithNetworkParams(cfg.NetworkParams)
-	} else if cfg.ChainID != 0 {
-		builder.WithNetworkID(fmt.Sprintf("%d", cfg.ChainID))
 	}
 
 	// Apply MEV configuration

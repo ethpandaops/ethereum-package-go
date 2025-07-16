@@ -136,6 +136,14 @@ func WithKurtosisClient(client kurtosis.Client) RunOption {
 	}
 }
 
+func WithEthereumMetricsExporterEnabled() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.ConfigSource = config.NewInlineConfigSource(&config.EthereumPackageConfig{
+			EthereumMetricsExporterEnabled: &[]bool{true}[0],
+		})
+	}
+}
+
 // Convenience functions for common configurations
 
 // AllELs returns a preset with all execution layer clients
