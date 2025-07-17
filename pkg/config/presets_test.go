@@ -134,9 +134,7 @@ func TestPresetBuilder(t *testing.T) {
 		Type: "mock",
 	}
 
-	service := AdditionalService{
-		Name: "blockscout",
-	}
+	service := AdditionalService("blockscout")
 
 	config, err := builder.
 		WithNetworkID("12345"). // This will be overridden by network params
@@ -164,7 +162,7 @@ func TestPresetBuilder(t *testing.T) {
 
 	// Should have additional service
 	assert.Len(t, config.AdditionalServices, 1)
-	assert.Equal(t, "blockscout", config.AdditionalServices[0].Name)
+	assert.Equal(t, "blockscout", config.AdditionalServices[0])
 
 	// Should have global log level
 	assert.Equal(t, "debug", config.GlobalLogLevel)

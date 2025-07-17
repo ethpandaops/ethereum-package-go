@@ -68,6 +68,7 @@ func (m *ServiceMapper) MapToNetwork(ctx context.Context, enclaveName string, cf
 			ContainerID: service.UUID,
 			Ports:       m.convertPorts(service.Ports),
 			Status:      service.Status,
+			IPAddress:   service.IPAddress,
 		})
 	}
 
@@ -251,6 +252,11 @@ func detectConsensusClientType(name string) client.Type {
 // detectServiceType detects the service type from the service name
 func detectServiceType(name string) network.ServiceType {
 	nameLower := strings.ToLower(name)
+
+	// Check ethereum-metrics-exporter
+	if strings.Contains(nameLower, "ethereum-metrics-exporter") {
+		return network.ServiceTypeEthereumMetricsExporter
+	}
 
 	// Check for validator services first (most specific)
 	if strings.Contains(nameLower, "validator-key-generation") ||

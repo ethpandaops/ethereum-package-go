@@ -34,8 +34,8 @@ func TestValidatorValidConfig(t *testing.T) {
 			MaxBundleLength: 3,
 		},
 		AdditionalServices: []AdditionalService{
-			{Name: "prometheus"},
-			{Name: "grafana"},
+			"prometheus",
+			"grafana",
 		},
 		GlobalLogLevel: "info",
 	}
@@ -96,26 +96,19 @@ func TestValidatorAdditionalServices(t *testing.T) {
 		wantErr  string
 	}{
 		{
-			name: "missing service name",
-			services: []AdditionalService{
-				{Name: ""},
-			},
-			wantErr: "additional service 0: name is required",
+			name:     "missing service name",
+			services: []AdditionalService{""},
+			wantErr:  "additional service 0: name is required",
 		},
 		{
-			name: "duplicate service",
-			services: []AdditionalService{
-				{Name: "prometheus"},
-				{Name: "prometheus"},
-			},
-			wantErr: "duplicate additional service: prometheus",
+			name:     "duplicate service",
+			services: []AdditionalService{"prometheus", "prometheus"},
+			wantErr:  "duplicate additional service: prometheus",
 		},
 		{
-			name: "invalid service name",
-			services: []AdditionalService{
-				{Name: "invalid-service"},
-			},
-			wantErr: "invalid additional service name: invalid-service",
+			name:     "invalid service name",
+			services: []AdditionalService{"invalid-service"},
+			wantErr:  "invalid additional service name: invalid-service",
 		},
 	}
 

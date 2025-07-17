@@ -19,6 +19,12 @@ func NewConfigBuilder() *ConfigBuilder {
 	}
 }
 
+func NewConfigBuilderFromConfig(config *EthereumPackageConfig) *ConfigBuilder {
+	return &ConfigBuilder{
+		config: config,
+	}
+}
+
 // WithParticipant adds a participant to the configuration
 func (b *ConfigBuilder) WithParticipant(participant ParticipantConfig) *ConfigBuilder {
 	b.config.Participants = append(b.config.Participants, participant)
@@ -78,6 +84,18 @@ func (b *ConfigBuilder) WithDockerCacheParams(dockerCache *DockerCacheParams) *C
 	return b
 }
 
+// WithEthereumMetricsExporterEnabled sets the ethereum metrics exporter enabled
+func (b *ConfigBuilder) WithEthereumMetricsExporterEnabled(enabled bool) *ConfigBuilder {
+	b.config.EthereumMetricsExporterEnabled = &enabled
+	return b
+}
+
+// WithPersistent sets the persistent configuration
+func (b *ConfigBuilder) WithPersistent(persistent bool) *ConfigBuilder {
+	b.config.Persistent = persistent
+	return b
+}
+
 // Build returns the built configuration
 func (b *ConfigBuilder) Build() (*EthereumPackageConfig, error) {
 	// Apply defaults
@@ -120,14 +138,14 @@ func (p *SimpleParticipantBuilder) WithCL(clientType client.Type) *SimplePartici
 }
 
 // WithELVersion sets the execution layer version
-func (p *SimpleParticipantBuilder) WithELVersion(version string) *SimpleParticipantBuilder {
-	p.participant.ELVersion = version
+func (p *SimpleParticipantBuilder) WithELImage(image string) *SimpleParticipantBuilder {
+	p.participant.ELImage = &image
 	return p
 }
 
 // WithCLVersion sets the consensus layer version
-func (p *SimpleParticipantBuilder) WithCLVersion(version string) *SimpleParticipantBuilder {
-	p.participant.CLVersion = version
+func (p *SimpleParticipantBuilder) WithCLImage(image string) *SimpleParticipantBuilder {
+	p.participant.CLImage = &image
 	return p
 }
 
