@@ -41,7 +41,7 @@ func (e *EndpointExtractor) ExtractExecutionEndpoints(service *kurtosis.ServiceI
 
 	// Fallback attempts if certain endpoints are missing
 	if endpoints.RPCURL == "" {
-		endpoints.RPCURL = e.findFallbackEndpoint(service, []string{"http", "http-rpc", "json-rpc"}, "http")
+		endpoints.RPCURL = e.findFallbackEndpoint(service, []string{"rpc", "http", "http-rpc", "json-rpc"}, "http")
 	}
 	if endpoints.EngineURL == "" {
 		endpoints.EngineURL = e.findFallbackEndpoint(service, []string{"engine", "auth", "auth-rpc"}, "http")
