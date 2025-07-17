@@ -26,7 +26,7 @@ func (e *EndpointExtractor) ExtractExecutionEndpoints(service *kurtosis.ServiceI
 		portNameLower := strings.ToLower(portName)
 
 		switch {
-		case strings.Contains(portNameLower, "rpc") && !strings.Contains(portNameLower, "ws"):
+		case strings.Contains(portNameLower, "rpc") && !strings.Contains(portNameLower, "ws") && !strings.Contains(portNameLower, "engine"):
 			endpoints.RPCURL = e.buildURL(service, portInfo, "http")
 		case strings.Contains(portNameLower, "ws") || strings.Contains(portNameLower, "websocket"):
 			endpoints.WSURL = e.buildURL(service, portInfo, "ws")
