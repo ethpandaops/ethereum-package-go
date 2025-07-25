@@ -26,9 +26,7 @@ func TestConfigBuilder(t *testing.T) {
 		Type: "full",
 	}
 
-	service := AdditionalService{
-		Name: "prometheus",
-	}
+	service := AdditionalService("prometheus")
 
 	config, err := builder.
 		WithParticipant(participant).
@@ -48,7 +46,7 @@ func TestConfigBuilder(t *testing.T) {
 	assert.NotNil(t, config.MEV)
 	assert.Equal(t, "full", config.MEV.Type)
 	assert.Len(t, config.AdditionalServices, 1)
-	assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
+	assert.Equal(t, "prometheus", config.AdditionalServices[0])
 	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
@@ -147,16 +145,16 @@ func TestSimpleParticipantBuilder(t *testing.T) {
 	participant := NewParticipantBuilder().
 		WithEL(client.Geth).
 		WithCL(client.Lighthouse).
-		WithELVersion("v1.13.0").
-		WithCLVersion("v4.5.0").
+		WithELImage("ethereum/client-go:v1.15.10").
+		WithCLImage("sigp/lighthouse:v7.0.1").
 		WithCount(3).
 		WithValidatorCount(96).
 		Build()
 
 	assert.Equal(t, client.Geth, participant.ELType)
 	assert.Equal(t, client.Lighthouse, participant.CLType)
-	assert.Equal(t, "v1.13.0", participant.ELVersion)
-	assert.Equal(t, "v4.5.0", participant.CLVersion)
+	assert.Equal(t, "ethereum/client-go:v1.15.10", *participant.ELImage)
+	assert.Equal(t, "sigp/lighthouse:v7.0.1", *participant.CLImage)
 	assert.Equal(t, 3, participant.Count)
 	assert.Equal(t, 96, participant.ValidatorCount)
 }
@@ -170,8 +168,8 @@ func TestSimpleParticipantBuilderDefaults(t *testing.T) {
 	assert.Equal(t, client.Geth, participant.ELType)
 	assert.Equal(t, client.Lighthouse, participant.CLType)
 	assert.Equal(t, 1, participant.Count) // Default
-	assert.Equal(t, "", participant.ELVersion)
-	assert.Equal(t, "", participant.CLVersion)
+	assert.Equal(t, "", participant.ELImage)
+	assert.Equal(t, "", participant.CLImage)
 	assert.Equal(t, 0, participant.ValidatorCount)
 }
 

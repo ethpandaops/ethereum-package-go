@@ -28,12 +28,7 @@ func TestToYAML(t *testing.T) {
 			Type: "full",
 		},
 		AdditionalServices: []AdditionalService{
-			{
-				Name: "prometheus",
-				Config: map[string]interface{}{
-					"port": 9090,
-				},
-			},
+			"prometheus",
 		},
 		GlobalLogLevel: "info",
 	}
@@ -139,9 +134,8 @@ global_log_level: debug
 
 	// Check additional services
 	assert.Len(t, config.AdditionalServices, 2)
-	assert.Equal(t, "prometheus", config.AdditionalServices[0].Name)
-	assert.NotNil(t, config.AdditionalServices[0].Config)
-	assert.Equal(t, "grafana", config.AdditionalServices[1].Name)
+	assert.Equal(t, "prometheus", config.AdditionalServices[0])
+	assert.Equal(t, "grafana", config.AdditionalServices[1])
 
 	// Check global log level
 	assert.Equal(t, "debug", config.GlobalLogLevel)
@@ -203,8 +197,8 @@ func TestRoundTrip(t *testing.T) {
 			{
 				ELType:         client.Geth,
 				CLType:         client.Lighthouse,
-				ELVersion:      "v1.13.0",
-				CLVersion:      "v4.5.0",
+				ELImage:        &[]string{"v1.13.0"}[0],
+				CLImage:        &[]string{"v4.5.0"}[0],
 				Count:          3,
 				ValidatorCount: 96,
 			},
@@ -232,16 +226,8 @@ func TestRoundTrip(t *testing.T) {
 			MaxBundleLength: 3,
 		},
 		AdditionalServices: []AdditionalService{
-			{
-				Name: "prometheus",
-				Config: map[string]interface{}{
-					"port":      9090,
-					"retention": "15d",
-				},
-			},
-			{
-				Name: "grafana",
-			},
+			"prometheus",
+			"grafana",
 		},
 		GlobalLogLevel: "info",
 	}

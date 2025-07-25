@@ -53,9 +53,7 @@ func WithMEV(mevConfig *config.MEVConfig) RunOption {
 func WithAdditionalServices(services ...string) RunOption {
 	return func(cfg *RunConfig) {
 		for _, service := range services {
-			cfg.AdditionalServices = append(cfg.AdditionalServices, config.AdditionalService{
-				Name: service,
-			})
+			cfg.AdditionalServices = append(cfg.AdditionalServices, config.AdditionalService(service))
 		}
 	}
 }
@@ -135,6 +133,14 @@ func WithTimeout(timeout time.Duration) RunOption {
 func WithKurtosisClient(client kurtosis.Client) RunOption {
 	return func(cfg *RunConfig) {
 		cfg.KurtosisClient = client
+	}
+}
+
+func WithEthereumMetricsExporterEnabled() RunOption {
+	return func(cfg *RunConfig) {
+		cfg.ConfigSource = config.NewInlineConfigSource(&config.EthereumPackageConfig{
+			EthereumMetricsExporterEnabled: &[]bool{true}[0],
+		})
 	}
 }
 
