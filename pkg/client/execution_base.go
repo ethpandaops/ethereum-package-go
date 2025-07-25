@@ -221,56 +221,6 @@ func (b *BaseExecutionClient) WaitForSync(ctx context.Context) error {
 	}
 }
 
-// SyncProgress gets the sync progress object if syncing, returns nil if not syncing
-func (b *BaseExecutionClient) SyncProgress(ctx context.Context) (*SyncProgress, error) {
-	req := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "eth_syncing",
-		"params":  []interface{}{},
-		"id":      1,
-	}
-
-	resp, err := b.makeRPCRequest(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sync progress: %w", err)
-	}
-
-	// eth_syncing returns false when not syncing, or a sync object when syncing
-	var result interface{}
-	if err := json.Unmarshal(resp.Result, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse sync progress: %w", err)
-	}
-
-	// If result is false, not syncing
-	if syncing, ok := result.(bool); ok && !syncing {
-		return nil, nil
-	}
-
-	// If result is an object, parse it as sync progress with hex values
-	var rawProgress struct {
-		CurrentBlock  string `json:"currentBlock"`
-		HighestBlock  string `json:"highestBlock"`
-		StartingBlock string `json:"startingBlock"`
-	}
-	if err := json.Unmarshal(resp.Result, &rawProgress); err != nil {
-		return nil, fmt.Errorf("failed to parse sync progress object: %w", err)
-	}
-
-	// Parse hex strings to uint64
-	progress := &SyncProgress{}
-	if _, err := fmt.Sscanf(rawProgress.CurrentBlock, "0x%x", &progress.CurrentBlock); err != nil {
-		return nil, fmt.Errorf("failed to parse currentBlock hex: %w", err)
-	}
-	if _, err := fmt.Sscanf(rawProgress.HighestBlock, "0x%x", &progress.HighestBlock); err != nil {
-		return nil, fmt.Errorf("failed to parse highestBlock hex: %w", err)
-	}
-	if _, err := fmt.Sscanf(rawProgress.StartingBlock, "0x%x", &progress.StartingBlock); err != nil {
-		return nil, fmt.Errorf("failed to parse startingBlock hex: %w", err)
-	}
-
-	return progress, nil
-}
-
 // NodeInfo represents node information
 type NodeInfo struct {
 	ID    string                 `json:"id"`
@@ -310,38 +260,4 @@ type TraceResult struct {
 type TxPoolStatus struct {
 	Pending string `json:"pending"`
 	Queued  string `json:"queued"`
-}
-
-// SyncProgress represents the sync progress when syncing
-type SyncProgress struct {
-	CurrentBlock  uint64 `json:"currentBlock"`
-	HighestBlock  uint64 `json:"highestBlock"`
-	StartingBlock uint64 `json:"startingBlock"`
-}
-
-// GetPeerCount gets the number of connected peers
-func (b *BaseExecutionClient) GetPeerCount(ctx context.Context) (int, error) {
-	req := map[string]interface{}{
-		"jsonrpc": "2.0",
-		"method":  "net_peerCount",
-		"params":  []interface{}{},
-		"id":      1,
-	}
-
-	resp, err := b.makeRPCRequest(ctx, req)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get peer count: %w", err)
-	}
-
-	var peerCountHex string
-	if err := json.Unmarshal(resp.Result, &peerCountHex); err != nil {
-		return 0, fmt.Errorf("failed to parse peer count: %w", err)
-	}
-
-	var peerCount int
-	if _, err := fmt.Sscanf(peerCountHex, "0x%x", &peerCount); err != nil {
-		return 0, fmt.Errorf("failed to parse hex peer count: %w", err)
-	}
-
-	return peerCount, nil
 }
