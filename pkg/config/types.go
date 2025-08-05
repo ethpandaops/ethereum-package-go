@@ -318,7 +318,7 @@ type EthereumPackageConfig struct {
 	Persistent bool `yaml:"persistent,omitempty"`
 
 	// Checkpoint sync configuration (root level)
-	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
+	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled"`
 	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
 }
 
