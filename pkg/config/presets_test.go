@@ -162,7 +162,7 @@ func TestPresetBuilder(t *testing.T) {
 
 	// Should have additional service
 	assert.Len(t, config.AdditionalServices, 1)
-	assert.Equal(t, "blockscout", config.AdditionalServices[0])
+	assert.Equal(t, AdditionalService("blockscout"), config.AdditionalServices[0])
 
 	// Should have global log level
 	assert.Equal(t, "debug", config.GlobalLogLevel)

@@ -149,6 +149,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid seconds per slot (too low)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:        "kurtosis",
 				SecondsPerSlot: -1,
 			}),
 			WantErr: "seconds per slot must be between 1 and 60",
@@ -156,6 +157,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid seconds per slot (too high)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:        "kurtosis",
 				SecondsPerSlot: 121,
 			}),
 			WantErr: "seconds per slot must be between 1 and 60",
@@ -163,6 +165,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid validator keys per node (too low)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:                 "kurtosis",
 				SecondsPerSlot:          12,
 				NumValidatorKeysPerNode: -1,
 			}),
@@ -171,6 +174,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid validator keys per node (too high)",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:                 "kurtosis",
 				SecondsPerSlot:          12,
 				NumValidatorKeysPerNode: 1000001,
 			}),
@@ -179,6 +183,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "negative genesis delay",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:        "kurtosis",
 				SecondsPerSlot: 12,
 				GenesisDelay:   -1,
 			}),
@@ -187,6 +192,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "negative fork epoch",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:          "kurtosis",
 				SecondsPerSlot:   12,
 				CapellaForkEpoch: -1,
 			}),
@@ -195,6 +201,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid fork ordering",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:          "kurtosis",
 				SecondsPerSlot:   12,
 				CapellaForkEpoch: 20,
 				DenebForkEpoch:   10,
@@ -204,6 +211,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "checkpoint sync enabled without URL",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:               "kurtosis",
 				SecondsPerSlot:        12,
 				CheckpointSyncEnabled: true,
 				CheckpointSyncURL:     "",
@@ -213,6 +221,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "invalid checkpoint sync URL",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:           "kurtosis",
 				SecondsPerSlot:    12,
 				CheckpointSyncURL: "not-a-url",
 			}),
@@ -221,6 +230,7 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 		{
 			Name: "valid checkpoint sync config",
 			Config: createConfigWithNetworkParams(&NetworkParams{
+				Network:               "kurtosis",
 				SecondsPerSlot:        12,
 				CheckpointSyncEnabled: true,
 				CheckpointSyncURL:     "https://example.com/checkpoint",

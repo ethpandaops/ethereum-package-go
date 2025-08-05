@@ -48,7 +48,7 @@ func TestToYAML(t *testing.T) {
 	assert.Contains(t, yamlStr, "mev_params:")
 	assert.Contains(t, yamlStr, "type: full")
 	assert.Contains(t, yamlStr, "additional_services:")
-	assert.Contains(t, yamlStr, "name: prometheus")
+	assert.Contains(t, yamlStr, "- prometheus")
 	assert.Contains(t, yamlStr, "global_log_level: info")
 }
 
@@ -100,10 +100,8 @@ mev_params:
   relay_url: http://localhost:18550
 
 additional_services:
-  - name: prometheus
-    config:
-      port: 9090
-  - name: grafana
+  - prometheus
+  - grafana
 
 global_log_level: debug
 `
@@ -134,8 +132,8 @@ global_log_level: debug
 
 	// Check additional services
 	assert.Len(t, config.AdditionalServices, 2)
-	assert.Equal(t, "prometheus", config.AdditionalServices[0])
-	assert.Equal(t, "grafana", config.AdditionalServices[1])
+	assert.Equal(t, AdditionalService("prometheus"), config.AdditionalServices[0])
+	assert.Equal(t, AdditionalService("grafana"), config.AdditionalServices[1])
 
 	// Check global log level
 	assert.Equal(t, "debug", config.GlobalLogLevel)

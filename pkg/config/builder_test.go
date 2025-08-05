@@ -46,7 +46,7 @@ func TestConfigBuilder(t *testing.T) {
 	assert.NotNil(t, config.MEV)
 	assert.Equal(t, "full", config.MEV.Type)
 	assert.Len(t, config.AdditionalServices, 1)
-	assert.Equal(t, "prometheus", config.AdditionalServices[0])
+	assert.Equal(t, AdditionalService("prometheus"), config.AdditionalServices[0])
 	assert.Equal(t, "debug", config.GlobalLogLevel)
 }
 
@@ -168,8 +168,8 @@ func TestSimpleParticipantBuilderDefaults(t *testing.T) {
 	assert.Equal(t, client.Geth, participant.ELType)
 	assert.Equal(t, client.Lighthouse, participant.CLType)
 	assert.Equal(t, 1, participant.Count) // Default
-	assert.Equal(t, "", participant.ELImage)
-	assert.Equal(t, "", participant.CLImage)
+	assert.Nil(t, participant.ELImage)
+	assert.Nil(t, participant.CLImage)
 	assert.Equal(t, 0, participant.ValidatorCount)
 }
 
