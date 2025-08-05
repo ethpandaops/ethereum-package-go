@@ -28,8 +28,6 @@ func TestValidatorValidConfig(t *testing.T) {
 			CapellaForkEpoch:        10,
 			DenebForkEpoch:          20,
 			ElectraForkEpoch:        30,
-			CheckpointSyncEnabled:   true,
-			CheckpointSyncURL:       "https://example.com/checkpoint",
 		},
 		MEV: &MEVConfig{
 			Type:            "full",
@@ -40,7 +38,9 @@ func TestValidatorValidConfig(t *testing.T) {
 			"prometheus",
 			"grafana",
 		},
-		GlobalLogLevel: "info",
+		GlobalLogLevel:        "info",
+		CheckpointSyncEnabled: true,
+		CheckpointSyncURL:     "https://example.com/checkpoint",
 	}
 
 	validator := NewValidator(config)
@@ -90,6 +90,10 @@ func TestValidatorNetworkParams(t *testing.T) {
 
 func TestValidatorMEV(t *testing.T) {
 	RunValidatorTests(t, MEVTestCases())
+}
+
+func TestValidatorCheckpointSync(t *testing.T) {
+	RunValidatorTests(t, CheckpointSyncTestCases())
 }
 
 func TestValidatorAdditionalServices(t *testing.T) {

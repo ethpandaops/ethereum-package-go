@@ -118,10 +118,6 @@ type NetworkParams struct {
 	DenebForkEpoch              int    `yaml:"deneb_fork_epoch,omitempty"`
 	ElectraForkEpoch            int    `yaml:"electra_fork_epoch,omitempty"`
 	FuluForkEpoch               int    `yaml:"fulu_fork_epoch,omitempty"`
-
-	// Checkpoint sync configuration
-	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
-	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
 }
 
 // Validate validates the network parameters
@@ -155,15 +151,6 @@ func (n *NetworkParams) Validate() error {
 		if forkEpochs[i] != 0 && forkEpochs[i] < forkEpochs[i-1] {
 			return fmt.Errorf("fork epochs must be in chronological order")
 		}
-	}
-
-	// Validate checkpoint sync configuration
-	if n.CheckpointSyncEnabled && n.CheckpointSyncURL == "" {
-		return fmt.Errorf("checkpoint sync URL is required when checkpoint sync is enabled")
-	}
-
-	if n.CheckpointSyncURL != "" && !strings.HasPrefix(n.CheckpointSyncURL, "http://") && !strings.HasPrefix(n.CheckpointSyncURL, "https://") {
-		return fmt.Errorf("checkpoint sync URL must start with http:// or https://")
 	}
 
 	return nil
@@ -324,11 +311,16 @@ type EthereumPackageConfig struct {
 	// Global client settings
 	GlobalLogLevel string `yaml:"global_log_level,omitempty"`
 
+
 	// Ethereum metrics exporter enabled
 	EthereumMetricsExporterEnabled *bool `yaml:"ethereum_metrics_exporter_enabled,omitempty"`
 
 	// Persistent
 	Persistent bool `yaml:"persistent,omitempty"`
+
+	// Checkpoint sync configuration (root level)
+	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
+	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
 }
 
 // Validate validates the EthereumPackageConfig
@@ -396,6 +388,15 @@ func (c *EthereumPackageConfig) Validate() error {
 	// Validate global log level
 	if c.GlobalLogLevel != "" && !isValidLogLevel(c.GlobalLogLevel) {
 		return fmt.Errorf("invalid global log level: %s, must be one of: debug, info, warn, error, fatal", c.GlobalLogLevel)
+	}
+
+	// Validate checkpoint sync configuration
+	if c.CheckpointSyncEnabled && c.CheckpointSyncURL == "" {
+		return fmt.Errorf("checkpoint sync URL is required when checkpoint sync is enabled")
+	}
+
+	if c.CheckpointSyncURL != "" && !strings.HasPrefix(c.CheckpointSyncURL, "http://") && !strings.HasPrefix(c.CheckpointSyncURL, "https://") {
+		return fmt.Errorf("checkpoint sync URL must start with http:// or https://")
 	}
 
 	return nil
