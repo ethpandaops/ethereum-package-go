@@ -201,6 +201,32 @@ func NetworkParamsTestCases() []ValidatorTestCase {
 			}),
 			WantErr: "fork epochs must be in chronological order",
 		},
+		{
+			Name: "checkpoint sync enabled without URL",
+			Config: createConfigWithNetworkParams(&NetworkParams{
+				SecondsPerSlot:        12,
+				CheckpointSyncEnabled: true,
+				CheckpointSyncURL:     "",
+			}),
+			WantErr: "checkpoint sync URL is required when checkpoint sync is enabled",
+		},
+		{
+			Name: "invalid checkpoint sync URL",
+			Config: createConfigWithNetworkParams(&NetworkParams{
+				SecondsPerSlot:    12,
+				CheckpointSyncURL: "not-a-url",
+			}),
+			WantErr: "checkpoint sync URL must start with http:// or https://",
+		},
+		{
+			Name: "valid checkpoint sync config",
+			Config: createConfigWithNetworkParams(&NetworkParams{
+				SecondsPerSlot:        12,
+				CheckpointSyncEnabled: true,
+				CheckpointSyncURL:     "https://example.com/checkpoint",
+			}),
+			WantErr: "",
+		},
 	}
 }
 

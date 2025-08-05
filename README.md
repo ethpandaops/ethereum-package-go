@@ -62,14 +62,55 @@ ethereum.WithExplorer()                 // Dora
 ### Advanced Config
 
 ```go
-config := &types.EthereumPackageConfig{
-    Participants: []types.ParticipantConfig{{
-        ELType: types.ClientGeth,
-        CLType: types.ClientLighthouse,
+import (
+    "github.com/ethpandaops/ethereum-package-go"
+    "github.com/ethpandaops/ethereum-package-go/pkg/config"
+    "github.com/ethpandaops/ethereum-package-go/pkg/client"
+)
+
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
         Count:  3,
     }},
 }
 network, err := ethereum.Run(ctx, ethereum.WithConfig(config))
+```
+
+### Checkpoint Sync
+
+Enable checkpoint sync for faster node startup:
+
+```go
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
+        Count:  1,
+    }},
+    NetworkParams: &config.NetworkParams{
+        // Enable checkpoint sync for faster startup
+        CheckpointSyncEnabled: true,
+        CheckpointSyncURL:     "https://beaconstate.info",
+    },
+}
+```
+
+### Supernode Configuration
+
+Enable supernode mode for PeerDAS subnet coverage:
+
+```go
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
+        Count:  1,
+        // Enable supernode - subscribes to all subnet topics
+        Supernode: true,
+    }},
+}
 ```
 
 ## Access Clients
