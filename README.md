@@ -18,7 +18,7 @@ import (
     "fmt"
     
     "github.com/ethpandaops/ethereum-package-go"
-    "github.com/ethpandaops/ethereum-package-go/pkg/types"
+    "github.com/ethpandaops/ethereum-package-go/pkg/client"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
     // Optional: defer network.Cleanup(ctx) for explicit cleanup
     
     // Access clients
-    clients := network.ExecutionClients().ByType(types.ClientGeth)
+    clients := network.ExecutionClients().ByType(client.Geth)
     if len(clients) > 0 {
         fmt.Printf("Geth RPC: %s\n", clients[0].RPCURL())
     }
@@ -62,22 +62,57 @@ ethereum.WithExplorer()                 // Dora
 ### Advanced Config
 
 ```go
-config := &types.EthereumPackageConfig{
-    Participants: []types.ParticipantConfig{{
-        ELType: types.ClientGeth,
-        CLType: types.ClientLighthouse,
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
         Count:  3,
     }},
 }
 network, err := ethereum.Run(ctx, ethereum.WithConfig(config))
 ```
 
+### Checkpoint Sync
+
+Enable checkpoint sync for faster node startup:
+
+```go
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
+        Count:  1,
+    }},
+    NetworkParams: &config.NetworkParams{
+        // Enable checkpoint sync for faster startup
+        CheckpointSyncEnabled: true,
+        CheckpointSyncURL:     "https://beaconstate.info",
+    },
+}
+```
+
+### Supernode Configuration
+
+Enable supernode mode for PeerDAS subnet coverage:
+
+```go
+config := &config.EthereumPackageConfig{
+    Participants: []config.ParticipantConfig{{
+        ELType: client.Geth,
+        CLType: client.Lighthouse,
+        Count:  1,
+        // Enable supernode - subscribes to all subnet topics
+        Supernode: true,
+    }},
+}
+```
+
 ## Access Clients
 
 ```go
 // By type
-gethClients := network.ExecutionClients().ByType(types.ClientGeth)
-lighthouseClients := network.ConsensusClients().ByType(types.ClientLighthouse)
+gethClients := network.ExecutionClients().ByType(client.Geth)
+lighthouseClients := network.ConsensusClients().ByType(client.Lighthouse)
 
 // All clients
 for _, client := range network.ExecutionClients().All() {
