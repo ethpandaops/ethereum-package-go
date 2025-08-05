@@ -140,7 +140,6 @@ func (n *NetworkParams) Validate() error {
 		}
 	}
 
-
 	return nil
 }
 

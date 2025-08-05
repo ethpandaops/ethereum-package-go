@@ -89,11 +89,9 @@ config := &config.EthereumPackageConfig{
         CLType: client.Lighthouse,
         Count:  1,
     }},
-    NetworkParams: &config.NetworkParams{
-        // Enable checkpoint sync for faster startup
-        CheckpointSyncEnabled: true,
-        CheckpointSyncURL:     "https://beaconstate.info",
-    },
+    // Enable checkpoint sync for faster startup (root level)
+    CheckpointSyncEnabled: true,
+    CheckpointSyncURL:     "https://beaconstate.info",
 }
 ```
 
