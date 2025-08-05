@@ -311,7 +311,6 @@ type EthereumPackageConfig struct {
 	// Global client settings
 	GlobalLogLevel string `yaml:"global_log_level,omitempty"`
 
-
 	// Ethereum metrics exporter enabled
 	EthereumMetricsExporterEnabled *bool `yaml:"ethereum_metrics_exporter_enabled,omitempty"`
 
