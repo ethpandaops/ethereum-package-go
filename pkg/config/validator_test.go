@@ -15,6 +15,7 @@ func TestValidatorValidConfig(t *testing.T) {
 				CLType:         client.Lighthouse,
 				Count:          2,
 				ValidatorCount: 64,
+				Supernode:      true,
 			},
 		},
 		NetworkParams: &NetworkParams{
@@ -27,6 +28,8 @@ func TestValidatorValidConfig(t *testing.T) {
 			CapellaForkEpoch:        10,
 			DenebForkEpoch:          20,
 			ElectraForkEpoch:        30,
+			CheckpointSyncEnabled:   true,
+			CheckpointSyncURL:       "https://example.com/checkpoint",
 		},
 		MEV: &MEVConfig{
 			Type:            "full",
@@ -164,6 +167,46 @@ func TestValidatorGlobalSettings(t *testing.T) {
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidatorSupernodeConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		supernode bool
+		wantErr   bool
+	}{
+		{
+			name:      "supernode enabled",
+			supernode: true,
+			wantErr:   false,
+		},
+		{
+			name:      "supernode disabled",
+			supernode: false,
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &EthereumPackageConfig{
+				Participants: []ParticipantConfig{
+					{
+						ELType:    client.Geth,
+						CLType:    client.Lighthouse,
+						Supernode: tt.supernode,
+					},
+				},
+			}
+			validator := NewValidator(config)
+			err := validator.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}

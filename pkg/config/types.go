@@ -52,6 +52,12 @@ type ParticipantConfig struct {
 
 	// Validator configuration
 	ValidatorCount int `yaml:"validator_count,omitempty"`
+
+	// Supernode configuration
+	// Whether to act as a supernode for the network
+	// Supernodes will subscribe to all subnet topics
+	// This flag should only be used with peerdas
+	Supernode bool `yaml:"supernode,omitempty"`
 }
 
 // Validate validates the participant configuration
@@ -112,6 +118,10 @@ type NetworkParams struct {
 	DenebForkEpoch              int    `yaml:"deneb_fork_epoch,omitempty"`
 	ElectraForkEpoch            int    `yaml:"electra_fork_epoch,omitempty"`
 	FuluForkEpoch               int    `yaml:"fulu_fork_epoch,omitempty"`
+
+	// Checkpoint sync configuration
+	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
+	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
 }
 
 // Validate validates the network parameters
@@ -145,6 +155,15 @@ func (n *NetworkParams) Validate() error {
 		if forkEpochs[i] != 0 && forkEpochs[i] < forkEpochs[i-1] {
 			return fmt.Errorf("fork epochs must be in chronological order")
 		}
+	}
+
+	// Validate checkpoint sync configuration
+	if n.CheckpointSyncEnabled && n.CheckpointSyncURL == "" {
+		return fmt.Errorf("checkpoint sync URL is required when checkpoint sync is enabled")
+	}
+
+	if n.CheckpointSyncURL != "" && !strings.HasPrefix(n.CheckpointSyncURL, "http://") && !strings.HasPrefix(n.CheckpointSyncURL, "https://") {
+		return fmt.Errorf("checkpoint sync URL must start with http:// or https://")
 	}
 
 	return nil
