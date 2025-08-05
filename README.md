@@ -18,7 +18,7 @@ import (
     "fmt"
     
     "github.com/ethpandaops/ethereum-package-go"
-    "github.com/ethpandaops/ethereum-package-go/pkg/client"
+    "github.com/ethpandaops/ethereum-package-go/pkg/types"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
     // Optional: defer network.Cleanup(ctx) for explicit cleanup
     
     // Access clients
-    clients := network.ExecutionClients().ByType(client.Geth)
+    clients := network.ExecutionClients().ByType(types.ClientGeth)
     if len(clients) > 0 {
         fmt.Printf("Geth RPC: %s\n", clients[0].RPCURL())
     }
@@ -62,6 +62,12 @@ ethereum.WithExplorer()                 // Dora
 ### Advanced Config
 
 ```go
+import (
+    "github.com/ethpandaops/ethereum-package-go"
+    "github.com/ethpandaops/ethereum-package-go/pkg/config"
+    "github.com/ethpandaops/ethereum-package-go/pkg/client"
+)
+
 config := &config.EthereumPackageConfig{
     Participants: []config.ParticipantConfig{{
         ELType: client.Geth,
@@ -111,8 +117,8 @@ config := &config.EthereumPackageConfig{
 
 ```go
 // By type
-gethClients := network.ExecutionClients().ByType(client.Geth)
-lighthouseClients := network.ConsensusClients().ByType(client.Lighthouse)
+gethClients := network.ExecutionClients().ByType(types.ClientGeth)
+lighthouseClients := network.ConsensusClients().ByType(types.ClientLighthouse)
 
 // All clients
 for _, client := range network.ExecutionClients().All() {
