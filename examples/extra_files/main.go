@@ -46,16 +46,16 @@ logging:
 	participant := config.NewParticipantBuilder().
 		WithEL(client.Geth).
 		WithCL(client.Lighthouse).
-		//WithCLExtraMounts(map[string]string{
-		//	"/configs/beacon.yaml":   "beacon-config.yaml",
-		//	"/configs/features.json": "features.json",
-		//}).
-		//WithCLExtraParams([]string{
-		//	"--config-file=/configs/beacon.yaml",
-		//}).
-		//WithVCExtraMounts(map[string]string{
-		//	"/configs/validator.yaml": "validator-config.yaml",
-		//}).
+		WithCLExtraMounts(map[string]string{
+			"/configs/beacon.yaml":   "beacon-config.yaml",
+			"/configs/features.json": "features.json",
+		}).
+		WithCLExtraParams([]string{
+			"--config-file=/configs/beacon.yaml",
+		}).
+		WithVCExtraMounts(map[string]string{
+			"/configs/validator.yaml": "validator-config.yaml",
+		}).
 		Build()
 
 	// Build network configuration with extra files at root level
