@@ -84,6 +84,21 @@ func (b *ConfigBuilder) WithDockerCacheParams(dockerCache *DockerCacheParams) *C
 	return b
 }
 
+// WithExtraFile adds a single extra file to the configuration
+func (b *ConfigBuilder) WithExtraFile(name, content string) *ConfigBuilder {
+	if b.config.ExtraFiles == nil {
+		b.config.ExtraFiles = make(map[string]string)
+	}
+	b.config.ExtraFiles[name] = content
+	return b
+}
+
+// WithExtraFiles sets all extra files at once
+func (b *ConfigBuilder) WithExtraFiles(files map[string]string) *ConfigBuilder {
+	b.config.ExtraFiles = files
+	return b
+}
+
 // WithEthereumMetricsExporterEnabled sets the ethereum metrics exporter enabled
 func (b *ConfigBuilder) WithEthereumMetricsExporterEnabled(enabled bool) *ConfigBuilder {
 	b.config.EthereumMetricsExporterEnabled = &enabled
