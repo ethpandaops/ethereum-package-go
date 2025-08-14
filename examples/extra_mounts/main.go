@@ -19,9 +19,12 @@ func main() {
 		WithCL(client.Prysm).
 		WithEL(client.Geth).
 		// NOTE: Mount paths must exist in the ethereum-package repository
-		WithCLExtraMounts(map[string]string{
-			"/data/config": "static_files/nginx-config",
-		}).
+		//WithCLExtraMounts(map[string]string{
+		//	"/tmp/cl-cfg": "static_files/cl-config",
+		//}).
+		//WithELExtraMounts(map[string]string{
+		//	"/tmp/el-cfg": "static_files/el-config",
+		//}).
 		WithCLExtraParams([]string{
 			"--graffiti=ethereum-package-go-example",
 		}).
