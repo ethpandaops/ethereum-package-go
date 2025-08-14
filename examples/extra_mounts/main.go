@@ -20,75 +20,16 @@ func main() {
 		WithEL(client.Geth).
 		// NOTE: Mount paths must exist in the ethereum-package repository
 		WithCLExtraMounts(map[string]string{
-			"/data/config": "static_files/jwt",
+			"/data/config": "static_files/nginx-config",
 		}).
 		WithCLExtraParams([]string{
 			"--graffiti=ethereum-package-go-example",
 		}).
 		Build()
 
-	// Example 2: Using extra environment variables and labels
-	advancedParticipant := config.NewParticipantBuilder().
-		WithCL(client.Lighthouse).
-		WithEL(client.Nethermind).
-		WithCount(2).
-		WithValidatorCount(32).
-		// NOTE: Mount paths must exist in the ethereum-package repository
-		WithCLExtraMounts(map[string]string{
-			"/data/config": "static_files/jwt",
-		}).
-		// Add extra command line parameters
-		WithCLExtraParams([]string{
-			"--graffiti=ethereum-package-go-test",
-			"--metrics-address=0.0.0.0",
-			"--metrics-port=5054",
-		}).
-		WithELExtraParams([]string{
-			"--Metrics.Enabled",
-			"--Metrics.PushGatewayUrl=http://prometheus-pushgateway:9091",
-		}).
-		// Set environment variables
-		WithCLExtraEnvVars(map[string]string{
-			"RUST_LOG":           "debug",
-			"LIGHTHOUSE_PROFILE": "minimal",
-		}).
-		WithELExtraEnvVars(map[string]string{
-			"NETHERMIND_CLI_SWITCH_SYNC": "debug",
-		}).
-		// Add labels for container organization
-		WithCLExtraLabels(map[string]string{
-			"team":        "devops",
-			"environment": "testing",
-			"version":     "v1.0.0",
-		}).
-		Build()
-
-	// Example 3: Validator client configuration
-	validatorParticipant := config.NewParticipantBuilder().
-		WithCL(client.Teku).
-		WithEL(client.Besu).
-		WithValidatorCount(100).
-		// NOTE: Mount paths must exist in the ethereum-package repository
-		WithCLExtraMounts(map[string]string{
-			"/data/config": "static_files/jwt",
-		}).
-		WithVCExtraParams([]string{
-			"--validators-proposer-default-fee-recipient=0x0000000000000000000000000000000000000000",
-		}).
-		WithVCExtraEnvVars(map[string]string{
-			"JAVA_OPTS": "-Xmx2g -Xms1g",
-		}).
-		WithVCExtraLabels(map[string]string{
-			"role":     "validator",
-			"security": "high",
-		}).
-		Build()
-
 	// Build the ethereum network configuration
 	networkConfig, err := config.NewConfigBuilder().
 		WithParticipant(mountParticipant).
-		WithParticipant(advancedParticipant).
-		WithParticipant(validatorParticipant).
 		WithNetworkParams(&config.NetworkParams{
 			Network:                 "kurtosis",
 			SecondsPerSlot:          12,
