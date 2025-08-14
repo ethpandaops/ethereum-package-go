@@ -516,3 +516,248 @@ func TestDockerCacheParamsRoundTrip(t *testing.T) {
 	assert.Equal(t, original.DockerCacheParams.Enabled, parsed.DockerCacheParams.Enabled)
 	assert.Equal(t, original.DockerCacheParams.URL, parsed.DockerCacheParams.URL)
 }
+
+func TestToYAMLWithExtraConfig(t *testing.T) {
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType:        client.Geth,
+				CLType:        client.Prysm,
+				Count:         1,
+				ELExtraParams: []string{"--metrics", "--metrics.addr=0.0.0.0"},
+				ELExtraMounts: map[string]string{
+					"/data/scripts": "scripts/monitoring",
+				},
+				ELExtraEnvVars: map[string]string{
+					"GETH_DEBUG": "true",
+				},
+				ELExtraLabels: map[string]string{
+					"team": "devops",
+				},
+				CLExtraParams: []string{"--graffiti=test"},
+				CLExtraMounts: map[string]string{
+					"/etc/tysm": "static_files/tysm",
+				},
+				CLExtraEnvVars: map[string]string{
+					"LOG_LEVEL": "debug",
+				},
+				CLExtraLabels: map[string]string{
+					"environment": "testing",
+				},
+				VCExtraParams: []string{"--suggested-fee-recipient=0x0000000000000000000000000000000000000000"},
+				VCExtraMounts: map[string]string{
+					"/validator/keys": "validator_keys/production",
+				},
+				VCExtraEnvVars: map[string]string{
+					"JAVA_OPTS": "-Xmx2g",
+				},
+				VCExtraLabels: map[string]string{
+					"security": "high",
+				},
+			},
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlStr)
+
+	// Check that extra config elements are present
+	assert.Contains(t, yamlStr, "el_extra_params:")
+	assert.Contains(t, yamlStr, "- --metrics")
+	assert.Contains(t, yamlStr, "- --metrics.addr=0.0.0.0")
+	assert.Contains(t, yamlStr, "el_extra_mounts:")
+	assert.Contains(t, yamlStr, "/data/scripts: scripts/monitoring")
+	assert.Contains(t, yamlStr, "el_extra_env_vars:")
+	assert.Contains(t, yamlStr, "GETH_DEBUG: \"true\"")
+	assert.Contains(t, yamlStr, "el_extra_labels:")
+	assert.Contains(t, yamlStr, "team: devops")
+
+	assert.Contains(t, yamlStr, "cl_extra_params:")
+	assert.Contains(t, yamlStr, "- --graffiti=test")
+	assert.Contains(t, yamlStr, "cl_extra_mounts:")
+	assert.Contains(t, yamlStr, "/etc/tysm: static_files/tysm")
+	assert.Contains(t, yamlStr, "cl_extra_env_vars:")
+	assert.Contains(t, yamlStr, "LOG_LEVEL: debug")
+	assert.Contains(t, yamlStr, "cl_extra_labels:")
+	assert.Contains(t, yamlStr, "environment: testing")
+
+	assert.Contains(t, yamlStr, "vc_extra_params:")
+	assert.Contains(t, yamlStr, "- --suggested-fee-recipient=0x0000000000000000000000000000000000000000")
+	assert.Contains(t, yamlStr, "vc_extra_mounts:")
+	assert.Contains(t, yamlStr, "/validator/keys: validator_keys/production")
+	assert.Contains(t, yamlStr, "vc_extra_env_vars:")
+	assert.Contains(t, yamlStr, "JAVA_OPTS: -Xmx2g")
+	assert.Contains(t, yamlStr, "vc_extra_labels:")
+	assert.Contains(t, yamlStr, "security: high")
+}
+
+func TestFromYAMLWithExtraConfig(t *testing.T) {
+	yamlContent := `
+participants:
+  - el_type: geth
+    cl_type: prysm
+    count: 1
+    el_extra_params:
+      - --metrics
+      - --metrics.addr=0.0.0.0
+    el_extra_mounts:
+      /data/scripts: scripts/monitoring
+    el_extra_env_vars:
+      GETH_DEBUG: "true"
+    el_extra_labels:
+      team: devops
+    cl_extra_params:
+      - --graffiti=test
+    cl_extra_mounts:
+      /etc/tysm: static_files/tysm
+    cl_extra_env_vars:
+      LOG_LEVEL: debug
+    cl_extra_labels:
+      environment: testing
+    vc_extra_params:
+      - --suggested-fee-recipient=0x0000000000000000000000000000000000000000
+    vc_extra_mounts:
+      /validator/keys: validator_keys/production
+    vc_extra_env_vars:
+      JAVA_OPTS: "-Xmx2g"
+    vc_extra_labels:
+      security: high
+`
+
+	config, err := FromYAML(yamlContent)
+	require.NoError(t, err)
+
+	// Check participant
+	assert.Len(t, config.Participants, 1)
+	participant := config.Participants[0]
+
+	// Check EL extras
+	assert.Equal(t, []string{"--metrics", "--metrics.addr=0.0.0.0"}, participant.ELExtraParams)
+	assert.Equal(t, map[string]string{"/data/scripts": "scripts/monitoring"}, participant.ELExtraMounts)
+	assert.Equal(t, map[string]string{"GETH_DEBUG": "true"}, participant.ELExtraEnvVars)
+	assert.Equal(t, map[string]string{"team": "devops"}, participant.ELExtraLabels)
+
+	// Check CL extras
+	assert.Equal(t, []string{"--graffiti=test"}, participant.CLExtraParams)
+	assert.Equal(t, map[string]string{"/etc/tysm": "static_files/tysm"}, participant.CLExtraMounts)
+	assert.Equal(t, map[string]string{"LOG_LEVEL": "debug"}, participant.CLExtraEnvVars)
+	assert.Equal(t, map[string]string{"environment": "testing"}, participant.CLExtraLabels)
+
+	// Check VC extras
+	assert.Equal(t, []string{"--suggested-fee-recipient=0x0000000000000000000000000000000000000000"}, participant.VCExtraParams)
+	assert.Equal(t, map[string]string{"/validator/keys": "validator_keys/production"}, participant.VCExtraMounts)
+	assert.Equal(t, map[string]string{"JAVA_OPTS": "-Xmx2g"}, participant.VCExtraEnvVars)
+	assert.Equal(t, map[string]string{"security": "high"}, participant.VCExtraLabels)
+}
+
+func TestExtraConfigRoundTrip(t *testing.T) {
+	// Create a config with extra configuration
+	original := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType:        client.Geth,
+				CLType:        client.Prysm,
+				Count:         2,
+				ELExtraParams: []string{"--param1", "--param2=value"},
+				ELExtraMounts: map[string]string{
+					"/mount1": "source1",
+					"/mount2": "source2",
+				},
+				ELExtraEnvVars: map[string]string{
+					"ENV1": "value1",
+					"ENV2": "value2",
+				},
+				ELExtraLabels: map[string]string{
+					"label1": "value1",
+					"label2": "value2",
+				},
+				CLExtraParams: []string{"--cl-param1"},
+				CLExtraMounts: map[string]string{
+					"/cl/mount": "cl/source",
+				},
+				CLExtraEnvVars: map[string]string{
+					"CL_ENV": "cl_value",
+				},
+				CLExtraLabels: map[string]string{
+					"cl_label": "cl_value",
+				},
+				VCExtraParams: []string{"--vc-param1"},
+				VCExtraMounts: map[string]string{
+					"/vc/mount": "vc/source",
+				},
+				VCExtraEnvVars: map[string]string{
+					"VC_ENV": "vc_value",
+				},
+				VCExtraLabels: map[string]string{
+					"vc_label": "vc_value",
+				},
+			},
+		},
+	}
+
+	// Convert to YAML
+	yamlStr, err := ToYAML(original)
+	require.NoError(t, err)
+
+	// Parse back from YAML
+	parsed, err := FromYAML(yamlStr)
+	require.NoError(t, err)
+
+	// Verify all extra config fields match
+	require.Len(t, parsed.Participants, 1)
+	participant := parsed.Participants[0]
+
+	assert.Equal(t, original.Participants[0].ELExtraParams, participant.ELExtraParams)
+	assert.Equal(t, original.Participants[0].ELExtraMounts, participant.ELExtraMounts)
+	assert.Equal(t, original.Participants[0].ELExtraEnvVars, participant.ELExtraEnvVars)
+	assert.Equal(t, original.Participants[0].ELExtraLabels, participant.ELExtraLabels)
+
+	assert.Equal(t, original.Participants[0].CLExtraParams, participant.CLExtraParams)
+	assert.Equal(t, original.Participants[0].CLExtraMounts, participant.CLExtraMounts)
+	assert.Equal(t, original.Participants[0].CLExtraEnvVars, participant.CLExtraEnvVars)
+	assert.Equal(t, original.Participants[0].CLExtraLabels, participant.CLExtraLabels)
+
+	assert.Equal(t, original.Participants[0].VCExtraParams, participant.VCExtraParams)
+	assert.Equal(t, original.Participants[0].VCExtraMounts, participant.VCExtraMounts)
+	assert.Equal(t, original.Participants[0].VCExtraEnvVars, participant.VCExtraEnvVars)
+	assert.Equal(t, original.Participants[0].VCExtraLabels, participant.VCExtraLabels)
+}
+
+func TestExtraConfigOmitEmpty(t *testing.T) {
+	// Create a config with only some extra config fields set
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				Count:  1,
+				// Only set CL extra mounts, leave everything else empty
+				CLExtraMounts: map[string]string{
+					"/etc/config": "config/cl",
+				},
+			},
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlStr)
+
+	// Check that only the set field is present
+	assert.Contains(t, yamlStr, "cl_extra_mounts:")
+	assert.Contains(t, yamlStr, "/etc/config: config/cl")
+
+	// Check that empty fields are omitted
+	assert.NotContains(t, yamlStr, "el_extra_params:")
+	assert.NotContains(t, yamlStr, "el_extra_mounts:")
+	assert.NotContains(t, yamlStr, "el_extra_env_vars:")
+	assert.NotContains(t, yamlStr, "el_extra_labels:")
+	assert.NotContains(t, yamlStr, "cl_extra_params:")
+	assert.NotContains(t, yamlStr, "cl_extra_env_vars:")
+	assert.NotContains(t, yamlStr, "cl_extra_labels:")
+	assert.NotContains(t, yamlStr, "vc_extra_params:")
+	assert.NotContains(t, yamlStr, "vc_extra_mounts:")
+	assert.NotContains(t, yamlStr, "vc_extra_env_vars:")
+	assert.NotContains(t, yamlStr, "vc_extra_labels:")
+}
