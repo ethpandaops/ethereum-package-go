@@ -761,3 +761,120 @@ func TestExtraConfigOmitEmpty(t *testing.T) {
 	assert.NotContains(t, yamlStr, "vc_extra_env_vars:")
 	assert.NotContains(t, yamlStr, "vc_extra_labels:")
 }
+
+func TestToYAMLWithExtraFiles(t *testing.T) {
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				Count:  1,
+				CLExtraMounts: map[string]string{
+					"/configs/beacon.yaml": "beacon-config.yaml",
+				},
+			},
+		},
+		ExtraFiles: map[string]string{
+			"beacon-config.yaml": "metrics:\n  enabled: true\n  port: 8080",
+			"validator.yaml":     "graffiti: test",
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+	assert.NotEmpty(t, yamlStr)
+
+	// Check that extra_files is present at root level
+	assert.Contains(t, yamlStr, "extra_files:")
+	assert.Contains(t, yamlStr, "beacon-config.yaml:")
+	assert.Contains(t, yamlStr, "validator.yaml:")
+	assert.Contains(t, yamlStr, "graffiti: test")
+}
+
+func TestFromYAMLWithExtraFiles(t *testing.T) {
+	yamlContent := `
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+    cl_extra_mounts:
+      /configs/beacon.yaml: beacon-config.yaml
+
+extra_files:
+  beacon-config.yaml: |
+    metrics:
+      enabled: true
+      port: 8080
+  validator.yaml: "graffiti: test"
+`
+
+	config, err := FromYAML(yamlContent)
+	require.NoError(t, err)
+
+	// Check participants
+	assert.Len(t, config.Participants, 1)
+	assert.Equal(t, client.Geth, config.Participants[0].ELType)
+	assert.Equal(t, client.Lighthouse, config.Participants[0].CLType)
+
+	// Check extra files
+	require.NotNil(t, config.ExtraFiles)
+	assert.Len(t, config.ExtraFiles, 2)
+	assert.Contains(t, config.ExtraFiles["beacon-config.yaml"], "metrics:")
+	assert.Equal(t, "graffiti: test", config.ExtraFiles["validator.yaml"])
+
+	// Check extra mounts reference extra files
+	assert.Equal(t, "beacon-config.yaml", config.Participants[0].CLExtraMounts["/configs/beacon.yaml"])
+}
+
+func TestExtraFilesRoundTrip(t *testing.T) {
+	// Create a config with extra files
+	original := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Prysm,
+				Count:  1,
+				CLExtraMounts: map[string]string{
+					"/etc/config.yaml":   "config.yaml",
+					"/etc/features.json": "features.json",
+				},
+			},
+		},
+		ExtraFiles: map[string]string{
+			"config.yaml":   "key: value\nother: data",
+			"features.json": `{"feature1": true, "feature2": false}`,
+		},
+	}
+
+	// Convert to YAML
+	yamlStr, err := ToYAML(original)
+	require.NoError(t, err)
+
+	// Parse back from YAML
+	parsed, err := FromYAML(yamlStr)
+	require.NoError(t, err)
+
+	// Verify extra files match
+	require.NotNil(t, parsed.ExtraFiles)
+	assert.Equal(t, len(original.ExtraFiles), len(parsed.ExtraFiles))
+	for key, value := range original.ExtraFiles {
+		assert.Equal(t, value, parsed.ExtraFiles[key])
+	}
+}
+
+func TestExtraFilesOmitEmpty(t *testing.T) {
+	// Create a config without extra files
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+			},
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+
+	// Check that extra_files is omitted when empty
+	assert.NotContains(t, yamlStr, "extra_files:")
+}

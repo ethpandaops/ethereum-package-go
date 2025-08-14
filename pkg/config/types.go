@@ -381,6 +381,10 @@ type EthereumPackageConfig struct {
 	// Checkpoint sync configuration (root level)
 	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
 	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
+
+	// ExtraFiles defines file contents that can be referenced in extra_mounts
+	// Keys are file names (used in extra_mounts), values are file contents
+	ExtraFiles map[string]string `yaml:"extra_files,omitempty"`
 }
 
 // Validate validates the EthereumPackageConfig
@@ -459,6 +463,16 @@ func (c *EthereumPackageConfig) Validate() error {
 		return fmt.Errorf("checkpoint sync URL must start with http:// or https://")
 	}
 
+	// Validate ExtraFiles
+	for name := range c.ExtraFiles {
+		if name == "" {
+			return fmt.Errorf("extra_files cannot have empty names")
+		}
+		if strings.Contains(name, "/") {
+			return fmt.Errorf("extra_files name '%s' cannot contain path separators", name)
+		}
+	}
+
 	return nil
 }
 
@@ -481,6 +495,11 @@ func (c *EthereumPackageConfig) ApplyDefaults() {
 	// Apply defaults to port publisher config
 	if c.PortPublisher != nil {
 		c.PortPublisher.ApplyDefaults()
+	}
+
+	// Initialize ExtraFiles if nil
+	if c.ExtraFiles == nil {
+		c.ExtraFiles = make(map[string]string)
 	}
 }
 
