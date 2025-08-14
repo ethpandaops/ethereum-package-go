@@ -15,7 +15,8 @@ const (
 	// DefaultPackageRepository is the default ethereum-package repository
 	DefaultPackageRepository = "github.com/ethpandaops/ethereum-package"
 	// DefaultPackageVersion is the pinned version of ethereum-package
-	DefaultPackageVersion = "5.0.1"
+	// See https://github.com/ethpandaops/ethereum-package/pull/1013 (v6.0.0).
+	DefaultPackageVersion = "release-please--branches--main--components--ethereum-package"
 )
 
 // RunOption configures how the Ethereum network is started

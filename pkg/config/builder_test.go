@@ -175,6 +175,225 @@ func TestSimpleParticipantBuilderDefaults(t *testing.T) {
 	assert.Equal(t, 0, participant.ValidatorCount)
 }
 
+func TestSimpleParticipantBuilderWithExtraConfig(t *testing.T) {
+	participant := NewParticipantBuilder().
+		WithEL(client.Geth).
+		WithCL(client.Prysm).
+		WithELExtraParams([]string{"--metrics", "--metrics.addr=0.0.0.0"}).
+		WithELExtraMounts(map[string]string{
+			"/data/scripts": "scripts/monitoring",
+		}).
+		WithELExtraEnvVars(map[string]string{
+			"GETH_DEBUG": "true",
+		}).
+		WithELExtraLabels(map[string]string{
+			"team": "devops",
+		}).
+		WithCLExtraParams([]string{"--graffiti=test"}).
+		WithCLExtraMounts(map[string]string{
+			"/etc/tysm": "static_files/tysm",
+		}).
+		WithCLExtraEnvVars(map[string]string{
+			"LOG_LEVEL": "debug",
+		}).
+		WithCLExtraLabels(map[string]string{
+			"environment": "testing",
+		}).
+		WithVCExtraParams([]string{"--suggested-fee-recipient=0x0000000000000000000000000000000000000000"}).
+		WithVCExtraMounts(map[string]string{
+			"/validator/keys": "validator_keys/production",
+		}).
+		WithVCExtraEnvVars(map[string]string{
+			"JAVA_OPTS": "-Xmx2g",
+		}).
+		WithVCExtraLabels(map[string]string{
+			"security": "high",
+		}).
+		Build()
+
+	// Check EL extras
+	assert.Equal(t, []string{"--metrics", "--metrics.addr=0.0.0.0"}, participant.ELExtraParams)
+	assert.Equal(t, map[string]string{"/data/scripts": "scripts/monitoring"}, participant.ELExtraMounts)
+	assert.Equal(t, map[string]string{"GETH_DEBUG": "true"}, participant.ELExtraEnvVars)
+	assert.Equal(t, map[string]string{"team": "devops"}, participant.ELExtraLabels)
+
+	// Check CL extras
+	assert.Equal(t, []string{"--graffiti=test"}, participant.CLExtraParams)
+	assert.Equal(t, map[string]string{"/etc/tysm": "static_files/tysm"}, participant.CLExtraMounts)
+	assert.Equal(t, map[string]string{"LOG_LEVEL": "debug"}, participant.CLExtraEnvVars)
+	assert.Equal(t, map[string]string{"environment": "testing"}, participant.CLExtraLabels)
+
+	// Check VC extras
+	assert.Equal(t, []string{"--suggested-fee-recipient=0x0000000000000000000000000000000000000000"}, participant.VCExtraParams)
+	assert.Equal(t, map[string]string{"/validator/keys": "validator_keys/production"}, participant.VCExtraMounts)
+	assert.Equal(t, map[string]string{"JAVA_OPTS": "-Xmx2g"}, participant.VCExtraEnvVars)
+	assert.Equal(t, map[string]string{"security": "high"}, participant.VCExtraLabels)
+}
+
+func TestParticipantConfigExtraMountsValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		participant ParticipantConfig
+		wantErr     string
+	}{
+		{
+			name: "valid EL extra mounts",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				ELExtraMounts: map[string]string{
+					"/etc/config": "configs/el",
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid EL mount path - not absolute",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				ELExtraMounts: map[string]string{
+					"relative/path": "configs/el",
+				},
+			},
+			wantErr: "el_extra_mounts path 'relative/path' must be absolute",
+		},
+		{
+			name: "invalid EL mount source - absolute path",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				ELExtraMounts: map[string]string{
+					"/etc/config": "/absolute/source",
+				},
+			},
+			wantErr: "el_extra_mounts source '/absolute/source' cannot be absolute",
+		},
+		{
+			name: "valid CL extra mounts",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				CLExtraMounts: map[string]string{
+					"/etc/tysm":    "static_files/tysm",
+					"/config/xatu": "configs/xatu.yaml",
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid CL mount path - not absolute",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				CLExtraMounts: map[string]string{
+					"tysm": "static_files/tysm",
+				},
+			},
+			wantErr: "cl_extra_mounts path 'tysm' must be absolute",
+		},
+		{
+			name: "invalid CL mount source - absolute path",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				CLExtraMounts: map[string]string{
+					"/etc/tysm": "/usr/local/tysm",
+				},
+			},
+			wantErr: "cl_extra_mounts source '/usr/local/tysm' cannot be absolute",
+		},
+		{
+			name: "valid VC extra mounts",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				VCExtraMounts: map[string]string{
+					"/validator/keys": "validator_keys/production",
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "invalid VC mount path - not absolute",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				VCExtraMounts: map[string]string{
+					"keys": "validator_keys",
+				},
+			},
+			wantErr: "vc_extra_mounts path 'keys' must be absolute",
+		},
+		{
+			name: "invalid VC mount source - absolute path",
+			participant: ParticipantConfig{
+				ELType: client.Geth,
+				CLType: client.Lighthouse,
+				VCExtraMounts: map[string]string{
+					"/validator/keys": "/home/user/keys",
+				},
+			},
+			wantErr: "vc_extra_mounts source '/home/user/keys' cannot be absolute",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.participant.Validate(0)
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestParticipantConfigApplyDefaultsInitializesMaps(t *testing.T) {
+	participant := ParticipantConfig{
+		ELType: client.Geth,
+		CLType: client.Lighthouse,
+	}
+
+	// Maps should be nil initially
+	assert.Nil(t, participant.ELExtraMounts)
+	assert.Nil(t, participant.ELExtraEnvVars)
+	assert.Nil(t, participant.ELExtraLabels)
+	assert.Nil(t, participant.CLExtraMounts)
+	assert.Nil(t, participant.CLExtraEnvVars)
+	assert.Nil(t, participant.CLExtraLabels)
+	assert.Nil(t, participant.VCExtraMounts)
+	assert.Nil(t, participant.VCExtraEnvVars)
+	assert.Nil(t, participant.VCExtraLabels)
+
+	// Apply defaults
+	participant.ApplyDefaults()
+
+	// Maps should be initialized
+	assert.NotNil(t, participant.ELExtraMounts)
+	assert.NotNil(t, participant.ELExtraEnvVars)
+	assert.NotNil(t, participant.ELExtraLabels)
+	assert.NotNil(t, participant.CLExtraMounts)
+	assert.NotNil(t, participant.CLExtraEnvVars)
+	assert.NotNil(t, participant.CLExtraLabels)
+	assert.NotNil(t, participant.VCExtraMounts)
+	assert.NotNil(t, participant.VCExtraEnvVars)
+	assert.NotNil(t, participant.VCExtraLabels)
+
+	// Maps should be empty but not nil
+	assert.Empty(t, participant.ELExtraMounts)
+	assert.Empty(t, participant.ELExtraEnvVars)
+	assert.Empty(t, participant.ELExtraLabels)
+	assert.Empty(t, participant.CLExtraMounts)
+	assert.Empty(t, participant.CLExtraEnvVars)
+	assert.Empty(t, participant.CLExtraLabels)
+	assert.Empty(t, participant.VCExtraMounts)
+	assert.Empty(t, participant.VCExtraEnvVars)
+	assert.Empty(t, participant.VCExtraLabels)
+}
+
 func TestConfigBuilderImmutability(t *testing.T) {
 	builder := NewConfigBuilder()
 	participant := ParticipantConfig{

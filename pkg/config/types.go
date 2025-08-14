@@ -50,6 +50,24 @@ type ParticipantConfig struct {
 	// Supernodes will subscribe to all subnet topics
 	// This flag should only be used with peerdas
 	Supernode bool `yaml:"supernode,omitempty"`
+
+	// Execution Layer extras
+	ELExtraParams  []string          `yaml:"el_extra_params,omitempty"`
+	ELExtraMounts  map[string]string `yaml:"el_extra_mounts,omitempty"`
+	ELExtraEnvVars map[string]string `yaml:"el_extra_env_vars,omitempty"`
+	ELExtraLabels  map[string]string `yaml:"el_extra_labels,omitempty"`
+
+	// Consensus Layer extras
+	CLExtraParams  []string          `yaml:"cl_extra_params,omitempty"`
+	CLExtraMounts  map[string]string `yaml:"cl_extra_mounts,omitempty"`
+	CLExtraEnvVars map[string]string `yaml:"cl_extra_env_vars,omitempty"`
+	CLExtraLabels  map[string]string `yaml:"cl_extra_labels,omitempty"`
+
+	// Validator Client extras
+	VCExtraParams  []string          `yaml:"vc_extra_params,omitempty"`
+	VCExtraMounts  map[string]string `yaml:"vc_extra_mounts,omitempty"`
+	VCExtraEnvVars map[string]string `yaml:"vc_extra_env_vars,omitempty"`
+	VCExtraLabels  map[string]string `yaml:"vc_extra_labels,omitempty"`
 }
 
 // Validate validates the participant configuration
@@ -83,6 +101,36 @@ func (p *ParticipantConfig) Validate(index int) error {
 		return fmt.Errorf("participant %d: validator count cannot exceed 1000000", index)
 	}
 
+	// Validate EL extra mounts
+	for mountPath, source := range p.ELExtraMounts {
+		if !strings.HasPrefix(mountPath, "/") {
+			return fmt.Errorf("participant %d: el_extra_mounts path '%s' must be absolute", index, mountPath)
+		}
+		if strings.HasPrefix(source, "/") {
+			return fmt.Errorf("participant %d: el_extra_mounts source '%s' cannot be absolute", index, source)
+		}
+	}
+
+	// Validate CL extra mounts
+	for mountPath, source := range p.CLExtraMounts {
+		if !strings.HasPrefix(mountPath, "/") {
+			return fmt.Errorf("participant %d: cl_extra_mounts path '%s' must be absolute", index, mountPath)
+		}
+		if strings.HasPrefix(source, "/") {
+			return fmt.Errorf("participant %d: cl_extra_mounts source '%s' cannot be absolute", index, source)
+		}
+	}
+
+	// Validate VC extra mounts
+	for mountPath, source := range p.VCExtraMounts {
+		if !strings.HasPrefix(mountPath, "/") {
+			return fmt.Errorf("participant %d: vc_extra_mounts path '%s' must be absolute", index, mountPath)
+		}
+		if strings.HasPrefix(source, "/") {
+			return fmt.Errorf("participant %d: vc_extra_mounts source '%s' cannot be absolute", index, source)
+		}
+	}
+
 	return nil
 }
 
@@ -90,6 +138,37 @@ func (p *ParticipantConfig) Validate(index int) error {
 func (p *ParticipantConfig) ApplyDefaults() {
 	if p.Count == 0 {
 		p.Count = 1
+	}
+
+	// Initialize nil maps to empty maps
+	if p.ELExtraMounts == nil {
+		p.ELExtraMounts = make(map[string]string)
+	}
+	if p.ELExtraEnvVars == nil {
+		p.ELExtraEnvVars = make(map[string]string)
+	}
+	if p.ELExtraLabels == nil {
+		p.ELExtraLabels = make(map[string]string)
+	}
+
+	if p.CLExtraMounts == nil {
+		p.CLExtraMounts = make(map[string]string)
+	}
+	if p.CLExtraEnvVars == nil {
+		p.CLExtraEnvVars = make(map[string]string)
+	}
+	if p.CLExtraLabels == nil {
+		p.CLExtraLabels = make(map[string]string)
+	}
+
+	if p.VCExtraMounts == nil {
+		p.VCExtraMounts = make(map[string]string)
+	}
+	if p.VCExtraEnvVars == nil {
+		p.VCExtraEnvVars = make(map[string]string)
+	}
+	if p.VCExtraLabels == nil {
+		p.VCExtraLabels = make(map[string]string)
 	}
 }
 

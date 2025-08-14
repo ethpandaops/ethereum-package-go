@@ -143,6 +143,78 @@ func (p *SimpleParticipantBuilder) WithValidatorCount(count int) *SimpleParticip
 	return p
 }
 
+// WithELExtraParams sets the execution layer extra parameters
+func (p *SimpleParticipantBuilder) WithELExtraParams(params []string) *SimpleParticipantBuilder {
+	p.participant.ELExtraParams = params
+	return p
+}
+
+// WithELExtraMounts sets the execution layer extra mounts
+func (p *SimpleParticipantBuilder) WithELExtraMounts(mounts map[string]string) *SimpleParticipantBuilder {
+	p.participant.ELExtraMounts = mounts
+	return p
+}
+
+// WithELExtraEnvVars sets the execution layer extra environment variables
+func (p *SimpleParticipantBuilder) WithELExtraEnvVars(envVars map[string]string) *SimpleParticipantBuilder {
+	p.participant.ELExtraEnvVars = envVars
+	return p
+}
+
+// WithELExtraLabels sets the execution layer extra labels
+func (p *SimpleParticipantBuilder) WithELExtraLabels(labels map[string]string) *SimpleParticipantBuilder {
+	p.participant.ELExtraLabels = labels
+	return p
+}
+
+// WithCLExtraParams sets the consensus layer extra parameters
+func (p *SimpleParticipantBuilder) WithCLExtraParams(params []string) *SimpleParticipantBuilder {
+	p.participant.CLExtraParams = params
+	return p
+}
+
+// WithCLExtraMounts sets the consensus layer extra mounts
+func (p *SimpleParticipantBuilder) WithCLExtraMounts(mounts map[string]string) *SimpleParticipantBuilder {
+	p.participant.CLExtraMounts = mounts
+	return p
+}
+
+// WithCLExtraEnvVars sets the consensus layer extra environment variables
+func (p *SimpleParticipantBuilder) WithCLExtraEnvVars(envVars map[string]string) *SimpleParticipantBuilder {
+	p.participant.CLExtraEnvVars = envVars
+	return p
+}
+
+// WithCLExtraLabels sets the consensus layer extra labels
+func (p *SimpleParticipantBuilder) WithCLExtraLabels(labels map[string]string) *SimpleParticipantBuilder {
+	p.participant.CLExtraLabels = labels
+	return p
+}
+
+// WithVCExtraParams sets the validator client extra parameters
+func (p *SimpleParticipantBuilder) WithVCExtraParams(params []string) *SimpleParticipantBuilder {
+	p.participant.VCExtraParams = params
+	return p
+}
+
+// WithVCExtraMounts sets the validator client extra mounts
+func (p *SimpleParticipantBuilder) WithVCExtraMounts(mounts map[string]string) *SimpleParticipantBuilder {
+	p.participant.VCExtraMounts = mounts
+	return p
+}
+
+// WithVCExtraEnvVars sets the validator client extra environment variables
+func (p *SimpleParticipantBuilder) WithVCExtraEnvVars(envVars map[string]string) *SimpleParticipantBuilder {
+	p.participant.VCExtraEnvVars = envVars
+	return p
+}
+
+// WithVCExtraLabels sets the validator client extra labels
+func (p *SimpleParticipantBuilder) WithVCExtraLabels(labels map[string]string) *SimpleParticipantBuilder {
+	p.participant.VCExtraLabels = labels
+	return p
+}
+
 // Build returns the built participant configuration
 func (p *SimpleParticipantBuilder) Build() ParticipantConfig {
 	return p.participant
