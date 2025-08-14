@@ -106,8 +106,8 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 
 				// Check monitoring services
 				assert.Len(t, cfg.AdditionalServices, 2)
-				assert.Equal(t, "prometheus", cfg.AdditionalServices[0].Name)
-				assert.Equal(t, "grafana", cfg.AdditionalServices[1].Name)
+				assert.Equal(t, "prometheus", string(cfg.AdditionalServices[0]))
+				assert.Equal(t, "grafana", string(cfg.AdditionalServices[1]))
 
 				// Check log level
 				assert.Equal(t, "debug", cfg.GlobalLogLevel)
@@ -141,7 +141,7 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 				assert.Len(t, cfg.AdditionalServices, 3)
 				serviceNames := []string{}
 				for _, svc := range cfg.AdditionalServices {
-					serviceNames = append(serviceNames, svc.Name)
+					serviceNames = append(serviceNames, string(svc))
 				}
 				assert.Contains(t, serviceNames, "prometheus")
 				assert.Contains(t, serviceNames, "grafana")
@@ -206,39 +206,6 @@ func TestAdvancedConfigurationCombinations(t *testing.T) {
 			tt.validate(t, cfg)
 		})
 	}
-}
-
-func TestAdditionalServiceWithConfig(t *testing.T) {
-	cfg := defaultRunConfig()
-
-	// Add service with configuration
-	service := config.AdditionalService{
-		Name: "prometheus",
-		Config: map[string]interface{}{
-			"retention": "30d",
-			"storage": map[string]interface{}{
-				"tsdb": map[string]interface{}{
-					"retention.time": "30d",
-					"retention.size": "10GB",
-				},
-			},
-		},
-	}
-
-	opt := WithAdditionalService(service)
-	opt(cfg)
-
-	require.Len(t, cfg.AdditionalServices, 1)
-	assert.Equal(t, "prometheus", cfg.AdditionalServices[0].Name)
-	assert.NotNil(t, cfg.AdditionalServices[0].Config)
-	assert.Equal(t, "30d", cfg.AdditionalServices[0].Config["retention"])
-
-	storage, ok := cfg.AdditionalServices[0].Config["storage"].(map[string]interface{})
-	require.True(t, ok)
-	tsdb, ok := storage["tsdb"].(map[string]interface{})
-	require.True(t, ok)
-	assert.Equal(t, "30d", tsdb["retention.time"])
-	assert.Equal(t, "10GB", tsdb["retention.size"])
 }
 
 func TestNetworkParamsValidation(t *testing.T) {
