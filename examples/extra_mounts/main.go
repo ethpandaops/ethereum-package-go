@@ -49,10 +49,6 @@ func main() {
 	}
 
 	fmt.Println("Network started successfully!")
-	fmt.Println("The following extra configurations have been applied:")
-	fmt.Println("- Participant 1: CL extra mounts and parameters")
-	fmt.Println("- Participant 2: Advanced configuration with extra params, env vars, and labels")
-	fmt.Println("- Participant 3: Validator client configuration with extra params, env vars, and labels")
 
 	// Get execution clients
 	execClients := network.ExecutionClients()
@@ -61,13 +57,6 @@ func main() {
 	// Get consensus clients
 	consClients := network.ConsensusClients()
 	fmt.Printf("Consensus clients running: %d\n", len(consClients.All()))
-
-	// Display configuration information
-	fmt.Println("\nExtra configurations include:")
-	fmt.Println("- Custom command-line parameters for clients")
-	fmt.Println("- Environment variables for runtime configuration")
-	fmt.Println("- Labels for container organization")
-	fmt.Println("- Support for mounting files (when paths exist in ethereum-package)")
 
 	// Clean up
 	fmt.Println("\nPress Enter to stop the network...")
