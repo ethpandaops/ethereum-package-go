@@ -43,10 +43,6 @@ type ParticipantConfig struct {
 	ELLogLevel *string `yaml:"el_log_level,omitempty"`
 	CLLogLevel *string `yaml:"cl_log_level,omitempty"`
 
-	// Extra params
-	ELExtraParams []string `yaml:"el_extra_params,omitempty"`
-	CLExtraParams []string `yaml:"cl_extra_params,omitempty"`
-
 	// Node count
 	Count int `yaml:"count,omitempty"`
 
