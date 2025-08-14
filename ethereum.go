@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/ethpandaops/ethereum-package-go/pkg/config"
@@ -321,6 +322,17 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 	case "inline":
 		inline := cfg.ConfigSource.(*config.InlineConfigSource)
 		baseConfig = inline.GetConfig()
+	case "file":
+		fileSource := cfg.ConfigSource.(*config.FileConfigSource)
+		yamlData, readErr := os.ReadFile(fileSource.GetPath())
+		if readErr != nil {
+			return nil, fmt.Errorf("failed to read config file %s: %w", fileSource.GetPath(), readErr)
+		}
+		baseConfig, err = config.FromYAML(string(yamlData))
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse config file %s: %w", fileSource.GetPath(), err)
+		}
+		return baseConfig, nil
 	default:
 		return nil, fmt.Errorf("unsupported config source type: %s", cfg.ConfigSource.Type())
 	}
@@ -329,14 +341,19 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 		return nil, err
 	}
 
+	if cfg.ChainID != 0 {
+		if baseConfig.NetworkParams == nil {
+			baseConfig.NetworkParams = &config.NetworkParams{}
+		}
+		baseConfig.NetworkParams.NetworkID = fmt.Sprintf("%d", cfg.ChainID)
+	}
+
 	// Apply overrides using ConfigBuilder
-	builder := config.NewConfigBuilder().WithParticipants(baseConfig.Participants)
+	builder := config.NewConfigBuilderFromConfig(baseConfig)
 
 	// Apply network parameters
 	if cfg.NetworkParams != nil {
 		builder.WithNetworkParams(cfg.NetworkParams)
-	} else if cfg.ChainID != 0 {
-		builder.WithNetworkID(fmt.Sprintf("%d", cfg.ChainID))
 	}
 
 	// Apply MEV configuration
@@ -354,8 +371,10 @@ func buildEthereumConfig(cfg *RunConfig) (*config.EthereumPackageConfig, error) 
 		builder.WithDockerCacheParams(cfg.DockerCacheParams)
 	}
 
-	// Apply additional services
-	for _, service := range cfg.AdditionalServices {
+	// Apply additional services - merge base and override configs
+	allServices := append([]config.AdditionalService{}, baseConfig.AdditionalServices...)
+	allServices = append(allServices, cfg.AdditionalServices...)
+	for _, service := range allServices {
 		builder.WithAdditionalService(service)
 	}
 

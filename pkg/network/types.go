@@ -15,16 +15,17 @@ import (
 type ServiceType string
 
 const (
-	ServiceTypeExecutionClient ServiceType = "execution"
-	ServiceTypeConsensusClient ServiceType = "consensus"
-	ServiceTypeValidator       ServiceType = "validator"
-	ServiceTypePrometheus      ServiceType = "prometheus"
-	ServiceTypeGrafana         ServiceType = "grafana"
-	ServiceTypeBlockscout      ServiceType = "blockscout"
-	ServiceTypeDora            ServiceType = "dora"
-	ServiceTypeApache          ServiceType = "apache"
-	ServiceTypeSpamoor         ServiceType = "spamoor"
-	ServiceTypeOther           ServiceType = "other"
+	ServiceTypeExecutionClient         ServiceType = "execution"
+	ServiceTypeConsensusClient         ServiceType = "consensus"
+	ServiceTypeEthereumMetricsExporter ServiceType = "ethereum-metrics-exporter"
+	ServiceTypeValidator               ServiceType = "validator"
+	ServiceTypePrometheus              ServiceType = "prometheus"
+	ServiceTypeGrafana                 ServiceType = "grafana"
+	ServiceTypeBlockscout              ServiceType = "blockscout"
+	ServiceTypeDora                    ServiceType = "dora"
+	ServiceTypeApache                  ServiceType = "apache"
+	ServiceTypeSpamoor                 ServiceType = "spamoor"
+	ServiceTypeOther                   ServiceType = "other"
 )
 
 // Network represents an Ethereum network with all its services

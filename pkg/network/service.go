@@ -9,6 +9,7 @@ type Service struct {
 	ContainerID string
 	Ports       []Port
 	Status      string
+	IPAddress   string
 }
 
 // ServiceMetadata contains detailed information about a service

@@ -35,9 +35,13 @@ type ParticipantConfig struct {
 	ELType client.Type `yaml:"el_type,omitempty"`
 	CLType client.Type `yaml:"cl_type,omitempty"`
 
-	// Version overrides
-	ELVersion string `yaml:"el_version,omitempty"`
-	CLVersion string `yaml:"cl_version,omitempty"`
+	// Image overrides
+	ELImage *string `yaml:"el_image,omitempty"`
+	CLImage *string `yaml:"cl_image,omitempty"`
+
+	// EL Log level
+	ELLogLevel *string `yaml:"el_log_level,omitempty"`
+	CLLogLevel *string `yaml:"cl_log_level,omitempty"`
 
 	// Node count
 	Count int `yaml:"count,omitempty"`
@@ -72,6 +76,7 @@ type ParticipantConfig struct {
 
 // Validate validates the participant configuration
 func (p *ParticipantConfig) Validate(index int) error {
+
 	if p.ELType == "" {
 		return fmt.Errorf("participant %d: execution layer type is required", index)
 	}
@@ -192,6 +197,10 @@ type NetworkParams struct {
 
 // Validate validates the network parameters
 func (n *NetworkParams) Validate() error {
+	if n.Network != "kurtosis" {
+		return nil
+	}
+
 	if n.SecondsPerSlot < 1 || n.SecondsPerSlot > 60 {
 		return fmt.Errorf("seconds per slot must be between 1 and 60, got %d", n.SecondsPerSlot)
 	}
@@ -224,9 +233,10 @@ func (n *NetworkParams) Validate() error {
 
 // ApplyDefaults applies default values to network parameters
 func (n *NetworkParams) ApplyDefaults() {
-	if n.Network == "" {
-		n.Network = "kurtosis"
+	if n.Network != "kurtosis" {
+		return
 	}
+
 	if n.NetworkID == "" {
 		n.NetworkID = "3151908"
 	}
@@ -245,6 +255,7 @@ func (n *NetworkParams) ApplyDefaults() {
 	if n.GenesisGasLimit == 0 {
 		n.GenesisGasLimit = 60000000
 	}
+
 }
 
 // MEVConfig represents MEV-boost configuration
@@ -284,10 +295,7 @@ func (m *MEVConfig) Validate() error {
 }
 
 // AdditionalService represents an additional service to run
-type AdditionalService struct {
-	Name   string                 `yaml:"name"`
-	Config map[string]interface{} `yaml:"config,omitempty"`
-}
+type AdditionalService string
 
 // DockerCacheParams represents Docker cache configuration.
 type DockerCacheParams struct {
@@ -378,8 +386,14 @@ type EthereumPackageConfig struct {
 	// Global client settings
 	GlobalLogLevel string `yaml:"global_log_level,omitempty"`
 
+	// Ethereum metrics exporter enabled
+	EthereumMetricsExporterEnabled *bool `yaml:"ethereum_metrics_exporter_enabled,omitempty"`
+
+	// Persistent
+	Persistent bool `yaml:"persistent,omitempty"`
+
 	// Checkpoint sync configuration (root level)
-	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled,omitempty"`
+	CheckpointSyncEnabled bool   `yaml:"checkpoint_sync_enabled"`
 	CheckpointSyncURL     string `yaml:"checkpoint_sync_url,omitempty"`
 }
 
@@ -422,26 +436,26 @@ func (c *EthereumPackageConfig) Validate() error {
 	}
 
 	// Validate additional services
-	serviceNames := make(map[string]bool)
+	serviceNames := make(map[AdditionalService]bool)
 	for i, service := range c.AdditionalServices {
-		if service.Name == "" {
+		if service == "" {
 			return fmt.Errorf("additional service %d: name is required", i)
 		}
-		if serviceNames[service.Name] {
-			return fmt.Errorf("duplicate additional service: %s", service.Name)
+		if serviceNames[service] {
+			return fmt.Errorf("duplicate additional service: %s", service)
 		}
-		serviceNames[service.Name] = true
+		serviceNames[service] = true
 
 		// Validate known service names
-		validServices := map[string]bool{
+		validServices := map[AdditionalService]bool{
 			"prometheus": true,
 			"grafana":    true,
 			"dora":       true,
 			"spamoor":    true,
 			"blockscout": true,
 		}
-		if !validServices[service.Name] {
-			return fmt.Errorf("invalid additional service name: %s", service.Name)
+		if !validServices[service] {
+			return fmt.Errorf("invalid additional service name: %s", service)
 		}
 	}
 
