@@ -7,6 +7,7 @@ import (
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestToYAML(t *testing.T) {
@@ -861,4 +862,32 @@ func TestExtraFilesOmitEmpty(t *testing.T) {
 
 	// Check that extra_files is omitted when empty
 	assert.NotContains(t, yamlStr, "extra_files:")
+}
+
+func TestYAMLSerializationWithVCImage(t *testing.T) {
+	participant := NewParticipantBuilder().
+		WithEL(client.Geth).
+		WithCL(client.Prysm).
+		WithCLImage("ethpandaops/tysm:tysm-peerset").
+		WithVCImage("ethpandaops/tysm-validator:tysm-peerset").
+		WithValidatorCount(32).
+		Build()
+
+	// Convert to YAML
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{participant},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+
+	// Verify YAML contains vc_image
+	assert.Contains(t, yamlStr, "vc_image: ethpandaops/tysm-validator:tysm-peerset")
+
+	// Round-trip test
+	var parsed EthereumPackageConfig
+	err = yaml.Unmarshal([]byte(yamlStr), &parsed)
+	require.NoError(t, err)
+	require.NotNil(t, parsed.Participants[0].VCImage)
+	assert.Equal(t, "ethpandaops/tysm-validator:tysm-peerset", *parsed.Participants[0].VCImage)
 }

@@ -38,6 +38,7 @@ type ParticipantConfig struct {
 	// Image overrides
 	ELImage *string `yaml:"el_image,omitempty"`
 	CLImage *string `yaml:"cl_image,omitempty"`
+	VCImage *string `yaml:"vc_image,omitempty"`
 
 	// EL Log level
 	ELLogLevel *string `yaml:"el_log_level,omitempty"`
