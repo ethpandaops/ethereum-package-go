@@ -164,6 +164,12 @@ func (p *SimpleParticipantBuilder) WithCLImage(image string) *SimpleParticipantB
 	return p
 }
 
+// WithVCImage sets the validator client image
+func (p *SimpleParticipantBuilder) WithVCImage(image string) *SimpleParticipantBuilder {
+	p.participant.VCImage = &image
+	return p
+}
+
 // WithCount sets the number of nodes
 func (p *SimpleParticipantBuilder) WithCount(count int) *SimpleParticipantBuilder {
 	p.participant.Count = count

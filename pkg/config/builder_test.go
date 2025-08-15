@@ -685,3 +685,12 @@ func TestEthereumPackageConfig_PortPublisherValidation(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "port publisher el: public_port_start must be between 1024 and 65535")
 }
+
+func TestParticipantBuilderWithVCImage(t *testing.T) {
+	builder := NewParticipantBuilder()
+	vcImage := "ethpandaops/tysm-validator:tysm-peerset"
+	participant := builder.WithVCImage(vcImage).Build()
+
+	require.NotNil(t, participant.VCImage)
+	assert.Equal(t, vcImage, *participant.VCImage)
+}
