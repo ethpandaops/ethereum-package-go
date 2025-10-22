@@ -117,10 +117,16 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	}
 
 	// Create run configuration
+	imageDownloadMode := kurtosis_core_rpc_api_bindings.ImageDownloadMode_missing
+	if config.ImageDownload {
+		imageDownloadMode = kurtosis_core_rpc_api_bindings.ImageDownloadMode_always
+	}
+
 	runConfig := starlark_run_config.NewRunStarlarkConfig(
 		starlark_run_config.WithSerializedParams(config.ConfigYAML),
 		starlark_run_config.WithDryRun(config.DryRun),
 		starlark_run_config.WithParallelism(int32(config.Parallelism)),
+		starlark_run_config.WithImageDownloadMode(imageDownloadMode),
 	)
 
 	// Execute the package
