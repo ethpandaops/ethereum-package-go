@@ -121,7 +121,7 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 				CLType: cl,
 				Count:  1,
 			}
-			// First participant acts as supernode for Fulu fork compatibility
+
 			// First participant acts as supernode for Fulu fork compatibility
 			if len(participants) == 0 {
 				p.Supernode = true
