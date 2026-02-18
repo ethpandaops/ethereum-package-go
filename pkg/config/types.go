@@ -194,6 +194,7 @@ type NetworkParams struct {
 	DenebForkEpoch              int    `yaml:"deneb_fork_epoch,omitempty"`
 	ElectraForkEpoch            int    `yaml:"electra_fork_epoch,omitempty"`
 	FuluForkEpoch               int    `yaml:"fulu_fork_epoch,omitempty"`
+	PerfectPeerdasEnabled       bool   `yaml:"perfect_peerdas_enabled,omitempty"` //nolint:tagliatelle // must match ethereum-package snake_case config format
 }
 
 // Validate validates the network parameters

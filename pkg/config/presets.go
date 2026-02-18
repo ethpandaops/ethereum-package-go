@@ -25,9 +25,10 @@ func getAllELsConfig() *EthereumPackageConfig {
 	return &EthereumPackageConfig{
 		Participants: []ParticipantConfig{
 			{
-				ELType: client.Geth,
-				CLType: client.Lighthouse,
-				Count:  1,
+				ELType:    client.Geth,
+				CLType:    client.Lighthouse,
+				Count:     1,
+				Supernode: true,
 			},
 			{
 				ELType: client.Besu,
@@ -58,9 +59,10 @@ func getAllCLsConfig() *EthereumPackageConfig {
 	return &EthereumPackageConfig{
 		Participants: []ParticipantConfig{
 			{
-				ELType: client.Geth,
-				CLType: client.Lighthouse,
-				Count:  1,
+				ELType:    client.Geth,
+				CLType:    client.Lighthouse,
+				Count:     1,
+				Supernode: true,
 			},
 			{
 				ELType: client.Geth,
@@ -114,11 +116,18 @@ func getAllClientsMatrixConfig() *EthereumPackageConfig {
 
 	for _, el := range elClients {
 		for _, cl := range clClients {
-			participants = append(participants, ParticipantConfig{
+			p := ParticipantConfig{
 				ELType: el,
 				CLType: cl,
 				Count:  1,
-			})
+			}
+			// First participant acts as supernode for Fulu fork compatibility
+			// First participant acts as supernode for Fulu fork compatibility
+			if len(participants) == 0 {
+				p.Supernode = true
+			}
+
+			participants = append(participants, p)
 		}
 	}
 
@@ -136,6 +145,7 @@ func getMinimalConfig() *EthereumPackageConfig {
 				CLType:         client.Lighthouse,
 				Count:          1,
 				ValidatorCount: 64,
+				Supernode:      true,
 			},
 		},
 	}
