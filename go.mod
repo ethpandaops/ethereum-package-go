@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/attestantio/go-eth2-client v0.26.0
-	github.com/kurtosis-tech/kurtosis/api/golang v1.15.2
+	github.com/kurtosis-tech/kurtosis/api/golang v1.16.6
 	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1
 )
