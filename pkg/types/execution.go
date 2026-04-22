@@ -10,6 +10,8 @@ const (
 	ClientNethermind ClientType = "nethermind"
 	ClientErigon     ClientType = "erigon"
 	ClientReth       ClientType = "reth"
+	ClientEthrex     ClientType = "ethrex"
+	ClientNimbusEth1 ClientType = "nimbusel"
 
 	// Unknown client
 	ClientUnknown ClientType = "unknown"
