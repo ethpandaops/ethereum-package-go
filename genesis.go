@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	eth2client "github.com/attestantio/go-eth2-client"
-	"github.com/attestantio/go-eth2-client/api"
 	"github.com/ethpandaops/ethereum-package-go/pkg/client"
 	"github.com/ethpandaops/ethereum-package-go/pkg/network"
+	eth2client "github.com/ethpandaops/go-eth2-client"
+	"github.com/ethpandaops/go-eth2-client/api"
 )
 
 // WaitForGenesis waits until the genesis time of the network
