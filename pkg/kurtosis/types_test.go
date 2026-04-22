@@ -65,6 +65,9 @@ func TestDetectClientType(t *testing.T) {
 		{"detect nethermind", "nethermind-node-1", client.Nethermind},
 		{"detect erigon", "erigon-archive", client.Erigon},
 		{"detect reth", "reth-full-node", client.Reth},
+		{"detect ethrex", "el-3-ethrex-lighthouse", client.Ethrex},
+		{"detect nimbus-eth1 (el)", "el-4-nimbus-eth1-teku", client.NimbusEth1},
+		{"detect nimbusel alias", "el-5-nimbusel-prysm", client.NimbusEth1},
 
 		// Consensus clients
 		{"detect lighthouse", "cl-1-lighthouse-geth", client.Lighthouse},

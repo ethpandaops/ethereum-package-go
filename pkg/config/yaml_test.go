@@ -53,6 +53,25 @@ func TestToYAML(t *testing.T) {
 	assert.Contains(t, yamlStr, "global_log_level: info")
 }
 
+// TestToYAMLNimbusEth1WireName verifies that the user-facing NimbusEth1
+// ("nimbusel") alias is translated to the "nimbus" wire name that upstream
+// ethereum-package expects for the nimbus-eth1 execution client.
+func TestToYAMLNimbusEth1WireName(t *testing.T) {
+	config := &EthereumPackageConfig{
+		Participants: []ParticipantConfig{
+			{ELType: client.NimbusEth1, CLType: client.Teku},
+			{ELType: client.Ethrex, CLType: client.Lighthouse},
+		},
+	}
+
+	yamlStr, err := ToYAML(config)
+	require.NoError(t, err)
+
+	assert.Contains(t, yamlStr, "el_type: nimbus", "NimbusEth1 must serialize as upstream wire name 'nimbus'")
+	assert.NotContains(t, yamlStr, "el_type: nimbusel", "'nimbusel' alias must not leak to upstream YAML")
+	assert.Contains(t, yamlStr, "el_type: ethrex")
+}
+
 func TestToYAMLMinimal(t *testing.T) {
 	config := &EthereumPackageConfig{
 		Participants: []ParticipantConfig{

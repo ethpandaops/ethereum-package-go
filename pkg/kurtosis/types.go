@@ -118,6 +118,10 @@ func DetectClientType(serviceName string) client.Type {
 			return client.Erigon
 		case contains(serviceName, "reth"):
 			return client.Reth
+		case contains(serviceName, "ethrex"):
+			return client.Ethrex
+		case contains(serviceName, "nimbus-eth1"), contains(serviceName, "nimbusel"):
+			return client.NimbusEth1
 		}
 	}
 
@@ -133,6 +137,10 @@ func DetectClientType(serviceName string) client.Type {
 		return client.Erigon
 	case contains(serviceName, "reth"):
 		return client.Reth
+	case contains(serviceName, "ethrex"):
+		return client.Ethrex
+	case contains(serviceName, "nimbus-eth1"), contains(serviceName, "nimbusel"):
+		return client.NimbusEth1
 	case contains(serviceName, "lighthouse"):
 		return client.Lighthouse
 	case contains(serviceName, "teku"):
