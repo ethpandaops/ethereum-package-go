@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	eth2client "github.com/attestantio/go-eth2-client"
-	eth2http "github.com/attestantio/go-eth2-client/http"
+	eth2client "github.com/ethpandaops/go-eth2-client"
+	eth2http "github.com/ethpandaops/go-eth2-client/http"
 )
 
 // GetAttestantClient returns an attestant go-eth2 client for the consensus client
