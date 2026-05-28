@@ -99,9 +99,9 @@ type RPCResponse struct {
 
 // RPCError represents a JSON-RPC error
 type RPCError struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func (e *RPCError) Error() string {
@@ -109,7 +109,7 @@ func (e *RPCError) Error() string {
 }
 
 // makeRPCRequest makes a JSON-RPC request
-func (b *BaseExecutionClient) makeRPCRequest(ctx context.Context, req interface{}) (*RPCResponse, error) {
+func (b *BaseExecutionClient) makeRPCRequest(ctx context.Context, req any) (*RPCResponse, error) {
 	if b.rpcURL == "" {
 		return nil, fmt.Errorf("RPC URL not configured")
 	}
@@ -146,10 +146,10 @@ func (b *BaseExecutionClient) makeRPCRequest(ctx context.Context, req interface{
 
 // GetBlockNumber gets the current block number
 func (b *BaseExecutionClient) GetBlockNumber(ctx context.Context) (uint64, error) {
-	req := map[string]interface{}{
+	req := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  "eth_blockNumber",
-		"params":  []interface{}{},
+		"params":  []any{},
 		"id":      1,
 	}
 
@@ -173,10 +173,10 @@ func (b *BaseExecutionClient) GetBlockNumber(ctx context.Context) (uint64, error
 
 // IsSyncing checks if the client is syncing
 func (b *BaseExecutionClient) IsSyncing(ctx context.Context) (bool, error) {
-	req := map[string]interface{}{
+	req := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  "eth_syncing",
-		"params":  []interface{}{},
+		"params":  []any{},
 		"id":      1,
 	}
 
@@ -186,7 +186,7 @@ func (b *BaseExecutionClient) IsSyncing(ctx context.Context) (bool, error) {
 	}
 
 	// eth_syncing returns false when not syncing, or a sync object when syncing
-	var result interface{}
+	var result any
 	if err := json.Unmarshal(resp.Result, &result); err != nil {
 		return false, fmt.Errorf("failed to parse sync status: %w", err)
 	}
@@ -223,23 +223,23 @@ func (b *BaseExecutionClient) WaitForSync(ctx context.Context) error {
 
 // NodeInfo represents node information
 type NodeInfo struct {
-	ID    string                 `json:"id"`
-	Name  string                 `json:"name"`
-	Enode string                 `json:"enode"`
-	ENR   string                 `json:"enr"`
-	IP    string                 `json:"ip"`
-	Ports map[string]interface{} `json:"ports"`
+	ID    string         `json:"id"`
+	Name  string         `json:"name"`
+	Enode string         `json:"enode"`
+	ENR   string         `json:"enr"`
+	IP    string         `json:"ip"`
+	Ports map[string]any `json:"ports"`
 }
 
 // PeerInfo represents peer information
 type PeerInfo struct {
-	ID        string                 `json:"id"`
-	Name      string                 `json:"name"`
-	Enode     string                 `json:"enode"`
-	ENR       string                 `json:"enr"`
-	Caps      []string               `json:"caps"`
-	Network   map[string]interface{} `json:"network"`
-	Protocols map[string]interface{} `json:"protocols"`
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Enode     string         `json:"enode"`
+	ENR       string         `json:"enr"`
+	Caps      []string       `json:"caps"`
+	Network   map[string]any `json:"network"`
+	Protocols map[string]any `json:"protocols"`
 }
 
 // TraceResult represents the result of a transaction trace

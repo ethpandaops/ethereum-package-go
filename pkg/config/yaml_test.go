@@ -287,8 +287,8 @@ func TestYAMLFormatting(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check proper indentation (2 spaces)
-	lines := strings.Split(yamlStr, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(yamlStr, "\n")
+	for line := range lines {
 		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "    ") {
 			// Second level should have 2 spaces
 			assert.True(t, strings.HasPrefix(line, "  "))

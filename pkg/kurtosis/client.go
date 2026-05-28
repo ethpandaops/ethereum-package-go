@@ -3,6 +3,7 @@ package kurtosis
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -103,7 +104,7 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 	k.mu.Unlock()
 
 	// Prepare package run options
-	packageConfig := make(map[string]interface{})
+	packageConfig := make(map[string]any)
 	if config.ConfigYAML != "" {
 		// Parse YAML config and convert to map
 		// For now, we'll pass the raw YAML as a string parameter
@@ -203,8 +204,8 @@ func (k *KurtosisClient) RunPackage(ctx context.Context, config RunPackageConfig
 
 		// Process run output (multiline string)
 		if runResult.RunOutput != "" {
-			outputLines := strings.Split(string(runResult.RunOutput), "\n")
-			for _, line := range outputLines {
+			outputLines := strings.SplitSeq(string(runResult.RunOutput), "\n")
+			for line := range outputLines {
 				if line != "" {
 					responseLines = append(responseLines, line)
 				}
@@ -396,23 +397,13 @@ func (k *KurtosisClient) getOrCreateEnclave(ctx context.Context, enclaveName str
 // isHTTPPort checks if a port is typically used for HTTP
 func isHTTPPort(port uint16) bool {
 	httpPorts := []uint16{80, 8080, 3000, 5052, 9090, 4000}
-	for _, p := range httpPorts {
-		if port == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(httpPorts, port)
 }
 
 // isWSPort checks if a port is typically used for WebSocket
 func isWSPort(port uint16) bool {
 	wsPorts := []uint16{8546}
-	for _, p := range wsPorts {
-		if port == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(wsPorts, port)
 }
 
 // formatStarlarkResponse formats a Starlark response line for display

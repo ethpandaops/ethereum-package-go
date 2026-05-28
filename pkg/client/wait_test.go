@@ -183,7 +183,7 @@ func TestCombinedWaitStrategy_Sequential(t *testing.T) {
 	// Create strategies that track order
 	strategy1 := &mockWaitStrategy{
 		name: "strategy1",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			calls = append(calls, "strategy1")
 			return nil
 		},
@@ -191,7 +191,7 @@ func TestCombinedWaitStrategy_Sequential(t *testing.T) {
 
 	strategy2 := &mockWaitStrategy{
 		name: "strategy2",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			calls = append(calls, "strategy2")
 			return nil
 		},
@@ -211,7 +211,7 @@ func TestCombinedWaitStrategy_Parallel(t *testing.T) {
 
 	strategy1 := &mockWaitStrategy{
 		name: "strategy1",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			close(ch1)
 			<-ch2 // Wait for strategy2
 			return nil
@@ -220,7 +220,7 @@ func TestCombinedWaitStrategy_Parallel(t *testing.T) {
 
 	strategy2 := &mockWaitStrategy{
 		name: "strategy2",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			close(ch2)
 			<-ch1 // Wait for strategy1
 			return nil
@@ -236,14 +236,14 @@ func TestCombinedWaitStrategy_Parallel(t *testing.T) {
 func TestCombinedWaitStrategy_Error(t *testing.T) {
 	strategy1 := &mockWaitStrategy{
 		name: "strategy1",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			return nil
 		},
 	}
 
 	strategy2 := &mockWaitStrategy{
 		name: "strategy2",
-		waitFunc: func(ctx context.Context, target interface{}) error {
+		waitFunc: func(ctx context.Context, target any) error {
 			return assert.AnError
 		},
 	}
@@ -280,10 +280,10 @@ func TestDefaultWaitStrategies(t *testing.T) {
 // mockWaitStrategy is a test helper
 type mockWaitStrategy struct {
 	name     string
-	waitFunc func(context.Context, interface{}) error
+	waitFunc func(context.Context, any) error
 }
 
-func (m *mockWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
+func (m *mockWaitStrategy) WaitUntilReady(ctx context.Context, target any) error {
 	if m.waitFunc != nil {
 		return m.waitFunc(ctx, target)
 	}

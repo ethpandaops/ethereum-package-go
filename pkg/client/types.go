@@ -48,7 +48,7 @@ func (t Type) IsExecution() bool {
 // MarshalYAML translates disambiguated aliases (e.g. NimbusEth1 → "nimbus")
 // to the string the upstream ethereum-package Kurtosis module expects. All
 // other values round-trip as their raw string.
-func (t Type) MarshalYAML() (interface{}, error) {
+func (t Type) MarshalYAML() (any, error) {
 	if name, ok := upstreamELName[t]; ok {
 		return name, nil
 	}

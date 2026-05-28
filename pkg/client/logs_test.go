@@ -367,7 +367,7 @@ func BenchmarkLogFilter_applyFilters(b *testing.B) {
 
 	// Generate test lines
 	lines := make([]string, 1000)
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		if i%10 == 0 {
 			lines[i] = "ERROR: This is an error message"
 		} else {
