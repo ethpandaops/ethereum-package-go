@@ -1,6 +1,6 @@
 module github.com/ethpandaops/ethereum-package-go
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/ethpandaops/go-eth2-client v0.1.0
