@@ -33,7 +33,7 @@ logging:
 	}
 
 	// Add JSON config
-	jsonConfig := map[string]interface{}{
+	jsonConfig := map[string]any{
 		"version": "1.0",
 		"features": map[string]bool{
 			"metrics": true,

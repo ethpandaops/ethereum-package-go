@@ -47,7 +47,7 @@ func (h *ExtraFilesHelper) AddFileFromReader(name string, r io.Reader) error {
 }
 
 // AddJSON marshals an object to JSON and adds it as a file
-func (h *ExtraFilesHelper) AddJSON(name string, v interface{}) error {
+func (h *ExtraFilesHelper) AddJSON(name string, v any) error {
 	content, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)

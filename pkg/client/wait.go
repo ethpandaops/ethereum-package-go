@@ -9,7 +9,7 @@ import (
 
 // WaitStrategy defines how to wait for a service to be ready
 type WaitStrategy interface {
-	WaitUntilReady(ctx context.Context, target interface{}) error
+	WaitUntilReady(ctx context.Context, target any) error
 }
 
 // HTTPWaitStrategy waits for an HTTP endpoint to respond successfully
@@ -65,7 +65,7 @@ func (h *HTTPWaitStrategy) WithInterval(interval time.Duration) *HTTPWaitStrateg
 }
 
 // WaitUntilReady waits for the HTTP endpoint to be ready
-func (h *HTTPWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
+func (h *HTTPWaitStrategy) WaitUntilReady(ctx context.Context, target any) error {
 	var url string
 
 	switch t := target.(type) {
@@ -143,7 +143,7 @@ func (s *SyncWaitStrategy) WithInterval(interval time.Duration) *SyncWaitStrateg
 }
 
 // WaitUntilReady waits for the client to finish syncing
-func (s *SyncWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
+func (s *SyncWaitStrategy) WaitUntilReady(ctx context.Context, target any) error {
 	timeout := time.After(s.Timeout)
 	ticker := time.NewTicker(s.Interval)
 	defer ticker.Stop()
@@ -203,7 +203,7 @@ func (h *HealthWaitStrategy) WithInterval(interval time.Duration) *HealthWaitStr
 }
 
 // WaitUntilReady waits for the client to report healthy status
-func (h *HealthWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
+func (h *HealthWaitStrategy) WaitUntilReady(ctx context.Context, target any) error {
 	timeout := time.After(h.Timeout)
 	ticker := time.NewTicker(h.Interval)
 	defer ticker.Stop()
@@ -248,7 +248,7 @@ func (c *CombinedWaitStrategy) WithParallel(parallel bool) *CombinedWaitStrategy
 }
 
 // WaitUntilReady executes all wait strategies
-func (c *CombinedWaitStrategy) WaitUntilReady(ctx context.Context, target interface{}) error {
+func (c *CombinedWaitStrategy) WaitUntilReady(ctx context.Context, target any) error {
 	if c.parallel {
 		return c.waitParallel(ctx, target)
 	}
@@ -256,7 +256,7 @@ func (c *CombinedWaitStrategy) WaitUntilReady(ctx context.Context, target interf
 }
 
 // waitSequential executes strategies one after another
-func (c *CombinedWaitStrategy) waitSequential(ctx context.Context, target interface{}) error {
+func (c *CombinedWaitStrategy) waitSequential(ctx context.Context, target any) error {
 	for i, strategy := range c.strategies {
 		if err := strategy.WaitUntilReady(ctx, target); err != nil {
 			return fmt.Errorf("wait strategy %d failed: %w", i, err)
@@ -266,7 +266,7 @@ func (c *CombinedWaitStrategy) waitSequential(ctx context.Context, target interf
 }
 
 // waitParallel executes strategies in parallel
-func (c *CombinedWaitStrategy) waitParallel(ctx context.Context, target interface{}) error {
+func (c *CombinedWaitStrategy) waitParallel(ctx context.Context, target any) error {
 	errChan := make(chan error, len(c.strategies))
 
 	for i, strategy := range c.strategies {

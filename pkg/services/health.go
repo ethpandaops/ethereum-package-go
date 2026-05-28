@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 )
@@ -53,7 +54,7 @@ type ServiceHealthStatus struct {
 	Message   string        `json:"message,omitempty"`
 	LastCheck time.Time     `json:"last_check"`
 	Uptime    time.Duration `json:"uptime,omitempty"`
-	Details   interface{}   `json:"details,omitempty"`
+	Details   any           `json:"details,omitempty"`
 }
 
 // ServiceStatus represents the status of a service
@@ -192,10 +193,8 @@ func (h *HealthChecker) performHTTPCheck(ctx context.Context, check HealthCheck)
 	defer resp.Body.Close()
 
 	// Check if status code is in success codes
-	for _, code := range check.SuccessCodes {
-		if resp.StatusCode == code {
-			return nil
-		}
+	if slices.Contains(check.SuccessCodes, resp.StatusCode) {
+		return nil
 	}
 
 	return fmt.Errorf("unhealthy status code: %d", resp.StatusCode)

@@ -25,7 +25,7 @@ func AssertNoErrorOrFail(t *testing.T, err error) {
 type TableTest[T any] struct {
 	Name    string
 	Input   T
-	Want    interface{}
+	Want    any
 	WantErr string
 }
 

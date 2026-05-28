@@ -1,6 +1,7 @@
 package config
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -85,12 +86,7 @@ func (v *Validator) validateAdditionalServices() error {
 
 func isValidMEVType(mevType string) bool {
 	validTypes := []string{"none", "mock", "full", "relay", ""}
-	for _, valid := range validTypes {
-		if mevType == valid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validTypes, mevType)
 }
 
 func isValidURL(url string) bool {
@@ -110,10 +106,5 @@ func isValidServiceName(name string) bool {
 		"explorer",
 		"forkmon",
 	}
-	for _, valid := range validServices {
-		if name == valid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validServices, name)
 }
